@@ -1735,10 +1735,7 @@ int GenericCallbacks::D20ModCountdownEndHandler(DispatcherCallbackArgs args){
 	case 20: // Timed Disappear
 		if (args.dispType == dispTypeBeginRound || !evtObj || (evtObj->dispIOType == dispIoTypeSendSignal && evtObj->data1 == args.GetCondArg(0))){
 			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
-			gameSystems->GetParticleSys().CreateAtObj("Fizzle", args.objHndCaller);
-			auto aiFlags = objects.getInt64(args.objHndCaller, obj_f_npc_ai_flags64) | AiFlag::RunningOff;
-			objSystem->GetObject(args.objHndCaller)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
-			objects.FadeTo(args.objHndCaller, 0, 2, 5, 1);
+			critterSys.Banish(args.objHndCaller, objHndl::null, false);
 		}
 		break;
 	default:

@@ -243,6 +243,13 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
+
+	// Eliminates a creature as if by banishment or unsummoning.
+	void Banish(objHndl critter, objHndl killer = objHndl::null, bool xp = true);
+
+	// Awards appropriate party XP if killer defeats critter.
+	void AwardXpFor(objHndl killer, objHndl critter);
+
 	int GetHpDamage(objHndl handle);
 	void SetHpDamage(objHndl handle, int damage);
 	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);

@@ -2416,6 +2416,22 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_Banish(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	auto killer = objHndl::null;
+	bool awardXp = true;
+	if (!PyArg_ParseTuple(args, "|O&i:objhndl.critter_banish", &ConvertObjHndl, &killer, awardXp)) {
+		return 0;
+	}
+
+	critterSys.Banish(self->handle, killer, awardXp);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -4636,6 +4652,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL },
 	{ "critter_kill", PyObjHandle_Kill, METH_VARARGS, NULL },
 	{ "critter_kill_by_effect", PyObjHandle_KillByEffect, METH_VARARGS, NULL },
+	{ "critter_banish", PyObjHandle_Banish, METH_VARARGS, NULL },
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },

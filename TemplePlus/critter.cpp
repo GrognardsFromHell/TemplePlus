@@ -704,6 +704,47 @@ void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
+void LegacyCritterSystem::Banish(objHndl target, objHndl killer, bool xp)
+{
+	// if not dead yet, take care of some death stuff.
+	if (!IsDeadNullDestroyed(target) && killer && xp) {
+		AwardXpFor(killer, target);
+	}
+
+	gameSystems->GetParticleSys().CreateAtObj("Fizzle", target);
+	auto critter = objSystem->GetObject(target);
+	auto aiFlags = critter->GetInt64(obj_f_npc_ai_flags64);
+	aiFlags |= AiFlag::RunningOff;
+	critter->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	objects.FadeTo(target, 0, 2, 5, 1);
+}
+
+// port of 0x100B88E0
+void LegacyCritterSystem::AwardXpFor(objHndl killer, objHndl critter)
+{
+	auto LogbookDefeat = temple::GetRef<int(objHndl, objHndl)>(0x1009A910);
+	LogbookDefeat(killer, critter);
+
+	if (!party.IsInParty(killer)) return;
+
+	if (IsPC(critter)) return;
+
+	auto summoned = conds.GetByName("sp-Summoned");
+	if (d20Sys.d20QueryWithData(critter, DK_QUE_Critter_Has_Condition, summoned, 0))
+		return;
+
+	auto flags = objects.getInt32(critter, obj_f_critter_flags);
+	if (flags & OCF_EXPERIENCE_AWARDED) return;
+
+	auto cr = objects.getInt32(critter, obj_f_npc_challenge_rating);
+	cr += objects.StatLevelGet(critter, stat_level);
+
+	auto AwardXpForCR = temple::GetRef<void(int)>(0x100B8880);
+	AwardXpForCR(cr);
+	flags |= OCF_EXPERIENCE_AWARDED;
+	objects.setInt32(critter, obj_f_critter_flags, flags);
+}
+
 /* 0x100B8AA0 */
 void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
 {
