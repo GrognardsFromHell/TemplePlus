@@ -211,6 +211,7 @@ public:
 	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
 	static int __cdecl EncumbranceCapAC(DispatcherCallbackArgs args);
+	static int __cdecl DeafnessMod(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -571,6 +572,8 @@ public:
 
 		// replace deafness spell failure with no-op because it was stacking
 		replaceFunction(0x100C5D90, genericCallbacks.NoOp);
+		// replace deafness initiative penalty to use a non-stacking bonus
+		replaceFunction(0x100C5B00, genericCallbacks.DeafnessMod);
 
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
@@ -1843,6 +1846,28 @@ int GenericCallbacks::EncumbranceCapAC(DispatcherCallbackArgs args)
 		// 8 is dodge bonus
 		dispIo->bonlist.AddCap(8, cap, descline);
 	}
+
+	return 0;
+}
+
+// Port of 0x100C5B00. Applies a modifier based on params. Used for deafness
+// conditions.
+//
+// Changed to use a non-stacking modifier, because being deaf multiple
+// times shouldn't stack.
+int GenericCallbacks::DeafnessMod(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
+
+	auto mod = args.GetData1();
+	auto type = args.GetData2();
+
+	// uncertain why this is the only negative case, but it's what the original
+	// does.
+	if (type == 190) mod = -mod;
+
+	// 42=deafness to avoid stacking
+	dispIo->bonOut->AddBonus(mod, 42, type);
 
 	return 0;
 }
