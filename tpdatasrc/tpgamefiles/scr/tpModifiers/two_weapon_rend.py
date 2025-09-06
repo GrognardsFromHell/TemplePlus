@@ -66,8 +66,8 @@ def TwoWeaponRendDamageBonus(attachee, args, evt_obj):
 		
 		#Add 1 and a half times the strength score as the bonus
 		strScore = attachee.stat_level_get(stat_strength)
-		strMod = math.floor((strScore - 10)/2)
-		damage_dice.bonus = strMod + math.floor(strMod/2)
+		strMod = (strScore - 10)/2
+		damage_dice.bonus = strMod + strMod/2
 		evt_obj.damage_packet.add_dice(damage_dice, -1, 127)
 		attachee.float_text_line("Rend!")
 	return 0
