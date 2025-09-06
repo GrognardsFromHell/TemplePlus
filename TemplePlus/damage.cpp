@@ -874,7 +874,7 @@ void Damage::HealSubdual(objHndl target, int amount) {
 	addresses.HealSubdual(target, amount);
 }
 
-bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowType saveType, int flags) {
+bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowType saveType, int flags, const BonusList *bonExtra) {
 	auto obj = objSystem->GetObject(handle);
 	if (!obj) {
 		return false;
@@ -886,6 +886,7 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	evtObj.obj = attacker;
 	evtObj.flags = (int64_t)flags; // TODO: vanilla bug! flags input should be 64 bit (since some of the descriptor enums go beyond 32). Looks like they fixed it in the dispatcher but not this function.
 	evtObj.flags |= (1ull << (D20STD_F_FINAL_ROLL-1));
+	evtObj.bonlist = *bonExtra;
 	
 	// NPC special bonus from protos - moved to Global condition callback (was here in vanilla, so didn't show up on charsheet)
 
@@ -932,7 +933,7 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	return saveThrowMod + diceResult >= dc;
 }
 
-bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {
+bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId, const BonusList *bonExtra) {
 
 	auto result = false;
 	SpellPacketBody spPkt(spellId);
@@ -988,7 +989,7 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 
 	int nDCBonus = bonlist.GetEffectiveBonusSum();
 
-	result = damage.SavingThrow(obj, attacker, dc+ nDCBonus, type, flagsModified);
+	result = damage.SavingThrow(obj, attacker, dc+ nDCBonus, type, flagsModified, bonExtra);
 	spPkt.savingThrowResult = result;
 	if (!spPkt.UpdateSpellsCastRegistry()){
 		logger->debug("SavingThrowSpell: Unable to save spell pkt");
