@@ -641,6 +641,8 @@ public:
 		// helpless adjacent conditions
 		replaceFunction(0x100E7F80, HelplessCapStatBonus);
 
+		replaceFunction(0x100F7110, MonsterMeleeParalysisApply);
+		replaceFunction(0x100F71D0, MonsterMeleeParalysisNoElfApply);
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
@@ -4153,6 +4155,66 @@ int HelplessConditionRemoved(DispatcherCallbackArgs args)
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
 
 	return 0;
+}
+
+// Port/fix of 0x100F7110
+//
+// Original was testing for Elf in the wrong stat (but that stat now means
+// something).
+//
+// Also now passing the DC to the Paralyzed condition for Remove Paralysis.
+int MonsterMeleeParalysisApply(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	// melee only
+	if (dispIo->attackPacket.flags & D20CAF_RANGED) return 0;
+
+	auto atk = args.objHndCaller;
+	auto tgt = dispIo->attackPacket.victim;
+
+	/* TODO: consider, this is the standard calculation for DC of the ability.
+	 * It is charisma based, and the DC of Ex/Su abilities is:
+	 *
+	 *   10 + (hit dice)/2 + bonus
+	 *
+	 * Allows the DC to be adaptive and not have to be matched to the
+	 * creature's other stats by hand.
+	auto half_hd = objects.GetHitDiceNum(atk, false) >> 1;
+	auto dc = 10 + half_hd + obj.StatLevelGet(atk, stat_cha_mod);
+	 */
+	auto dc = args.GetCondArg(0);
+
+	if (damage.SavingThrow(tgt, atk, dc, SavingThrowType::Fortitude, 0))
+		return 0;
+
+	auto dur_dice = Dice::FromPacked(args.GetCondArg(1));
+	auto para =  conds.GetByName("Paralyzed");
+
+	conds.AddTo(tgt, para, { dur_dice.Roll(), dc });
+
+	return 0;
+}
+
+// Port/fix 0x100F71D0
+//
+// Original was testing for half_orc for some reason, and in the wrong stat.
+//
+// Also see above.
+int MonsterMeleeParalysisNoElfApply(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	switch (objects.StatLevelGet(dispIo->attackPacket.victim, stat_race))
+	{
+	case race_elf:
+	// "Elven Blood" says half-elves are treated as elves for race-related
+	// effects.
+	case race_half_elf:
+		return 0;
+	default:
+		return MonsterMeleeParalysisApply(args);
+	}
 }
 
 #pragma region Barbarian Stuff

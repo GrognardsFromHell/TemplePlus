@@ -326,6 +326,9 @@ int ParalyzeCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeEffectTooltip(DispatcherCallbackArgs args);
 int HelplessConditionRemoved(DispatcherCallbackArgs args);
 
+int MonsterMeleeParalysisApply(DispatcherCallbackArgs args);
+int MonsterMeleeParalysisNoElfApply(DispatcherCallbackArgs args);
+
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
 
