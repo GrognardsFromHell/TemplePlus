@@ -323,6 +323,7 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
 int HeldCapStatBonus(DispatcherCallbackArgs args);
 int HelplessCapStatBonus(DispatcherCallbackArgs args);
 int ParalyzeCheckRemove(DispatcherCallbackArgs args);
+int ParalyzeSpellCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeEffectTooltip(DispatcherCallbackArgs args);
 int HelplessConditionRemoved(DispatcherCallbackArgs args);
 

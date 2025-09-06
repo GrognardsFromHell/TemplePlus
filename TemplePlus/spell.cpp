@@ -588,9 +588,9 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 	return false;
 }
 
-bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
+bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags, BonusList *bonExtra) {
 	SpellEntry spEntry(spellEnum);
-	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
+	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId, bonExtra);
 }
 
 bool SpellPacketBody::CheckSpellResistance(objHndl tgt, bool forceCheck){

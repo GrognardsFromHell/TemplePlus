@@ -643,6 +643,7 @@ public:
 
 		replaceFunction(0x100F7110, MonsterMeleeParalysisApply);
 		replaceFunction(0x100F71D0, MonsterMeleeParalysisNoElfApply);
+		replaceFunction(0x100DB9C0, ParalyzeSpellCheckRemove);
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
@@ -4116,15 +4117,51 @@ int ParalyzeCheckRemove(DispatcherCallbackArgs args)
 	if (bonus > 0) {
 		// Offset the DC by the bonus, since it's less complicated than actually
 		// arranging for a bonus.
-		auto dc = args.GetCondArg(1) - bonus;
+		auto dc = args.GetCondArg(1);
 		auto critter = args.objHndCaller;
 		auto fort = SavingThrowType::Fortitude;
+		BonusList bonlist;
+		auto reason = "~Remove Paralysis~[TAG_SPELLS_REMOVE_PARALYSIS]"s;
+		bonlist.AddBonus(bonus, 0, reason);
 
-		if (!damage.SavingThrow(critter, objHndl::null, dc, fort, D20STF_NONE))
+		if (!damage.SavingThrow(critter, objHndl::null, dc, fort, D20STF_NONE, &bonlist))
 			return 0;
 	}
 
 	args.RemoveCondition();
+
+	return 0;
+}
+
+// Port of 0x100DB9C0
+int ParalyzeSpellCheckRemove(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto target = args.GetData1Cond();
+	if (dispIo->condStruct != target) return 0;
+
+	auto bonus = dispIo->arg2;
+
+	// If the bonus is greater than 0, it's not an automatic remove, so do a
+	// saving throw.
+	if (bonus > 0) {
+		auto critter = args.objHndCaller;
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+
+		BonusList bonlist;
+		auto reason = "~Remove Paralysis~[TAG_SPELLS_REMOVE_PARALYSIS]"s;
+		bonlist.AddBonus(bonus, 0, reason);
+
+		if (!spellPkt.SavingThrow(critter, D20STF_NONE, &bonlist)) {
+			return 0;
+		}
+	}
+
+	args.RemoveSpell();
+	args.RemoveSpellMod();
 
 	return 0;
 }

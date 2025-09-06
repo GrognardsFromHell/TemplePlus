@@ -265,6 +265,7 @@ struct DispatcherCallbackArgs {
 	void* GetCondArgPtr(uint32_t argIdxI);
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
+	CondStruct *GetData1Cond() const; // get condition from data1
 	void SetCondArg(uint32_t argIdx, int value);
 	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
 	void RemoveCondition(); // note: this is the low level function

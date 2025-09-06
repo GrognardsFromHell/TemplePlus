@@ -1532,6 +1532,14 @@ int DispatcherCallbackArgs::GetData1() const
 	return subDispNode->subDispDef->data1;
 }
 
+// Gets a cond struct from the data1 of subDispDef, but updating
+// the pointer if the condition has been extended.
+CondStruct* DispatcherCallbackArgs::GetData1Cond() const
+{
+	auto orig = reinterpret_cast<CondStruct*>(GetData1());
+	return conds.GetByName(orig->condName);
+}
+
 int DispatcherCallbackArgs::GetData2() const
 {
 	return subDispNode->subDispDef->data2;
