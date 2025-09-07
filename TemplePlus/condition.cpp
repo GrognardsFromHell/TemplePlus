@@ -3567,6 +3567,13 @@ void ConditionSystem::RegisterNewConditions()
 	// 
 	
 	{
+		static CondStructNew removePara;
+		removePara.ExtendExisting("sp-Remove Paralysis");
+		// sp-Remove Paralysis was removing the target on condition add, which
+		// screws up iterating over the target list by mutating it in the middle
+		// of the loop.
+		removePara.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+
 		// 'Held' seems to always be a spell-related effect, applying the actual
 		// debuff for the various 'Hold' spells. Arguments are the first three
 		// arguments of the spell condition.
@@ -3596,10 +3603,9 @@ void ConditionSystem::RegisterNewConditions()
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 3, 0);
 		condSleeping.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
 
-		auto removePara = conds.GetByName("sp-Remove Paralysis");
 		static CondStructNew condSlow;
 		condSlow.ExtendExisting("sp-Slow");
-		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeSpellCheckRemove, removePara, 0);
+		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeSpellCheckRemove, &removePara, 0);
 	}
 
 	{
