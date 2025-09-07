@@ -26,6 +26,8 @@ def	OnSpellEffect( spell ):
 		# can be inspected by paralysis conditions.
 		target.condition_add_with_args('sp-Remove Paralysis', spell.id, bonus, 0)
 
+		remove_list.append(target)
+
 	spell.target_list.remove_list(remove_list)
 	spell.spell_end(spell.id)
 
