@@ -3595,6 +3595,11 @@ void ConditionSystem::RegisterNewConditions()
 		condSleeping.ExtendExisting("Sleeping");
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 3, 0);
 		condSleeping.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+
+		auto removePara = conds.GetByName("sp-Remove Paralysis");
+		static CondStructNew condSlow;
+		condSlow.ExtendExisting("sp-Slow");
+		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeSpellCheckRemove, removePara, 0);
 	}
 
 	{
