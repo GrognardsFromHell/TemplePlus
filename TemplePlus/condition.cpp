@@ -3475,6 +3475,11 @@ void ConditionSystem::RegisterNewConditions()
 		vrockSpores.subDispDefs[6].dispCallback = genericCallbacks.NoOp; // TBS init
 		vrockSpores.subDispDefs[10].dispCallback = spCallbacks.VrockSporesEffectTip;
 		vrockSpores.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
+
+		static CondStructNew vrockScreech;
+		vrockScreech.ExtendExisting("sp-Vrock Screech");
+		// DK_QUE_Helpless; stunned is not helpless
+		vrockScreech.subDispDefs[6].dispCallback = genericCallbacks.NoOp;
 	}
 #pragma endregion
 
@@ -8335,6 +8340,25 @@ void Conditions::AddConditionsToTable(){
 	bardInspireHeroics.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
 	bardInspireHeroics.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit"); // todo make new pfx
 	bardInspireHeroics.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit");
+
+	{
+		static CondStructNew fascinate;
+		fascinate.ExtendExisting("Fascinate");
+		// set DK_QUE_Helpless to NoOp, fascinated is not helpless
+		fascinate.subDispDefs[6].dispCallback = genericCallbacks.NoOp;
+	}
+
+	{
+		static CondStructNew grappled;
+		grappled.ExtendExisting("Grappled");
+		// set DK_QUE_Helpless to NoOp, grappled is not helpless
+		grappled.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew stunned;
+		stunned.ExtendExisting("Stunned");
+		// set DK_QUE_Helpless to NoOp, stunned is not helpless
+		stunned.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+	}
 
 	{
 		auto removeFearCond = conds.GetByName("sp-Remove Fear");
