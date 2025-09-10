@@ -768,6 +768,10 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
  /* 0x1004E9F0 */
 bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
 {
+	// If another condition is causing helplessness, it will likely set a
+	// score to 0, but adding paralysis would just be noise.
+	if (d20Sys.d20Query(handle, DK_QUE_Helpless)) return false;
+
 	for (auto stat = (int)stat_strength; stat <= stat_charisma; ++stat) {
 		if (stat == stat_constitution) {
 			continue; // negative CON kills, rather than paralyzes
