@@ -161,6 +161,7 @@ public:
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
 	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
 	static int NoOp(DispatcherCallbackArgs);
+	static int FloatCombatLine(DispatcherCallbackArgs);
 
 	static int EffectTooltipDuration(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line; appends duration
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
@@ -1229,6 +1230,17 @@ int GenericCallbacks::ActionInvalidQueryTrue(DispatcherCallbackArgs args){
 }
 
 int GenericCallbacks::NoOp(DispatcherCallbackArgs args) {
+	return 0;
+}
+
+int GenericCallbacks::FloatCombatLine(DispatcherCallbackArgs args) {
+	auto critter = args.objHndCaller;
+
+	auto line = args.GetData1();
+	auto color = static_cast<FloatLineColor>(args.GetData2());
+
+	combatSys.FloatCombatLine(critter, line, color);
+
 	return 0;
 }
 
@@ -3597,6 +3609,7 @@ void ConditionSystem::RegisterNewConditions()
 		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 2, 0);
 		condPara.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeCheckRemove);
 		condPara.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+		condPara.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.FloatCombatLine, 149, FloatLineColor::Red);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
