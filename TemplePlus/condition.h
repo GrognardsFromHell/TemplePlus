@@ -325,6 +325,7 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args);
 int ParalyzeCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeSpellCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeEffectTooltip(DispatcherCallbackArgs args);
+int ParalyzeCoalesce(DispatcherCallbackArgs args);
 int HelplessConditionRemoved(DispatcherCallbackArgs args);
 
 int MonsterMeleeParalysisApply(DispatcherCallbackArgs args);

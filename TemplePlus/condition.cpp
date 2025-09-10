@@ -3604,6 +3604,7 @@ void ConditionSystem::RegisterNewConditions()
 		// for removal.
 		static CondStructNew condPara;
 		condPara.ExtendExisting("Paralyzed");
+		condPara.subDispDefs[0].dispCallback = ParalyzeCoalesce;
 		condPara.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
 		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 2, 0);
 		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 2, 0);
@@ -4201,6 +4202,29 @@ int ParalyzeEffectTooltip(DispatcherCallbackArgs args)
 
 	if (!d20Sys.d20Query(args.objHndCaller, free))
 		return orig(args);
+
+	return 0;
+}
+
+int ParalyzeCoalesce(DispatcherCallbackArgs args)
+{
+	// If the condition to be added isn't Paralyzed, ignore.
+	if (!ConditionMatchesData1(args)) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	auto newDur = dispIo->arg1;
+	auto newDC = dispIo->arg2;
+
+	auto oldDur = args.GetCondArg(0);
+	auto oldDC = args.GetCondArg(1);
+
+	// If new duration is longer, or the same and the DC is higher, remove
+	// ourselves in its favor. Otherwise tell it not to apply.
+	if (newDur >= oldDur || newDC > oldDC && newDur == oldDur) {
+		args.RemoveCondition();
+	} else {
+		dispIo->outputFlag = 0;
+	}
 
 	return 0;
 }
