@@ -1320,6 +1320,36 @@ void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* te
 	}
 }
 
+void DispIoEffectTooltip::AppendDistinct(int effectTypeId, int spellEnum, const char *text) const
+{
+	BuffDebuffSub *bdbSub = nullptr;
+	auto findSpec = uiParty.IndicatorSpecGet(effectTypeId);
+	switch (findSpec.type)
+	{
+	case IT_BUFF:
+		if (this->bdb->buffCount >= 8) return;
+		for (size_t i = 0; i < bdb->buffCount; i++) {
+			if (bdb->buffs[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->buffs[bdb->buffCount++];
+		break;
+	case IT_AILMENT:
+		if (bdb->debuffCount >= 8) return;
+		for (size_t i = 0; i < bdb->debuffCount; i++) {
+			if (bdb->debuffs[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->debuffs[bdb->debuffCount++];
+		break;
+	case IT_CONDITION:
+		if (bdb->innerCount >= 6) return;
+		for (size_t i = 0; i < bdb->innerCount; i++) {
+			if (bdb->innerStatuses[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->innerStatuses[bdb->innerCount++];
+		break;
+	}
+}
+
 void EvtObjActionCost::DispatchCost(D20DispatcherKey key){
 	if (!d20a || !d20a->d20APerformer) {
 		return;

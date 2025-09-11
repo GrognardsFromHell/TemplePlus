@@ -581,6 +581,8 @@ struct DispIoEffectTooltip: DispIO // type 24
 	see uiParty.IndicatorTextGet
 	*/
 	void Append(int effectTypeId, int spellEnum, const char* text) const;
+	// only appends if effectTypeId is not already in the list
+	void AppendDistinct(int effectTypeId, int spellEnum, const char* text) const;
 };
 
 

@@ -1197,6 +1197,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoEffectTooltip, DispIO>(m, "EventObjEffectTooltip", "Used for tooltips when hovering over the status effect indicators in the party portrait row")
 		.def("append", &DispIoEffectTooltip::Append)
+		.def("append_distinct", &DispIoEffectTooltip::AppendDistinct)
 		;
 
 	py::class_<EvtObjSpellCaster>(m, "EventObjSpellCaster", "Used for retrieving spell caster specs. New for Temple+!")
