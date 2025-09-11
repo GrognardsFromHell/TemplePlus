@@ -1691,23 +1691,40 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 
 	// Following arguments all have to be integers and gel with the condition argument count
 	vector<int> condArgs(cond->numArgs, 0);
-	for (unsigned int i = 0; i < cond->numArgs; ++i) {
-		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
-			auto item = PyTuple_GET_ITEM(args, i + 1);
-			if (PyLong_Check(item)){
-				condArgs[i] = PyLong_AsLong(item);
-				continue;
-			}
+	size_t j = 0;
+	for (unsigned int i = 0; j < cond->numArgs; ++i) {
+		// no more arguments
+		if (static_cast<uint32_t>(PyTuple_GET_SIZE(args)) <= i+1)
+			break;
 
-			if (!PyInt_Check(item)) {
-				auto itemRepr = PyObject_Repr(item);
-				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int or long: %s",
-				             i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
-				Py_DECREF(itemRepr);
+		auto item = PyTuple_GET_ITEM(args, i + 1);
+		if (PyLong_Check(item)){
+			condArgs[j++] = PyLong_AsLong(item);
+			continue;
+		}
+
+		if (PyInt_Check(item)) {
+			condArgs[j++] = PyInt_AsLong(item);
+			continue;
+		}
+
+		objHndl obj;
+		if (ConvertObjHndl(item, &obj)) {
+			if (j+1 < cond->numArgs) {
+				condArgs[j++] = obj.GetHandleUpper();
+				condArgs[j++] = obj.GetHandleLower();
+				continue;
+			} else {
+				PyErr_Format(PyExc_ValueError, "Object argument %d for condition %s cannot fit into %d arguments. Objects take two arguments.", i + 1, condName, cond->numArgs);
 				return false;
 			}
-			condArgs[i] = PyInt_AsLong(item);
 		}
+
+		auto itemRepr = PyObject_Repr(item);
+		PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int, long or object: %s",
+								 i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
+		Py_DECREF(itemRepr);
+		return false;
 	}
 
 	condStructOut = cond;
