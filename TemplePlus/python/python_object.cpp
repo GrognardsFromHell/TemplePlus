@@ -2721,9 +2721,33 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 
 
 static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto fname = "d20_query_with_object";
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		Py_RETURN_NONE;
+	}
+
+	if (PyTuple_GET_SIZE(args) < 2) {
+		auto err = "%s called with too few arguments!";
+		PyErr_Format(PyExc_RuntimeError, err, fname);
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		objHndl obj;
+		PyObject *arg = PyTuple_GET_ITEM(args, 1);
+		if (ConvertObjHndl(arg, &obj)) {
+			auto result = d20Sys.D20QueryPython(self->handle, argString, obj);
+			return PyInt_FromLong(result);
+		} else {
+			auto err = "%s could not decode object argument: %s";
+			auto argRepr = PyObject_Repr(arg);
+			PyErr_Format(PyExc_ValueError, err, fname, argRepr);
+			Py_DECREF(argRepr);
+			return PyInt_FromLong(0);
+		}
 	}
 
 	int queryKey;
