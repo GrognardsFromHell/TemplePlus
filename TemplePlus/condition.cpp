@@ -117,6 +117,8 @@ public:
 	static int __cdecl ReduceExponent(DispatcherCallbackArgs args);
 	static int __cdecl ReduceWeaponDice(DispatcherCallbackArgs args);
 
+	static int __cdecl AbilityPenalty(DispatcherCallbackArgs args);
+
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchTurnbasedStatus(DispatcherCallbackArgs args);
@@ -3672,6 +3674,15 @@ void ConditionSystem::RegisterNewConditions()
 		righteousMight.ExtendExisting("sp-Righteous Might");
 		righteousMight.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
 	}
+
+	{
+		static CondStructNew enfeeble;
+		enfeeble.ExtendExisting("sp-Ray of Enfeeblement");
+		// replace penalty function to avoid stacking and adjust penalty
+		// calculation.
+		enfeeble.subDispDefs[5].dispCallback = spCallbacks.AbilityPenalty;
+		enfeeble.subDispDefs[5].dispKey = DK_STAT_STRENGTH;
+	}
 #pragma endregion
 
 	/*
@@ -5421,6 +5432,18 @@ int SpellCallbacks::ReduceSizeCategory(DispatcherCallbackArgs args)
 		dispIo->return_val--;
 		dispIo->data2 = 1;
 	}
+
+	return 0;
+}
+
+int SpellCallbacks::AbilityPenalty(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	auto penalty = args.GetCondArg(2);
+	auto mesline = args.GetData2();
+
+	dispIo->bonlist.AddBonus(-penalty, 50, mesline);
 
 	return 0;
 }

@@ -35,6 +35,7 @@ void BonusList::Reset()
 int BonusList::GetEffectiveBonusSum() const {
 
 	int result = 0;
+	int penalty = 0; // for penalty types that don't reduce below 1
 
 	for (size_t i = 0; i < bonCount; ++i) {
 		auto& bonus = bonusEntries[i];
@@ -55,9 +56,20 @@ int BonusList::GetEffectiveBonusSum() const {
 		}
 		
 		if (!IsBonusSuppressed(i, nullptr)) {
-			result += value;
+			if (bonus.bonType == 50 && value < 0) {
+				penalty += value;
+			} else {
+				result += value;
+			}
 		}
 	}
+
+	// penalty can't lower result below 1 ...
+	if (penalty <= -result) penalty = 1 - result;
+	// ... but also can't be positive
+	if (penalty > 0) penalty = 0;
+
+	result += penalty;
 
 	if (bonFlags & 1 && result > overallCapHigh.bonValue) {
 		result = overallCapHigh.bonValue;
