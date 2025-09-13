@@ -239,7 +239,14 @@ void DispatcherSystem::DispatchForWearable(objHndl item, enum_disp_type dispType
 }
 
 int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
-	return dispatch.DispatchForCritter(handle, dispIo, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat+1));
+	auto key = static_cast<D20DispatcherKey>(stat+1);
+	auto dispType = dispTypeAbilityScoreLevel;
+	auto result = dispatch.DispatchForCritter(handle, dispIo, dispType, key);
+
+	// simplify bonuses for display
+	if (dispIo) dispIo->bonlist.Simplify();
+
+	return result;
 }
 
 int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)

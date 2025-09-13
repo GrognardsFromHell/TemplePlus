@@ -5442,8 +5442,9 @@ int SpellCallbacks::AbilityPenalty(DispatcherCallbackArgs args)
 
 	auto penalty = args.GetCondArg(2);
 	auto mesline = args.GetData2();
+	auto bontype = 12 | PenaltyCapPositive; // disallow reduction below 1
 
-	dispIo->bonlist.AddBonus(-penalty, 50, mesline);
+	dispIo->bonlist.AddBonus(-penalty, bontype, mesline);
 
 	return 0;
 }
