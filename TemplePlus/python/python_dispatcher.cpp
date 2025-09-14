@@ -422,18 +422,18 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
 		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
 		.def("set_args_from_obj", &DispatcherCallbackArgs::SetCondArgObjHndl)
-		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
+		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx, int dflt){
 			PyObject*tuplePtr = (PyObject*)args.GetData2();
 			
 			//return tuplePtr;
 			if (!tuplePtr || paramIdx >= PyTuple_Size(tuplePtr)){
-				return 0;
+				return dflt;
 			}
 				
 			auto tupItem = PyTuple_GetItem(tuplePtr, paramIdx);
 			auto result = (int)PyLong_AsLong(tupItem);
 			return result;
-		})
+		}, py::arg("index"), py::arg("default") = 0)
 		.def_readwrite("evt_obj", &DispatcherCallbackArgs::dispIO)
 		.def("condition_remove", [](DispatcherCallbackArgs& args)
 		{
