@@ -991,6 +991,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			auto isEqual = evtObj.condStruct == cond;
 			return isEqual ? TRUE : FALSE;
 		}, "Used for checking condition equality. The condition to be checked against is specified by its string ID")
+	.def("is_modifier_hash", [](DispIoCondStruct& evtObj, int key)->int {
+			auto cond = conds.GetById(key);
+			if (!cond) {
+				logger->error("Unknown Modifier specified: {}", key);
+				return 0;
+			}
+			auto isEqual = evtObj.condStruct == cond;
+			return isEqual ? TRUE : FALSE;
+		}, "Used for checking condition equality. Use tpdp.hash on the condition name to get the right key for a condition")
 		;
 
 
