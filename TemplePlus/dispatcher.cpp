@@ -1355,6 +1355,19 @@ void DispIoEffectTooltip::AppendDistinct(int effectTypeId, int spellEnum, const 
 		bdbSub = &bdb->innerStatuses[bdb->innerCount++];
 		break;
 	}
+
+	if (bdbSub != nullptr) {
+		bdbSub->effectTypeId = effectTypeId;
+		bdbSub->spellEnum = spellEnum;
+		if (text) {
+			bdbSub->text = new char[strlen(text) + 1];
+			strcpy(const_cast<char*>(bdbSub->text), text);
+		} else {
+			bdbSub->text = nullptr;
+		}
+	} else {
+		logger->error("Unknown tooltip effect {}", effectTypeId);
+	}
 }
 
 void EvtObjActionCost::DispatchCost(D20DispatcherKey key){
