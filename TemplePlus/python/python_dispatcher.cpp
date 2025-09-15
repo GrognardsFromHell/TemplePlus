@@ -110,6 +110,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return ElfHash::Hash(text);
 	});
 
+	m.def("cache_name", [](std::string & text) {
+		bonusSys.CacheCustomText(text);
+		return ElfHash::Hash(text);
+	}, "Caches the given string for reference by hash. Returns the hash.");
+
 	m.def("class_enum_to_casting_class", [](int class_enum) {
 		return spellSys.GetSpellClass(class_enum);
 	});
