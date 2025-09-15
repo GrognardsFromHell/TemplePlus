@@ -618,11 +618,23 @@ def applyBonus(attachee, args, evt_obj):
     if not bonusValue:
         bonusValue = args.get_arg(2)
     bonusType = args.get_param(1)
-    bonusHelpTag = getBonusHelpTag(bonusType)
     spellId = args.get_arg(0)
     spellHelpTag = getSpellHelpTag(spellId)
-    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    if args.get_param(2):
+        bonusDesc = spellHelpTag
+    else:
+        bonusDesc = "{} : {}".format(getBonusHelpTag(bonusType), spellHelpTag)
+    evt_obj.bonus_list.add(bonusValue, bonusType, bonusDesc)
     return 0
+
+def applyPenalty(critter, args, evt_obj):
+    penaltyValue = args.get_param(0)
+    if not penaltyValue:
+        penaltyValue = -args.get_arg(2)
+    penaltyType = args.get_param(1)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(penaltyValue, penaltyType, spellHelpTag)
 
 def applyDamagePacketBonus(attachee, args, evt_obj):
     bonusValue = args.get_param(0)
@@ -747,6 +759,12 @@ class SpellFunctions(BasicPyMod):
         for abilityScore in args:
             eventKey = abilityScore + 1
             self.add_hook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
+    def AddAbilityPenalty(self, value, penType, soft, *args):
+        # if soft, penalties can't reduce below 1
+        if soft: penType |= 0x10000
+        for abil in args:
+            key = abil + 1
+            self.add_hook(ET_OnAbilityScoreLevel, key, applyPenalty, (value, penType))
     def AddDamageReduction(self, drAmount, drBreakType):
         self.add_hook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
     def AddDamageResistance(self, resistanceAmount, resistanceType):
@@ -815,9 +833,10 @@ class SpellPythonModifier(SpellFunctions):
     #
     #This is the standard spell condition class
     #
-    def __init__(self, name, args = 3, preventDuplicate = False):
+    def __init__(self, name, args = 3, preventDuplicate = False, tooltip = True):
         super(SpellFunctions, self).__init__(name, args, preventDuplicate)
-        self.add_hook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
+        if tooltip:
+            self.add_hook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
         self.add_hook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
         self.add_spell_dispel_check_standard()
         self.add_spell_countdown_standard()
