@@ -495,7 +495,15 @@ struct DispIoSpellsPerDay : DispIO // type 18
 	DispIoSpellsPerDay();
 };
 
-
+// Apparent meanings of flags based on Dispatch59 code in DLL
+enum class AbilityLossFlags : int {
+	None = 0x0,
+	Damage = 0x1, // heals over time
+	Drain = 0x2,  // heals only by magic
+	Inflict = 0x4, // seems to be a holdover
+	Heal = 0x8, // reduce damage/drain
+	HealFully = 0x10 // unlimited healing amount
+};
 
 struct DispIoAbilityLoss: DispIO//  type 19
 {
@@ -503,7 +511,7 @@ struct DispIoAbilityLoss: DispIO//  type 19
 	Stat statDamaged;
 	int fieldC;
 	int spellId;
-	int flags; // 8 - marked at the beginning of dispatch; 0x10 - checks against this in the Temp/Perm ability damage
+	AbilityLossFlags flags;
 
 	DispIoAbilityLoss(){
 		dispIOType = dispIOType19;
@@ -511,7 +519,7 @@ struct DispIoAbilityLoss: DispIO//  type 19
 		statDamaged = Stat::stat_strength;
 		fieldC = 0;
 		spellId = 0;
-		flags = 0;
+		flags = AbilityLossFlags::None;
 	}
 
 };
