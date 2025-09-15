@@ -103,6 +103,7 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoMoveSpeed * DispIoCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIoCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
+	DispIoAbilityLoss* DispIoCheckIoType19(DispIO *dispIo);
 	DispIoAttackDice* DispIoCheckIoType20(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
@@ -140,6 +141,7 @@ struct DispatcherSystem : temple::AddressTable
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
 	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
+	int DispatchAbilityLoss(objHndl obj, DispIoAbilityLoss *dispIo);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null, LevelDrainType omit = LevelDrainType::NoDrainedLevel); // get level after accounting for level drain effects
 
@@ -502,7 +504,13 @@ enum class AbilityLossFlags : int {
 	Drain = 0x2,  // heals only by magic
 	Inflict = 0x4, // seems to be a holdover
 	Heal = 0x8, // reduce damage/drain
-	HealFully = 0x10 // unlimited healing amount
+	HealFully = 0x10, // unlimited healing amount
+
+	// combinations
+	HealDamage = 0x9,
+	HealDrain = 0xA,
+	HealDamageFully = 0x19,
+	HealDrainFully = 0x1A
 };
 
 struct DispIoAbilityLoss: DispIO//  type 19

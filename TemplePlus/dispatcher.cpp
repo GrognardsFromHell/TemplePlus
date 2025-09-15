@@ -570,6 +570,13 @@ DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 	return static_cast<DispIoObjEvent*>(dispIo);
 }
 
+DispIoAbilityLoss* DispatcherSystem::DispIoCheckIoType19(DispIO *dispIo)
+{
+	if (dispIo->dispIOType != dispIOType19) return nullptr;
+
+	return static_cast<DispIoAbilityLoss *>(dispIo);
+}
+
 DispIoAttackDice* DispatcherSystem::DispIoCheckIoType20(DispIO* dispIo)
 {
 	if (dispIo->dispIOType != dispIOType20)
@@ -1000,6 +1007,19 @@ int DispatcherSystem::DispatchD20ActionCheck(D20Actn* d20a, TurnBasedStatus* tur
 		}
 	}
 	return 0;
+}
+
+// port of 0x1004D480
+//
+// Omitting flag set, because everywhere else already seems to set it.
+int DispatcherSystem::DispatchAbilityLoss(objHndl obj, DispIoAbilityLoss *dispIo)
+{
+	auto dispatcher = objects.GetDispatcher(obj);
+	if (!dispatcherValid(dispatcher)) return 0;
+
+	DispatcherProcessor(dispatcher, dispTypeGetAbilityLoss, 0, dispIo);
+
+	return dispIo->result;
 }
 
 int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dispIo)

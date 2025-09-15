@@ -109,6 +109,7 @@ public:
 	static int __cdecl ConcentratingActionSequenceHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action taken
 	static int __cdecl ConcentratingActionRecipientHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action received
 
+	static int __cdecl LesserRestorationOnAdd(DispatcherCallbackArgs args);
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
@@ -143,7 +144,6 @@ public:
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
-
 	
 	static int __cdecl SpellModCountdownRemove(DispatcherCallbackArgs args);
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
@@ -4759,6 +4759,8 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
 	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
 
+	replaceFunction(0x100CE590, SpellCallbacks::LesserRestorationOnAdd);
+
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
 	SubDispDefNew sdd;
@@ -5289,6 +5291,47 @@ int SpellCallbacks::ConcentratingActionRecipientHandler(DispatcherCallbackArgs a
 	args2.dispType = enum_disp_type::dispTypeD20Signal;
 	args2.RemoveSpellMod();
 
+
+	return 0;
+}
+
+// Port of 0x100CE590, added pre-step to cure penalties before damage.
+int SpellCallbacks::LesserRestorationOnAdd(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	auto statType = static_cast<Stat>(args.GetCondArg(2));
+	auto critter = args.objHndCaller;
+
+	DispIoAbilityLoss abloss;
+
+	// try a basic heal to see if penalties get removed
+	abloss.flags = AbilityLossFlags::Heal;
+	abloss.fieldC = 1;
+	abloss.statDamaged = statType;
+	abloss.spellId = spellId;
+	abloss.result = 0;
+
+	// If penalties are removed, they will set the result to something other
+	// than 0.
+	if (dispatch.DispatchAbilityLoss(critter, &abloss) != 0) {
+		args.RemoveSpellMod();
+		return 0;
+	}
+
+	// otherwise reset and dispatch for ability damage healing
+	abloss.flags = AbilityLossFlags::HealDamage;
+	abloss.fieldC = 1;
+	abloss.statDamaged = statType;
+	abloss.spellId = spellId;
+	auto amount = Dice::Roll(1,4,0); // 1d4
+	abloss.result = amount;
+
+	auto after = dispatch.DispatchAbilityLoss(critter, &abloss);
+	auto stName = d20Stats.GetStatName(statType);
+	auto color = FloatLineColor::White;
+	auto extra = fmt::format(": {} [{}]", stName, amount - after);
+	floatSys.FloatSpellLine(critter, 20035, color, nullptr, extra.c_str());
+	args.RemoveSpellMod();
 
 	return 0;
 }
