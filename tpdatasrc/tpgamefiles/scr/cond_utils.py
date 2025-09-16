@@ -45,6 +45,38 @@ def CheckRemovedBy(obj, args, evt_obj):
 
 	return 0
 
+# Implements one condition being removed by another, but sets the flag that
+# makes the removing effect not actually be added. So the effects cancel each
+# other out rather than one taking the place of the other.
+#
+# This is used for e.g. Lesser Restoration, where it dispels any number of
+# ability penalties, but if it does so it does not heal ability damage. The
+# healing is triggerd by the Lesser Restoration condition being actually
+# added, so by preempting that it will only cancel penalties.
+#
+# Like CheckRemovedBy, any number of conditions are supported by providing as
+# many parameters. But the first parameter controls whether `return_val` is
+# checked. If it is, and `return_val` is 0, this condition will not be
+# removed. This implements a spell cancelling out exactly one condition,
+# rather than all relevant conditions.
+def CheckCancelOut(obj, args, evt_obj):
+	# if param 0 is true, and the removing condition has been used up, do
+	# nothing
+	if args.get_param(0) and not evt_obj.return_val: return 0
+
+	ix = 1
+	key = args.get_param(ix)
+	while key != 0:
+		if evt_obj.is_modifier_hash(key):
+			args.condition_remove()
+			evt_obj.return_val = 0 # don't add condition
+			break
+
+		ix += 1
+		key = args.get_param(ix)
+
+	return 0
+
 # Simply removes the condition
 def Remove(obj, args, evt_obj):
 	args.condition_remove()
@@ -78,17 +110,31 @@ def AbilityPenaltyHook(critter, args, evt_obj):
 class CondFunctions(BasicPyMod):
 	# Adds a hook that ends particles when the condition is removed. The default
 	# is for the particle id to be stored in slot 1, but that can be overridden.
-	def AddEndParticlesHook(self, index = 1):
+	def AddEndParticles(self, index = 1):
 		self.add_hook(ET_OnConditionRemove, EK_NONE, EndParticles, (index,))
 
 	# Adds a hook that removes this condition of one of the other specified
 	# conditions is added. The removing conditions are specified by name.
-	def AddRemovedByHook(self, *cond_names):
+	def AddRemovedBy(self, *cond_names):
 		if len(cond_names) <= 0: return
 
 		keys = tuple(tpdp.hash(cond_name) for cond_name in cond_names)
 
 		self.add_hook(ET_OnConditionAddPre, EK_NONE, CheckRemovedBy, keys)
+
+	# Adds a hook that causes this condition to be 'canceled out' by the
+	# specified conditions. This condition gets removed, but the cancelling
+	# condition also does not get added. `single` controls whether the specified
+	# conditions can cancel out only a single of these conditions, or
+	# arbitrarily many.
+	def AddCancelOut(self, single, *cond_names):
+		if len(cond_names) <= 0: return
+
+		keys = [tpdp.hash(cond_name) for cond_name in cond_names]
+		keys.insert(0, 1 if single else 0)
+		params = tuple(keys)
+
+		self.add_hook(ET_OnConditionAddPre, EK_NONE, CheckCancelOut, params)
 
 	# Remove condition on creature death.
 	def AddRemoveOnDeath(self):

@@ -175,6 +175,57 @@ def replaceCondition(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
+# This implements a spell being dispelled by some given spells. In this
+# scenario, the condition with this hook is removed, but the dispelling spell
+# is also marked to not be added, so neither is in effect at the end. An
+# example is Enlarge/Reduce person.
+#
+# The first parameter controls the dispelling mode
+#
+#   - if zero, then the spells can dispel as many of these conditions as the
+#     attachee has.
+#   - if non-zero, then this condition is only removed if the dispelling spell
+#     hasn't already been marked as canceled out.
+#
+# The remainder parameters contain the hashes of names of the dispelling
+# conditions.
+def dispelledByCheck(attachee, args, evt_obj):
+    if args.get_param(0) and not evt_obj.return_val: return 0
+
+    ix = 1
+    key = args.get_param(ix)
+    while key != 0:
+        if evt_obj.is_modifier_hash(key):
+            args.remove_spell()
+            args.remove_spell_mod()
+            evt_obj.return_val = 0 # cancel out
+            break
+
+        ix += 1
+        key = args.get_param(ix)
+
+    return 0
+
+# This implements a spell being removed by some given spells. If the specified
+# conditions are added, then this one will be removed. An example would be
+# Heal causing many conditions to remove themselves.
+#
+# The conditions are specified via the parameter tuple, which should contain
+# hashes of the modifier names.
+def removedByCheck(attachee, args, evt_obj):
+    ix = 0
+    key = args.get_param(ix)
+    while key != 0:
+        if evt_obj.is_modifier_hash(key):
+            args.remove_spell()
+            args.remove_spell_mod()
+            break
+
+        ix += 1
+        key = args.get_param(ix)
+
+    return 0
+
 # Used to check if a condition should be removed due to a new 'save'
 # from Countersong. Each round of a countersong, the bard makes a
 # perform check, and if it is equal to or greater than the spell's
@@ -799,6 +850,28 @@ class SpellFunctions(BasicPyMod):
     def AddSpellDismiss(self):
         self.add_hook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
         self.add_hook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
+
+    # Adds a hook that makes the specified conditions dispel this condition.
+    #
+    # `single` controls whether the other conditions can remove multiple
+    # copies of this condition (and similar ones; the default) or only one.
+    def AddDispelledBy(self, single, *cond_names):
+        if len(cond_names) <= 0: return
+
+        keys = [tpdp.hash(cond_name) for cond_name in cond_names]
+        keys.insert(0, 1 if single else 0)
+        params = tuple(keys)
+
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByCheck, params)
+
+    # Adds a hook that causes this condition to be removed when one of the
+    # specified other conditions are added. An example of this would be Heal
+    # causing other conditions to remove themselves.
+    def AddRemovedBy(self, *cond_names):
+        if len(cond_names) <= 0: return
+
+        params = tuple(tpdp.hash(cond_name) for cond_name in cond_names)
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, removedByCheck, params)
 
 class SpellBasicPyMod(SpellFunctions):
     # SpellBasicPyMod have at least 3 arguments:
