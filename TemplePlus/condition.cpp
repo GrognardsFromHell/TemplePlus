@@ -982,6 +982,11 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// TODO: This allows a single spell to dispel many other spells. This is
+// correct for e.g. Lesser Restoration dispelling many Rays of Enfeeblement.
+// But it might not be correct for Enlarge Person dispelling multiple copies
+// of Reduce Person (though the latter would not stack, they'd be harder to
+// eliminate). Maybe add a flag to data2 that controls this.
 int SpellDispelledBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
@@ -3676,12 +3681,56 @@ void ConditionSystem::RegisterNewConditions()
 	}
 
 	{
+		// restorations
+		auto lrest = conds.GetByName("sp-Lesser Restoration");
+		auto rest = conds.GetByName("sp-Restoration");
+		auto grest = conds.GetByName("sp-Greater Restoration");
+
 		static CondStructNew enfeeble;
 		enfeeble.ExtendExisting("sp-Ray of Enfeeblement");
 		// replace penalty function to avoid stacking and adjust penalty
 		// calculation.
 		enfeeble.subDispDefs[5].dispCallback = spCallbacks.AbilityPenalty;
 		enfeeble.subDispDefs[5].dispKey = DK_STAT_STRENGTH;
+		// Implement Restorations cancelling ability penalty from enfeeblement.
+		// Lesser using `SpellDispelledBy` will preempt the part that heals
+		// ability damage, so it will prefer to dispel penalties.
+		//
+		// Note: The wording of Lesser Restoration is ambiguous:
+		//
+		//   "Lesser restoration dispels any magical effects reducing one of the
+		//   subject's ability scores (such as ray of enfeeblement) or ..."
+		//
+		// The ways I can think of to interpret this are:
+		//
+		//   1. Choose a score. Lesser Restoration removes all spells penalizing
+		//      that score.
+		//   2. As above, but the spell must penalize _only_ that score, not other
+		//      scores as well.
+		//   3. _All_ spells that penalize ability scores are removed.
+		//   4. As 3 but only if they reduce a single score at a time.
+		//
+		// The reason for the ambiguity is that it's unclear whether "one of" is
+		// meant to force a choice or just characterize which sorts of conditions
+		// are cured (the ones that penalize abilities).
+		//
+		// I'm choosing 3 for the following reasons
+		//
+		//   1. Penalties are the lesser sort of condition of this sort (vs damage
+		//      and drain). These spells fall into the pattern of curing many
+		//      lesser things and/or one greater thing.
+		//   2. Restoration and Greater Restoration cite Lesser Restoration. This
+		//      is strange, because Restoration cures _all_ ability damage, but
+		//      reading as 1, 2 or 4 would mean it can only cure penalties of a
+		//      specific score for some reason (which are lesser effects). Greater
+		//      Restoration contains language that might suggest Lesser does
+		//      something else, but its effects completely subsume Lesser, so it's
+		//      unclear that it isn't just sloppy editing in that respect.
+		//   3. It's easier to implement. 4 is probably equally easy just by
+		//      choice of which conditions get hooked, but I lean to 3.
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellDispelledBy, lrest, 0);
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, rest, 0);
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, grest, 0);
 	}
 #pragma endregion
 

@@ -1017,7 +1017,7 @@ int DispatcherSystem::DispatchAbilityLoss(objHndl obj, DispIoAbilityLoss *dispIo
 	auto dispatcher = objects.GetDispatcher(obj);
 	if (!dispatcherValid(dispatcher)) return 0;
 
-	DispatcherProcessor(dispatcher, dispTypeGetAbilityLoss, 0, dispIo);
+	DispatcherProcessor(dispatcher, dispTypeGetAbilityLoss, DK_NONE, dispIo);
 
 	return dispIo->result;
 }
