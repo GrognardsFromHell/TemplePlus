@@ -46,4 +46,11 @@ sp-Small-Grease	black everyonce			perm	10						Disc		Polar		bigcircle	90	Blend	0
 sp-Small-Grease	round the way grease			perm	30						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	60	0,10,0	0	0	0	0	0	255,0	32	0	0						10
 sp-Obscuring Mist	mist			perm	120						Sprite		Polar		fire-sprite	120	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0	0?240	10?30	0	0	0?360	0	0	0,32,0	255	255	255						10
 sp-Obscuring Mist	New Emitter			perm	60						Sprite		Polar		fire-sprite	120	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	240	5?15	0	0	0?360	0	0	0,32,0	255	255	255						10
+Weakness	bang start			15	15		World				Sprite		Polar		flare-2	15	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	50?20	0	0	0?360	0	0	255,0	255,128	255,64	255,128						
+Weakness	sparkles			15	30		Object Pos				Sprite		Polar	Cartesian	flare-1	45	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0?360	#radius	8,0	0	0	0?360	0	0	255	255	255	255						
+Weakness	ray time			perm	45		Object Pos				Sprite		Polar		flare-2	60	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?360	#radius	20,0	0	0	0?360	0	0	64,0	128	64	128						
+Weakness	sparkles perm			perm	5		Object Pos				Sprite		Polar	Cartesian	flare-1	45	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0?360	#radius	8,0	0	0	0?360	0	0	255	255	255	255						
+Weakness-END	ray time			15	45		Object Pos				Sprite		Polar		flare-2	60	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?360	#radius	20,0	0	0	0?360	0	0	64,0	128	64	128						
+Weakness-END	sparkles			15	30		Object Pos				Sprite		Polar	Cartesian	flare-1	45	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0?360	#radius	8,0	0	0	0?360	0	0	255	255	255	255						
+Weakness-END	bang start			15	15		World				Sprite		Polar		flare-2	15	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	50?20	0	0	0?360	0	0	255,0	255,128	255,64	255,128						
 

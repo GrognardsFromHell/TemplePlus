@@ -21,10 +21,13 @@ def CountdownRemoveSelf(obj, args, evt_obj):
 # a different argument index.
 def EndParticles(obj, args, evt_obj):
 	part_index = args.get_param(0, default = 1)
+	skip_end = args.get_param(1)
 
 	part_id = args.get_arg(part_index)
 	if part_id != 0:
 		game.particles_end(part_id)
+		if not skip_end:
+			game.particles(args.get_cond_name() + "-END", obj)
 		args.set_arg(part_index, 0)
 
 	return 0
@@ -105,13 +108,39 @@ def AbilityPenaltyHook(critter, args, evt_obj):
 	evt_obj.bonus_list.add(-pen_amount, pen_type, mesline)
 	return 0
 
+# This hook adds particles for the condition's name to the critter the
+# condition affects. Typically this would be used as a ConditionAdd hook.
+#
+# The particle id is stored in an argument. By default this is arg 1, but if
+# param 0 is specified, it is used as the argument index for the particle id.
+# A negative index results in the particle id not being stored (not
+# recommended for permanent particles).
+def BeginParticlesHook(critter, args, evt_obj):
+	part_idx = args.get_param(0, default = 1)
+
+	part_id = game.particles(args.get_cond_name(), critter)
+	if (part_idx >= 0):
+		args.set_arg(part_idx, part_id)
+
+	return 0
+
 # Helper defining functions for building a standalone condition not associated
 # to a spell.
 class CondFunctions(BasicPyMod):
+	# Adds a hook to begin particles when the condition is added. The index is
+	# used to store the particle id, and should be matched to the one in
+	# `AddEndParticles`.
+	def AddBeginParticles(self, index = 1):
+		self.add_hook(ET_OnConditionAdd, EK_NONE, BeginParticlesHook, (index,))
+
 	# Adds a hook that ends particles when the condition is removed. The default
 	# is for the particle id to be stored in slot 1, but that can be overridden.
-	def AddEndParticles(self, index = 1):
-		self.add_hook(ET_OnConditionRemove, EK_NONE, EndParticles, (index,))
+	#
+	# the skip_end parameter controls whether the hook should try to play ending
+	# particles if the persistent particles are actually in place.
+	def AddEndParticles(self, index = 1, skip_end = 0):
+		params = (index,skip_end)
+		self.add_hook(ET_OnConditionRemove, EK_NONE, EndParticles, params)
 
 	# Adds a hook that removes this condition of one of the other specified
 	# conditions is added. The removing conditions are specified by name.

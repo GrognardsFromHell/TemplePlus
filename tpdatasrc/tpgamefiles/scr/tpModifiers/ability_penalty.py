@@ -9,6 +9,7 @@ print "Registering ability penalty conditions"
 # arg0 = duration, particle id, penalty, spare, spare
 weakness = CondPythonModifier("Weakness", 5)
 weakness.AddAbilityPenalties(43, False, 352, stat_strength)
+weakness.AddBeginParticles()
 weakness.AddEndParticles()
 weakness.AddRemovedBy('sp-Restoration', 'sp-Greater Restoration')
 weakness.AddCancelOut(False, 'sp-Lesser Restoration')
