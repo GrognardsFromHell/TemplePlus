@@ -110,6 +110,7 @@ public:
 	static int __cdecl ConcentratingActionRecipientHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action received
 
 	static int __cdecl LesserRestorationOnAdd(DispatcherCallbackArgs args);
+	static int __cdecl HealOnAdd(DispatcherCallbackArgs args);
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
@@ -4809,6 +4810,7 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
 
 	replaceFunction(0x100CE590, SpellCallbacks::LesserRestorationOnAdd);
+	replaceFunction(0x100CE010, SpellCallbacks::HealOnAdd);
 
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
@@ -5367,6 +5369,40 @@ int SpellCallbacks::LesserRestorationOnAdd(DispatcherCallbackArgs args)
 	auto extra = fmt::format(": {} [{}]", stName, amount - after);
 	floatSys.FloatSpellLine(critter, 20035, color, nullptr, extra.c_str());
 	args.RemoveSpellMod();
+
+	return 0;
+}
+
+// Port of 0x100CE010
+int SpellCallbacks::HealOnAdd(DispatcherCallbackArgs args)
+{
+	DispIoAbilityLoss abloss;
+	auto spellId = args.GetCondArg(0);
+	auto critter = args.objHndCaller;
+
+	for (uint32_t off = 0; off < 6; off++) {
+		auto abil = static_cast<Stat>(stat_strength + off);
+		abloss.statDamaged = abil;
+		abloss.fieldC = 1;
+		abloss.result = 0;
+		abloss.flags = AbilityLossFlags::HealDamageFully;
+		auto after = dispatch.DispatchAbilityLoss(critter, &abloss);
+
+		if (after >= 0) continue;
+
+		auto stName = d20Stats.GetStatName(abil);
+		auto extra = fmt::format(": {} [{}]", stName, -after);
+		auto color = FloatLineColor::White;
+		floatSys.FloatSpellLine(critter, 20035, color, nullptr, extra.c_str());
+	}
+
+	SpellPacketBody spellPkt(spellId);
+	auto caster = spellPkt.caster;
+	int clvl = spellPkt.casterLevel;
+	int healAmount = std::min(150, clvl * 10);
+	Dice healing(0, 0, healAmount);
+	damage.HealSpell(critter, caster, healing, D20A_CAST_SPELL, spellId);
+	damage.HealSubdual(critter, healAmount);
 
 	return 0;
 }
