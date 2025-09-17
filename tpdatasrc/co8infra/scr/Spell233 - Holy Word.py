@@ -38,14 +38,17 @@ def OnSpellEffect(spell):
 	for target_item in spell.target_list:
 		target = target_item.obj
 
+		# all targets will be removed at the end because Holy Word is an
+		# instantaneous spell
+		remove_list.append(target)
+
+		# can't affect creatures whose hit dice exceeds caster level
+		if target.hit_dice_num > spell.caster_level: continue
+
 		alignment = target.critter_get_alignment()
 
 		if not (alignment & ALIGNMENT_GOOD):
 			ungood_list.append(target)
-
-		# all targets will be removed at the end because Holy Word is an
-		# instantaneous spell
-		remove_list.append(target)
 
 	# If the caster is in an area of silence, the holy word is suppressed
 	if spell.caster.d20_query_has_condition('sp-Silence Hit'):
