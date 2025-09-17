@@ -5344,7 +5344,7 @@ int SpellCallbacks::ConcentratingActionRecipientHandler(DispatcherCallbackArgs a
 	return 0;
 }
 
-// Port of 0x100CE590, added pre-step to cure penalties before damage.
+// Port of 0x100CE590
 int SpellCallbacks::LesserRestorationOnAdd(DispatcherCallbackArgs args)
 {
 	auto spellId = args.GetCondArg(0);
@@ -5353,21 +5353,7 @@ int SpellCallbacks::LesserRestorationOnAdd(DispatcherCallbackArgs args)
 
 	DispIoAbilityLoss abloss;
 
-	// try a basic heal to see if penalties get removed
-	abloss.flags = AbilityLossFlags::Heal;
-	abloss.fieldC = 1;
-	abloss.statDamaged = statType;
-	abloss.spellId = spellId;
-	abloss.result = 0;
-
-	// If penalties are removed, they will set the result to something other
-	// than 0.
-	if (dispatch.DispatchAbilityLoss(critter, &abloss) != 0) {
-		args.RemoveSpellMod();
-		return 0;
-	}
-
-	// otherwise reset and dispatch for ability damage healing
+	// dispatch for ability damage healing
 	abloss.flags = AbilityLossFlags::HealDamage;
 	abloss.fieldC = 1;
 	abloss.statDamaged = statType;
