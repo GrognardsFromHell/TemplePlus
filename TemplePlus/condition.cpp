@@ -3598,7 +3598,7 @@ void ConditionSystem::RegisterNewConditions()
 		// sp-Remove Paralysis was removing the target on condition add, which
 		// screws up iterating over the target list by mutating it in the middle
 		// of the loop.
-		removePara.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+		removePara.subDispDefs[3].dispCallback = ConditionRemoveCallback;
 
 		// 'Held' seems to always be a spell-related effect, applying the actual
 		// debuff for the various 'Hold' spells. Arguments are the first three
