@@ -530,6 +530,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
 				 }, "Adds cap for a particular bonus type")
 			.def_readwrite("flags", &BonusList::bonFlags)
+			.def("saving_throw", [](BonusList & bonlist, objHndl tgt, objHndl atk, int dc, int ty, int flags)->bool {
+					auto typ = static_cast<SavingThrowType>(ty);
+					return damage.SavingThrow(tgt, atk, dc, typ, flags, &bonlist);
+				}, "Roll a saving throw using this bonus list as a basis")
 			;
 
 	 py::class_<AttackPacket>(m, "AttackPacket")
