@@ -111,6 +111,7 @@ public:
 
 	static int __cdecl LesserRestorationOnAdd(DispatcherCallbackArgs args);
 	static int __cdecl HealOnAdd(DispatcherCallbackArgs args);
+	static int __cdecl HarmOnAdd(DispatcherCallbackArgs args);
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
@@ -4811,6 +4812,7 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 
 	replaceFunction(0x100CE590, SpellCallbacks::LesserRestorationOnAdd);
 	replaceFunction(0x100CE010, SpellCallbacks::HealOnAdd);
+	replaceFunction(0x100CDEB0, SpellCallbacks::HarmOnAdd);
 
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
@@ -5403,6 +5405,48 @@ int SpellCallbacks::HealOnAdd(DispatcherCallbackArgs args)
 	Dice healing(0, 0, healAmount);
 	damage.HealSpell(critter, caster, healing, D20A_CAST_SPELL, spellId);
 	damage.HealSubdual(critter, healAmount);
+
+	return 0;
+}
+
+// Port of 0x100CDEB0 with fixed order of operations: cap damage _after_
+// doing the roll for half damage rather than before.
+int SpellCallbacks::HarmOnAdd(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	auto dmg = 10 * static_cast<int>(spellPkt.casterLevel);
+
+	auto target = args.objHndCaller;
+	auto caster = spellPkt.caster;
+
+	auto dc = spellPkt.dc;
+	auto will = SavingThrowType::Will;
+	auto flags = D20STF_NONE;
+
+	if (damage.SavingThrowSpell(target, caster, dc, will, flags, spellId)) {
+		dmg /= 2;
+		floatSys.FloatSpellLine(target, 30001, FloatLineColor::White);
+		gameSystems->GetParticleSys().CreateAtObj("Fizzle", target);
+		args.SetCondArg(2, 1);
+	} else {
+		floatSys.FloatSpellLine(target, 30002, FloatLineColor::White);
+	}
+
+	auto hpCur = objects.StatLevelGet(target, stat_hp_current);
+	if (dmg >= hpCur) {
+		dmg = hpCur - 1;
+	}
+
+	Dice dice(0, 0, dmg);
+	auto dmgTy = DamageType::NegativeEnergy;
+	auto atkPw = D20DAP_MAGIC;
+	int pct = 100; // percentage
+	int desc = 103;
+	auto act = D20A_CAST_SPELL;
+	auto caf = D20CAF_NONE;
+	damage.DealSpellDamage(
+			target, caster, dice, dmgTy, atkPw, pct, desc, act, spellId, caf);
 
 	return 0;
 }
