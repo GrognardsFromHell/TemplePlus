@@ -327,6 +327,7 @@ int ParalyzeSpellCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeEffectTooltip(DispatcherCallbackArgs args);
 int ParalyzeCoalesce(DispatcherCallbackArgs args);
 int HelplessConditionRemoved(DispatcherCallbackArgs args);
+int SlowCoalesce(DispatcherCallbackArgs args);
 
 int MonsterMeleeParalysisApply(DispatcherCallbackArgs args);
 int MonsterMeleeParalysisNoElfApply(DispatcherCallbackArgs args);

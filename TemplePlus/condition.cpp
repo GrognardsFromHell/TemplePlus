@@ -984,6 +984,27 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Hybrid of ConditionPrevent and SpellOverrideBy. Picks the longer duration,
+// presuming that arg2 is the duration number, as is standard for spells.
+int SpellCoalesce(DispatcherCallbackArgs args)
+{
+	if (!ConditionMatchesData1(args)) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	auto myDur = args.GetCondArg(1);
+	auto newDur = dispIo->arg2;
+
+	if (newDur > myDur) {
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+	} else {
+		// tell other condition not to add itself
+		dispIo->outputFlag = 0;
+	}
+
+	return 0;
+}
+
 // TODO: This allows a single spell to dispel many other spells. This is
 // correct for e.g. Lesser Restoration dispelling many Rays of Enfeeblement.
 // But it might not be correct for Enlarge Person dispelling multiple copies
@@ -3633,7 +3654,9 @@ void ConditionSystem::RegisterNewConditions()
 
 		static CondStructNew condSlow;
 		condSlow.ExtendExisting("sp-Slow");
+		condSlow.subDispDefs[1].dispCallback = SpellCoalesce;
 		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeSpellCheckRemove, &removePara, 0);
+		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, SlowCoalesce);
 	}
 
 	{
@@ -4305,6 +4328,28 @@ int HelplessConditionRemoved(DispatcherCallbackArgs args)
 	// manually set expired to avoid capping stats
 	args.SetExpired();
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+
+	return 0;
+}
+
+// Coalesces sp-Slow with standalone Slow based on duration.
+int SlowCoalesce(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto slow = conds.GetByName("Slow");
+	if (slow != dispIo->condStruct) return 0;
+
+	auto myDur = args.GetCondArg(1);
+	auto newDur = dispIo->arg1;
+
+	if (newDur > myDur) {
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+	} else {
+		dispIo->outputFlag = 0;
+	}
 
 	return 0;
 }

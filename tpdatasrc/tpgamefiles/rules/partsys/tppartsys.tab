@@ -53,4 +53,6 @@ Weakness	sparkles perm			perm	5		Object Pos				Sprite		Polar	Cartesian	flare-1	4
 Weakness-END	ray time			15	45		Object Pos				Sprite		Polar		flare-2	60	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?360	#radius	20,0	0	0	0?360	0	0	64,0	128	64	128						
 Weakness-END	sparkles			15	30		Object Pos				Sprite		Polar	Cartesian	flare-1	45	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0?360	#radius	8,0	0	0	0?360	0	0	255	255	255	255						
 Weakness-END	bang start			15	15		World				Sprite		Polar		flare-2	15	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	50?20	0	0	0?360	0	0	255,0	255,128	255,64	255,128						
+Slow	slow drops			perm	30		Object YPR				Disc	World	Polar	Polar	bigcircle	120	Blend	0				0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0,-20	0?360	0	#radius	1,1,1,2,2,3,4,5,7,10,5	0	0	0	0	0	255,255,255,255,0	0	0	0						
+Slow	slow hit			20	200		Object YPR				Sprite	World	Polar	Polar	bigcircle	50	Blend	0				0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-20	0?360	0?360	#radius	0,20	0	0	0	0	0	255,0	0	0	0						
 
