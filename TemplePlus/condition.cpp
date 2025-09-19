@@ -3660,6 +3660,13 @@ void ConditionSystem::RegisterNewConditions()
 	}
 
 	{
+		static CondStructNew condConf;
+		condConf.ExtendExisting("sp-Confusion");
+		// Calm Emotions removes Confusion. Was Confusion prevents Calm Emotions.
+		condConf.subDispDefs[1].dispCallback = SpellOverrideBy;
+	}
+
+	{
 		// Switch encumbrance conditions from responding to (armor) max dex dispatch
 		// to directly capping dex AC. Also, fix the actual cap numbers (they were
 		// all 3, which is the medium value).
