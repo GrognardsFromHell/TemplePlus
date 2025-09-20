@@ -109,6 +109,9 @@ public:
 	static int __cdecl ConcentratingActionSequenceHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action taken
 	static int __cdecl ConcentratingActionRecipientHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action received
 
+	static int __cdecl LesserRestorationOnAdd(DispatcherCallbackArgs args);
+	static int __cdecl HealOnAdd(DispatcherCallbackArgs args);
+	static int __cdecl HarmOnAdd(DispatcherCallbackArgs args);
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
@@ -116,6 +119,8 @@ public:
 	static int __cdecl ReduceSizeCategory(DispatcherCallbackArgs args);
 	static int __cdecl ReduceExponent(DispatcherCallbackArgs args);
 	static int __cdecl ReduceWeaponDice(DispatcherCallbackArgs args);
+
+	static int __cdecl AbilityPenalty(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
@@ -141,7 +146,6 @@ public:
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
-
 	
 	static int __cdecl SpellModCountdownRemove(DispatcherCallbackArgs args);
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
@@ -161,6 +165,7 @@ public:
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
 	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
 	static int NoOp(DispatcherCallbackArgs);
+	static int FloatCombatLine(DispatcherCallbackArgs);
 
 	static int EffectTooltipDuration(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line; appends duration
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
@@ -211,6 +216,7 @@ public:
 	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
 	static int __cdecl EncumbranceCapAC(DispatcherCallbackArgs args);
+	static int __cdecl DeafnessMod(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -569,6 +575,11 @@ public:
 		replaceFunction(0x10100470, genericCallbacks.NoOp);
 		replaceFunction(0x10100500, genericCallbacks.NoOp);
 
+		// replace deafness spell failure with no-op because it was stacking
+		replaceFunction(0x100C5D90, genericCallbacks.NoOp);
+		// replace deafness initiative penalty to use a non-stacking bonus
+		replaceFunction(0x100C5B00, genericCallbacks.DeafnessMod);
+
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
@@ -632,8 +643,12 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x1004AD40, TurnUndeadRadial);
 
+		// helpless adjacent conditions
+		replaceFunction(0x100E7F80, HelplessCapStatBonus);
 
-
+		replaceFunction(0x100F7110, MonsterMeleeParalysisApply);
+		replaceFunction(0x100F71D0, MonsterMeleeParalysisNoElfApply);
+		replaceFunction(0x100DB9C0, ParalyzeSpellCheckRemove);
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
@@ -969,6 +984,32 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Hybrid of ConditionPrevent and SpellOverrideBy. Picks the longer duration,
+// presuming that arg2 is the duration number, as is standard for spells.
+int SpellCoalesce(DispatcherCallbackArgs args)
+{
+	if (!ConditionMatchesData1(args)) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	auto myDur = args.GetCondArg(1);
+	auto newDur = dispIo->arg2;
+
+	if (newDur > myDur) {
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+	} else {
+		// tell other condition not to add itself
+		dispIo->outputFlag = 0;
+	}
+
+	return 0;
+}
+
+// TODO: This allows a single spell to dispel many other spells. This is
+// correct for e.g. Lesser Restoration dispelling many Rays of Enfeeblement.
+// But it might not be correct for Enlarge Person dispelling multiple copies
+// of Reduce Person (though the latter would not stack, they'd be harder to
+// eliminate). Maybe add a flag to data2 that controls this.
 int SpellDispelledBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
@@ -1219,6 +1260,17 @@ int GenericCallbacks::ActionInvalidQueryTrue(DispatcherCallbackArgs args){
 }
 
 int GenericCallbacks::NoOp(DispatcherCallbackArgs args) {
+	return 0;
+}
+
+int GenericCallbacks::FloatCombatLine(DispatcherCallbackArgs args) {
+	auto critter = args.objHndCaller;
+
+	auto line = args.GetData1();
+	auto color = static_cast<FloatLineColor>(args.GetData2());
+
+	combatSys.FloatCombatLine(critter, line, color);
+
 	return 0;
 }
 
@@ -1728,10 +1780,7 @@ int GenericCallbacks::D20ModCountdownEndHandler(DispatcherCallbackArgs args){
 	case 20: // Timed Disappear
 		if (args.dispType == dispTypeBeginRound || !evtObj || (evtObj->dispIOType == dispIoTypeSendSignal && evtObj->data1 == args.GetCondArg(0))){
 			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
-			gameSystems->GetParticleSys().CreateAtObj("Fizzle", args.objHndCaller);
-			auto aiFlags = objects.getInt64(args.objHndCaller, obj_f_npc_ai_flags64) | AiFlag::RunningOff;
-			objSystem->GetObject(args.objHndCaller)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
-			objects.FadeTo(args.objHndCaller, 0, 2, 5, 1);
+			critterSys.Banish(args.objHndCaller, objHndl::null, false);
 		}
 		break;
 	default:
@@ -1839,6 +1888,28 @@ int GenericCallbacks::EncumbranceCapAC(DispatcherCallbackArgs args)
 		// 8 is dodge bonus
 		dispIo->bonlist.AddCap(8, cap, descline);
 	}
+
+	return 0;
+}
+
+// Port of 0x100C5B00. Applies a modifier based on params. Used for deafness
+// conditions.
+//
+// Changed to use a non-stacking modifier, because being deaf multiple
+// times shouldn't stack.
+int GenericCallbacks::DeafnessMod(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
+
+	auto mod = args.GetData1();
+	auto type = args.GetData2();
+
+	// uncertain why this is the only negative case, but it's what the original
+	// does.
+	if (type == 190) mod = -mod;
+
+	// 42=deafness to avoid stacking
+	dispIo->bonOut->AddBonus(mod, 42, type);
 
 	return 0;
 }
@@ -3434,6 +3505,11 @@ void ConditionSystem::RegisterNewConditions()
 		vrockSpores.subDispDefs[6].dispCallback = genericCallbacks.NoOp; // TBS init
 		vrockSpores.subDispDefs[10].dispCallback = spCallbacks.VrockSporesEffectTip;
 		vrockSpores.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
+
+		static CondStructNew vrockScreech;
+		vrockScreech.ExtendExisting("sp-Vrock Screech");
+		// DK_QUE_Helpless; stunned is not helpless
+		vrockScreech.subDispDefs[6].dispCallback = genericCallbacks.NoOp;
 	}
 #pragma endregion
 
@@ -3538,21 +3614,56 @@ void ConditionSystem::RegisterNewConditions()
 	// 
 	
 	{
+		static CondStructNew removePara;
+		removePara.ExtendExisting("sp-Remove Paralysis");
+		// sp-Remove Paralysis was removing the target on condition add, which
+		// screws up iterating over the target list by mutating it in the middle
+		// of the loop.
+		removePara.subDispDefs[3].dispCallback = ConditionRemoveCallback;
+
+		// 'Held' seems to always be a spell-related effect, applying the actual
+		// debuff for the various 'Hold' spells. Arguments are the first three
+		// arguments of the spell condition.
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
-		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
-			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
-			// disable effect tooltip if freedom of movement
-			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
-				return orig(args);
-			return 0;
-		};
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+		condHeld.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 1, 0);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 1, 0);
+		condHeld.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+
+		// 'Paralyzed' is a standalone effect inflicted by e.g.
+		// 'Monster Melee Paralysis'. Has 3 arguments but vanilla only the first
+		// seems to be used, for duration.
+		//
+		// Since it's not associated with a spell, it needs to do its own checks
+		// for removal.
+		static CondStructNew condPara;
+		condPara.ExtendExisting("Paralyzed");
+		condPara.subDispDefs[0].dispCallback = ParalyzeCoalesce;
+		condPara.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 2, 0);
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 2, 0);
+		condPara.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeCheckRemove);
+		condPara.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+		condPara.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.FloatCombatLine, 149, FloatLineColor::Red);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
-		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 3, 0);
+		condSleeping.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+
+		static CondStructNew condSlow;
+		condSlow.ExtendExisting("sp-Slow");
+		condSlow.subDispDefs[1].dispCallback = SpellCoalesce;
+		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeSpellCheckRemove, &removePara, 0);
+		condSlow.AddHook(dispTypeConditionAddPre, DK_NONE, SlowCoalesce);
+	}
+
+	{
+		static CondStructNew condConf;
+		condConf.ExtendExisting("sp-Confusion");
+		// Calm Emotions removes Confusion. Was Confusion prevents Calm Emotions.
+		condConf.subDispDefs[1].dispCallback = SpellOverrideBy;
 	}
 
 	{
@@ -3599,6 +3710,59 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew righteousMight;
 		righteousMight.ExtendExisting("sp-Righteous Might");
 		righteousMight.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+	}
+
+	{
+		// restorations
+		auto lrest = conds.GetByName("sp-Lesser Restoration");
+		auto rest = conds.GetByName("sp-Restoration");
+		auto grest = conds.GetByName("sp-Greater Restoration");
+
+		static CondStructNew enfeeble;
+		enfeeble.ExtendExisting("sp-Ray of Enfeeblement");
+		// replace penalty function to avoid stacking and adjust penalty
+		// calculation.
+		enfeeble.subDispDefs[5].dispCallback = spCallbacks.AbilityPenalty;
+		enfeeble.subDispDefs[5].dispKey = DK_STAT_STRENGTH;
+		// Implement Restorations cancelling ability penalty from enfeeblement.
+		// Lesser using `SpellDispelledBy` will preempt the part that heals
+		// ability damage, so it will prefer to dispel penalties.
+		//
+		// Note: The wording of Lesser Restoration is ambiguous:
+		//
+		//   "Lesser restoration dispels any magical effects reducing one of the
+		//   subject's ability scores (such as ray of enfeeblement) or ..."
+		//
+		// The ways I can think of to interpret this are:
+		//
+		//   1. Choose a score. Lesser Restoration removes all spells penalizing
+		//      that score.
+		//   2. As above, but the spell must penalize _only_ that score, not other
+		//      scores as well.
+		//   3. _All_ spells that penalize ability scores are removed.
+		//   4. As 3 but only if they reduce a single score at a time.
+		//
+		// The reason for the ambiguity is that it's unclear whether "one of" is
+		// meant to force a choice or just characterize which sorts of conditions
+		// are cured (the ones that penalize abilities).
+		//
+		// I'm choosing 3 for the following reasons
+		//
+		//   1. Penalties are the lesser sort of condition of this sort (vs damage
+		//      and drain). These spells fall into the pattern of curing many
+		//      lesser things and/or one greater thing.
+		//   2. Restoration and Greater Restoration cite Lesser Restoration. This
+		//      is strange, because Restoration cures _all_ ability damage, but
+		//      reading as 1, 2 or 4 would mean it can only cure penalties of a
+		//      specific score for some reason (which are lesser effects). Greater
+		//      Restoration contains language that might suggest Lesser does
+		//      something else, but its effects completely subsume Lesser, so it's
+		//      unclear that it isn't just sloppy editing in that respect.
+		//   3. It's easier to implement. 4 is probably equally easy just by
+		//      choice of which conditions get hooked, but I lean to 3.
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellDispelledBy, lrest, 0);
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, rest, 0);
+		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, grest, 0);
 	}
 #pragma endregion
 
@@ -4019,6 +4183,17 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
 
+std::string GetHelplessStatCapReason(int data1)
+{
+	switch (data1)
+	{
+	case 1: return ": ~Held~[TAG_HELD]";
+	case 2: return ": ~Paralyzed~[TAG_PARALYZED]";
+	case 3: return ": ~Sleeping~[TAG_SLEEPING]";
+	default: return "";
+	}
+}
+
 // Port of 0x100E7F80. Was used in Unconscious but missing in similar
 // conditions. Helpless critters should have 0 effective dexterity, and
 // paralyzed creatures should have 0 effective strength.
@@ -4026,7 +4201,9 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
-	dispIo->bonlist.AddCap(0, 0, 109);
+	std::string reason = GetHelplessStatCapReason(args.GetData1());
+
+	dispIo->bonlist.SetOverallCap(1, 0, 0, 109, reason.c_str());
 
 	return 0;
 }
@@ -4036,13 +4213,213 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 int HeldCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+	auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
 
-	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
-		dispIo->bonlist.AddCap(0, 0, 109);
+	if (d20Sys.d20Query(args.objHndCaller, free)) return 0;
+
+	std::string reason = GetHelplessStatCapReason(args.GetData1());
+
+	dispIo->bonlist.SetOverallCap(1, 0, 0, 109, reason.c_str());
 
 	return 0;
 }
 
+int ParalyzeCheckRemove(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto removeParalysis = conds.GetByName("sp-Remove Paralysis");
+	if (dispIo->condStruct != removeParalysis) return 0;
+
+	auto bonus = dispIo->arg2;
+
+	// If the bonus is greater than 0, it's not the automatic remove, so
+	// do a saving throw.
+	if (bonus > 0) {
+		// Offset the DC by the bonus, since it's less complicated than actually
+		// arranging for a bonus.
+		auto dc = args.GetCondArg(1);
+		auto critter = args.objHndCaller;
+		auto fort = SavingThrowType::Fortitude;
+		BonusList bonlist;
+		auto reason = "~Remove Paralysis~[TAG_SPELLS_REMOVE_PARALYSIS]"s;
+		bonlist.AddBonus(bonus, 0, reason);
+
+		if (!damage.SavingThrow(critter, objHndl::null, dc, fort, D20STF_NONE, &bonlist))
+			return 0;
+	}
+
+	args.RemoveCondition();
+
+	return 0;
+}
+
+// Port of 0x100DB9C0
+int ParalyzeSpellCheckRemove(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto target = args.GetData1Cond();
+	if (dispIo->condStruct != target) return 0;
+
+	auto bonus = dispIo->arg2;
+
+	// If the bonus is greater than 0, it's not an automatic remove, so do a
+	// saving throw.
+	if (bonus > 0) {
+		auto critter = args.objHndCaller;
+		auto spellId = args.GetCondArg(0);
+		SpellPacketBody spellPkt(spellId);
+
+		BonusList bonlist;
+		auto reason = "~Remove Paralysis~[TAG_SPELLS_REMOVE_PARALYSIS]"s;
+		bonlist.AddBonus(bonus, 0, reason);
+
+		if (!spellPkt.SavingThrow(critter, D20STF_NONE, &bonlist)) {
+			return 0;
+		}
+	}
+
+	args.RemoveSpell();
+	args.RemoveSpellMod();
+
+	return 0;
+}
+
+// Wrapper around effect tooltip for paralysis conditions. Hides the tooltip
+// while freedom of movement is active.
+int ParalyzeEffectTooltip(DispatcherCallbackArgs args)
+{
+	static auto orig =
+		temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
+
+	auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
+
+	if (!d20Sys.d20Query(args.objHndCaller, free))
+		return orig(args);
+
+	return 0;
+}
+
+int ParalyzeCoalesce(DispatcherCallbackArgs args)
+{
+	// If the condition to be added isn't Paralyzed, ignore.
+	if (!ConditionMatchesData1(args)) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	auto newDur = dispIo->arg1;
+	auto newDC = dispIo->arg2;
+
+	auto oldDur = args.GetCondArg(0);
+	auto oldDC = args.GetCondArg(1);
+
+	// If new duration is longer, or the same and the DC is higher, remove
+	// ourselves in its favor. Otherwise tell it not to apply.
+	if (newDur >= oldDur || newDC > oldDC && newDur == oldDur) {
+		args.RemoveCondition();
+	} else {
+		dispIo->outputFlag = 0;
+	}
+
+	return 0;
+}
+
+// Triggers the HP changed event when removing a 'helpless' condition, because
+// they cap other stats that will cause an additional paralysis effect to be
+// added. The change event is the trigger to recalculate whether the
+// stat-based effect should be applied or not.
+int HelplessConditionRemoved(DispatcherCallbackArgs args)
+{
+	// manually set expired to avoid capping stats
+	args.SetExpired();
+	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+
+	return 0;
+}
+
+// Coalesces sp-Slow with standalone Slow based on duration.
+int SlowCoalesce(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto slow = conds.GetByName("Slow");
+	if (slow != dispIo->condStruct) return 0;
+
+	auto myDur = args.GetCondArg(1);
+	auto newDur = dispIo->arg1;
+
+	if (newDur > myDur) {
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+	} else {
+		dispIo->outputFlag = 0;
+	}
+
+	return 0;
+}
+
+// Port/fix of 0x100F7110
+//
+// Original was testing for Elf in the wrong stat (but that stat now means
+// something).
+//
+// Also now passing the DC to the Paralyzed condition for Remove Paralysis.
+int MonsterMeleeParalysisApply(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	// melee only
+	if (dispIo->attackPacket.flags & D20CAF_RANGED) return 0;
+
+	auto atk = args.objHndCaller;
+	auto tgt = dispIo->attackPacket.victim;
+
+	/* TODO: consider, this is the standard calculation for DC of the ability.
+	 * It is charisma based, and the DC of Ex/Su abilities is:
+	 *
+	 *   10 + (hit dice)/2 + bonus
+	 *
+	 * Allows the DC to be adaptive and not have to be matched to the
+	 * creature's other stats by hand.
+	auto half_hd = objects.GetHitDiceNum(atk, false) >> 1;
+	auto dc = 10 + half_hd + obj.StatLevelGet(atk, stat_cha_mod);
+	 */
+	auto dc = args.GetCondArg(0);
+
+	if (damage.SavingThrow(tgt, atk, dc, SavingThrowType::Fortitude, 0))
+		return 0;
+
+	auto dur_dice = Dice::FromPacked(args.GetCondArg(1));
+	auto para =  conds.GetByName("Paralyzed");
+
+	conds.AddTo(tgt, para, { dur_dice.Roll(), dc });
+
+	return 0;
+}
+
+// Port/fix 0x100F71D0
+//
+// Original was testing for half_orc for some reason, and in the wrong stat.
+//
+// Also see above.
+int MonsterMeleeParalysisNoElfApply(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	switch (objects.StatLevelGet(dispIo->attackPacket.victim, stat_race))
+	{
+	case race_elf:
+	// "Elven Blood" says half-elves are treated as elves for race-related
+	// effects.
+	case race_half_elf:
+		return 0;
+	default:
+		return MonsterMeleeParalysisApply(args);
+	}
+}
 
 #pragma region Barbarian Stuff
 
@@ -4484,6 +4861,10 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	replaceFunction(0x100D3620, SpellCallbacks::HasSpellEffectActive);
 	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
 	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
+
+	replaceFunction(0x100CE590, SpellCallbacks::LesserRestorationOnAdd);
+	replaceFunction(0x100CE010, SpellCallbacks::HealOnAdd);
+	replaceFunction(0x100CDEB0, SpellCallbacks::HarmOnAdd);
 
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
@@ -5019,6 +5400,109 @@ int SpellCallbacks::ConcentratingActionRecipientHandler(DispatcherCallbackArgs a
 	return 0;
 }
 
+// Port of 0x100CE590
+int SpellCallbacks::LesserRestorationOnAdd(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	auto statType = static_cast<Stat>(args.GetCondArg(2));
+	auto critter = args.objHndCaller;
+
+	DispIoAbilityLoss abloss;
+
+	// dispatch for ability damage healing
+	abloss.flags = AbilityLossFlags::HealDamage;
+	abloss.fieldC = 1;
+	abloss.statDamaged = statType;
+	abloss.spellId = spellId;
+	auto amount = Dice::Roll(1,4,0); // 1d4
+	abloss.result = amount;
+
+	auto after = dispatch.DispatchAbilityLoss(critter, &abloss);
+	auto stName = d20Stats.GetStatName(statType);
+	auto color = FloatLineColor::White;
+	auto extra = fmt::format(": {} [{}]", stName, amount - after);
+	floatSys.FloatSpellLine(critter, 20035, color, nullptr, extra.c_str());
+	args.RemoveSpellMod();
+
+	return 0;
+}
+
+// Port of 0x100CE010
+int SpellCallbacks::HealOnAdd(DispatcherCallbackArgs args)
+{
+	DispIoAbilityLoss abloss;
+	auto spellId = args.GetCondArg(0);
+	auto critter = args.objHndCaller;
+
+	for (uint32_t off = 0; off < 6; off++) {
+		auto abil = static_cast<Stat>(stat_strength + off);
+		abloss.statDamaged = abil;
+		abloss.fieldC = 1;
+		abloss.result = 0;
+		abloss.flags = AbilityLossFlags::HealDamageFully;
+		auto after = dispatch.DispatchAbilityLoss(critter, &abloss);
+
+		if (after >= 0) continue;
+
+		auto stName = d20Stats.GetStatName(abil);
+		auto extra = fmt::format(": {} [{}]", stName, -after);
+		auto color = FloatLineColor::White;
+		floatSys.FloatSpellLine(critter, 20035, color, nullptr, extra.c_str());
+	}
+
+	SpellPacketBody spellPkt(spellId);
+	auto caster = spellPkt.caster;
+	int clvl = spellPkt.casterLevel;
+	int healAmount = std::min(150, clvl * 10);
+	Dice healing(0, 0, healAmount);
+	damage.HealSpell(critter, caster, healing, D20A_CAST_SPELL, spellId);
+	damage.HealSubdual(critter, healAmount);
+
+	return 0;
+}
+
+// Port of 0x100CDEB0 with fixed order of operations: cap damage _after_
+// doing the roll for half damage rather than before.
+int SpellCallbacks::HarmOnAdd(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	auto dmg = 10 * static_cast<int>(spellPkt.casterLevel);
+
+	auto target = args.objHndCaller;
+	auto caster = spellPkt.caster;
+
+	auto dc = spellPkt.dc;
+	auto will = SavingThrowType::Will;
+	auto flags = D20STF_NONE;
+
+	if (damage.SavingThrowSpell(target, caster, dc, will, flags, spellId)) {
+		dmg /= 2;
+		floatSys.FloatSpellLine(target, 30001, FloatLineColor::White);
+		gameSystems->GetParticleSys().CreateAtObj("Fizzle", target);
+		args.SetCondArg(2, 1);
+	} else {
+		floatSys.FloatSpellLine(target, 30002, FloatLineColor::White);
+	}
+
+	auto hpCur = objects.StatLevelGet(target, stat_hp_current);
+	if (dmg >= hpCur) {
+		dmg = hpCur - 1;
+	}
+
+	Dice dice(0, 0, dmg);
+	auto dmgTy = DamageType::NegativeEnergy;
+	auto atkPw = D20DAP_MAGIC;
+	int pct = 100; // percentage
+	int desc = 103;
+	auto act = D20A_CAST_SPELL;
+	auto caf = D20CAF_NONE;
+	damage.DealSpellDamage(
+			target, caster, dice, dmgTy, atkPw, pct, desc, act, spellId, caf);
+
+	return 0;
+}
+
 int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 {
 	args.dispIO->AssertType(dispIOType20);
@@ -5158,6 +5642,19 @@ int SpellCallbacks::ReduceSizeCategory(DispatcherCallbackArgs args)
 		dispIo->return_val--;
 		dispIo->data2 = 1;
 	}
+
+	return 0;
+}
+
+int SpellCallbacks::AbilityPenalty(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	auto penalty = args.GetCondArg(2);
+	auto mesline = args.GetData2();
+	auto bontype = 12 | PenaltyCapPositive; // disallow reduction below 1
+
+	dispIo->bonlist.AddBonus(-penalty, bontype, mesline);
 
 	return 0;
 }
@@ -8077,6 +8574,25 @@ void Conditions::AddConditionsToTable(){
 	bardInspireHeroics.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
 	bardInspireHeroics.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit"); // todo make new pfx
 	bardInspireHeroics.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit");
+
+	{
+		static CondStructNew fascinate;
+		fascinate.ExtendExisting("Fascinate");
+		// set DK_QUE_Helpless to NoOp, fascinated is not helpless
+		fascinate.subDispDefs[6].dispCallback = genericCallbacks.NoOp;
+	}
+
+	{
+		static CondStructNew grappled;
+		grappled.ExtendExisting("Grappled");
+		// set DK_QUE_Helpless to NoOp, grappled is not helpless
+		grappled.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew stunned;
+		stunned.ExtendExisting("Stunned");
+		// set DK_QUE_Helpless to NoOp, stunned is not helpless
+		stunned.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+	}
 
 	{
 		auto removeFearCond = conds.GetByName("sp-Remove Fear");

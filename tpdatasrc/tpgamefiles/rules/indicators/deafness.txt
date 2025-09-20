@@ -1,0 +1,5 @@
+ID_string: DEAFNESS
+effect_type: 1
+texture_file: art\interface\Player_Conditions\Ailments\Deafness.tga
+help_topic: TAG_DEAFNESS
+tooltip_base_text: Deafened

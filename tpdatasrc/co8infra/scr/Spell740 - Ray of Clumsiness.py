@@ -26,7 +26,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	dam_amount = spell.roll_dice_with_metamagic(1, 6, dam_bonus)	
 
 		
-	dam_amount = -dam_amount 
 	print "amount=", dam_amount
 
 	spell.duration = 10 * spell.caster_level
@@ -36,7 +35,7 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	if spell.caster.perform_touch_attack( target_item.obj ) & D20CAF_HIT:
 
 		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 20022, tf_red )
-		target_item.obj.condition_add_with_args( 'sp-Cats Grace', spell.id, spell.duration, dam_amount )
+		target_item.obj.condition_add_with_args('sp-Ray of Clumsiness', spell.id, spell.duration, dam_amount)
 		target_item.partsys_id = game.particles( 'sp-Ray of Enfeeblement-Hit', target_item.obj )
 
 	else:
