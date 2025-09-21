@@ -158,7 +158,7 @@ def AddBarbarianFatigueSignal(attachee, args, evt_obj):
 	return 0
 
 def AddFatigueSignal(attachee, args, evt_obj):
-	if evt_obj.data1 == 0:
+	if evt_obj.data2 == 0:
 		fatigueDurationNew = evt_obj.data1
 	else:
 		fatigueDurationNew = -1
@@ -175,7 +175,7 @@ def AddFatigueSignal(attachee, args, evt_obj):
 		else:
 			attachee.float_text_line("Already Fatigued")
 	else:
-		target_item.obj.float_text_line("Already Fatigued")
+		attachee.float_text_line("Already Fatigued")
 		
 	return 0
 
