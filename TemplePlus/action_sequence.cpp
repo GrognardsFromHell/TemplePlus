@@ -489,11 +489,28 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum, spellClass);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
-		SpellEntry spellEntry;
-		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
-			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
+		auto wideFactor = metaMagicData.metaMagicWidenSpellCount + 1;
+		auto enlargeFactor = metaMagicData.metaMagicEnlargeSpellCount + 1;
+		SpellEntry spellEntry(spellEnum);
+
+		switch (spellEntry.spellRangeType)
+		{
+		case SRT_Specified:
+			// Specified is used for cones and lines, which widen applies to. For
+			// some reason cones don't use radius to determine the cone length.
+			spellEntry.spellRange *= wideFactor;
+			break;
+
+		case SRT_Close:
+		case SRT_Medium:
+		case SRT_Long:
+			// enlarge spell only applies to these range types
+			curSeq->spellPktBody.spellRange *= enlargeFactor;
+		default:
+			spellEntry.radiusTarget *= wideFactor;
+			break;
 		}
+
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
