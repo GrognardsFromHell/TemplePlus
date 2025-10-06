@@ -866,6 +866,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			return spEntry.GetLowestSpellLevel(spEntry.spellEnum);
 		})
 		.def_readwrite("spellRangeType", &SpellEntry::spellRangeType)
+		.def_readwrite("spell_range_type", &SpellEntry::spellRangeType)
+		.def_readwrite("spell_range", &SpellEntry::spellRange)
 		.def("get_spell_range_exact", [](SpellEntry &spEntry, int casterLevel, objHndl &caster)->int
 		{
 			return spellSys.GetSpellRangeExact(spEntry.spellRangeType, casterLevel, caster);
