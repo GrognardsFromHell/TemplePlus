@@ -2683,7 +2683,8 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 					break;
 				case 6:
 					spEntry.spellRangeType = (SpellRangeType)value;
-					spEntry.spellRange = value2;
+					if (spEntry.spellRangeType == SRT_Specified)
+						spEntry.spellRange = value2;
 					break;
 				case 7:
 					spEntry.savingThrowType = value;
