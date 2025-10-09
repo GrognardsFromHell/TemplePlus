@@ -78,6 +78,8 @@ public:
 
 	static int SuggestionOnAdd(DispatcherCallbackArgs args);
 
+	static int SilenceBegin(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Fix for when summoned Balor from skull casts suggestion
@@ -426,6 +428,8 @@ public:
 		replaceFunction(0x100D6660, SpikeStonesHitTrigger);
 
 		replaceFunction(0x100D62E0, SpikeGrowthHitTrigger);
+
+		replaceFunction(0x100CF760, SilenceBegin);
 
 		replaceFunction(0x100CAA30, SpellResistance_SpellResistanceMod); // fixes Spell Resistance stacking
 		{ // Remove ImmunityCheck hook
@@ -1520,6 +1524,36 @@ int SpellConditionFixes::SuggestionOnAdd(DispatcherCallbackArgs args)
 		critterSys.AddFollower(args.objHndCaller, pkt.caster, 1, 1);
 	}
 	args.SetCondArg(2, 1);
+	return 0;
+}
+
+/* 100CF760 */
+int SpellConditionFixes::SilenceBegin(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody pkt(spellId);
+	SpellEntry ent(pkt.spellEnum);
+	MetaMagicData mm(pkt.metaMagicData);
+	auto wide = mm.metaMagicWidenSpellCount;
+	objHndl center = args.objHndCaller;
+
+	float radius = ent.radiusTarget * (1+wide) * 12.0;
+
+	pkt.aoeObj = center;
+	auto evtId = objEvents.EventAppend(center, 32, 33, OLC_CRITTERS, radius, 0.0, XM_2PI);
+	args.SetCondArg(2, evtId);
+
+	auto partId = args.GetCondArg(3);
+
+	auto objIdx = pkt.numSpellObjs;
+	if (objIdx < 128) {
+		pkt.spellObjs[objIdx].obj = center;
+		pkt.spellObjs[objIdx].partySysId = partId;
+		pkt.numSpellObjs++;
+	}
+
+	spellSys.UpdateSpellPacket(pkt);
+	pySpellIntegration.UpdateSpell(spellId);
 	return 0;
 }
 

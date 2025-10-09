@@ -5,6 +5,7 @@
 #include <infrastructure/meshes.h>
 
 #include "common.h"
+#include "config/config.h"
 #include "dispatcher.h"
 #include "condition.h"
 #include "temple_functions.h"
@@ -136,6 +137,8 @@ public:
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 	static int __cdecl HasSpellEffectActive(DispatcherCallbackArgs args);
+
+	static int __cdecl SilenceObjectEvent(DispatcherCallbackArgs args);
 
 	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
@@ -5493,6 +5496,74 @@ int SpellCallbacks::HasSpellEffectActive(DispatcherCallbackArgs args){
 	return 0;
 }
 
+// Was 0x100D5B60
+int SpellCallbacks::SilenceObjectEvent(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType17(args.dispIO);
+	auto evtId = args.GetCondArg(2);
+
+	if (evtId != dispIo->evtId) return 0;
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody pkt(spellId);
+
+	auto strict = config.stricterRulesEnforcement;
+
+	if (!pkt.spellEnum) {
+		logger->error("Error getting spell packet ID {}", spellId);
+		return 0;
+	}
+
+	pkt.TriggerAoeHitScript();
+
+	int partId = -1;
+
+	switch (args.dispKey)
+	{
+	case DK_OnEnterAoE:
+		// The original game checks spell resistance and saves whenever you
+		// walk into an area of silence. This is wrong. You only get to
+		// resist being the center of a silence spell, not affected by it
+		// once it's in effect.
+		//
+		// Also, it seemed to check spell resistance before this switch,
+		// so you could resist becoming un-silenced.
+		if (!strict) {
+			// force this check so that the spell can be marked as not having an
+			// automatic SR check.
+			if (pkt.CheckSpellResistance(dispIo->tgt, true)) return 0;
+			if (pkt.SavingThrow(dispIo->tgt, D20SavingThrowFlag::D20STF_NONE)) {
+				// Saving throw successful!
+				floatSys.FloatSpellLine(dispIo->tgt, 0x7531, FloatLineColor::White);
+				return 0;
+			} else {
+				// Saving throw failed!
+				floatSys.FloatSpellLine(dispIo->tgt, 0x7532, FloatLineColor::White);
+				// intentionally fall through to apply effect
+			}
+		}
+		partId = gameSystems->GetParticleSys().CreateAtObj("Fizzle", dispIo->tgt);
+		pkt.AddTarget(dispIo->tgt, partId, 1);
+		conds.AddTo(dispIo->tgt, "sp-Silence Hit", { spellId, pkt.durationRemaining, evtId });
+		break;
+	case DK_OnLeaveAoE:
+		pkt.EndPartsysForTgtObj(dispIo->tgt);
+		if (!pkt.RemoveObjFromTargetList(dispIo->tgt)) {
+			logger->error("sp-Silence hit trigger: cannot remove target");
+			break;
+		}
+		args.RemoveSpellMod();
+		break;
+	default:
+		break;
+	}
+
+	spellSys.UpdateSpellPacket(pkt);
+	pySpellIntegration.UpdateSpell(spellId);
+
+	return 0;
+}
+
 int SpellCallbacks::SpellDismissRadialSub(DispatcherCallbackArgs args)
 {
 	auto spellId = args.GetCondArg(0);
@@ -8103,6 +8174,20 @@ void Conditions::AddConditionsToTable(){
 			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
 			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
 		}
+	}
+
+	{
+		static CondStructNew silence;
+		silence.ExtendExisting("sp-Silence");
+		silence.subDispDefs[6].dispCallback = spCallbacks.SilenceObjectEvent;
+		silence.subDispDefs[6].dispKey = DK_OnEnterAoE;
+
+		silence.AddHook(dispTypeD20Signal, DK_SIG_Dismiss_Spells, spCallbacks.SpellDismissSignalHandler, 1, 0);
+
+		static CondStructNew silenceHit;
+		silenceHit.ExtendExisting("sp-Silence Hit");
+		silenceHit.subDispDefs[6].dispCallback = spCallbacks.SilenceObjectEvent;
+		silenceHit.subDispDefs[6].dispKey = DK_OnLeaveAoE;
 	}
 
 	{
