@@ -20,6 +20,12 @@ def OnGetFavoredClass(attachee, args, evt_obj):
 		evt_obj.return_val = 1
 	return 0
 
+def Bonus1(critter, args, evt_obj):
+	evt_obj.return_val += 1
+
+	return 0
+
 raceSpecObj = PythonModifier(GetConditionName(), 0)
 race_utils.AddBaseMoveSpeed(raceSpecObj, 30)
 raceSpecObj.AddHook(ET_OnD20Query, EK_Q_FavoredClass, OnGetFavoredClass, ())
+raceSpecObj.AddHook(ET_OnD20PythonQuery, "Bonus Skillpoints", Bonus1, ())
