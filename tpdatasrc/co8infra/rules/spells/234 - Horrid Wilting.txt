@@ -1,0 +1,25 @@
+School: Necromancy
+Level: Sor 8
+Level: Water 8
+Level: Wiz 8
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Long
+Saving Throw: Fortitude
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+flags_Target: Min
+inc_flags_Target: Other
+inc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Multi
+mode_Target: Once-Multi
+mode_Target: Any 60 Feet
+mode_Target: End Early Multi
+min_Target: 1
+radius_Target: 0
+ai_type: ai_action_offensive
+source: PHB

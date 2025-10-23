@@ -33,6 +33,7 @@
 #include "config\config.h"
 #include <gametime.h>
 #include <infrastructure/vfs.h>
+#include <regex>
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -2557,6 +2558,31 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "end early multi", UiPickerType::EndEarlyMulti },
 				{ "loc is clear", UiPickerType::LocIsClear }
 			};
+
+			auto opts = std::regex_constants::icase; // ignore case
+			std::regex multiRange("(any|primary)\\s+(\\d+)\\s+feet", opts);
+			std::string text(textBuf + 12);
+			text = rtrim(tolower(text));
+			std::smatch match;
+
+			if (std::regex_search(text, match, multiRange)) {
+				if (match[1] == "primary") {
+					spEntry.modeTargetSemiBitmask |=
+						static_cast<uint64_t>(UiPickerType::Primary30Feet);
+				} else if (match[1] == "any") {
+					spEntry.modeTargetSemiBitmask |=
+						static_cast<uint64_t>(UiPickerType::Any30Feet);
+				}
+
+				try {
+					spEntry.degreesTarget = stoi(match[2]);
+				} catch (std::invalid_argument const & ex) {
+					logger->warn("SpellEntryFileParse: bad mode target: '{}'", text);
+				} catch (std::out_of_range const & ex) {
+					logger->warn("SpellEntryFileParse: bad mode target: '{}'", text);
+				}
+				continue;
+			}
 			
 			UiPickerType value = UiPickerType::None;
 			if (FindInMapping(spEntry.spellEnum, modeTgtStrings, textBuf + 11, value)) {
@@ -2683,7 +2709,8 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 					break;
 				case 6:
 					spEntry.spellRangeType = (SpellRangeType)value;
-					spEntry.spellRange = value2;
+					if (spEntry.spellRangeType == SRT_Specified)
+						spEntry.spellRange = value2;
 					break;
 				case 7:
 					spEntry.savingThrowType = value;

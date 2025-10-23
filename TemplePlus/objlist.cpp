@@ -90,6 +90,36 @@ void ObjListResult::ListRaycast(LocAndOffsets & origin, LocAndOffsets & endPt, f
 	}
 }
 
+bool ObjListResult::ContainsHandle(objHndl tgt)
+{
+	auto node = this->objects;
+	while (node) {
+		if (node->handle == tgt) return true;
+		node = node->next;
+	}
+	return false;
+}
+
+bool ObjListResult::AnyHandle(std::function<bool(objHndl)> pred)
+{
+	auto node = this->objects;
+	while (node) {
+		if (pred(node->handle)) return true;
+		node = node->next;
+	}
+	return false;
+}
+
+bool ObjListResult::AllHandles(std::function<bool(objHndl)> pred)
+{
+	auto node = this->objects;
+	while (node) {
+		if (!pred(node->handle)) return false;
+		node = node->next;
+	}
+	return true;
+}
+
 ObjList::ObjList() {
 	FreeResult();
 }
