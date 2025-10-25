@@ -1319,7 +1319,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
-	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary))
+	if (critterSys.LeftHandIsPrimary(d20a->d20APerformer))
 		useSecondaryAnim = !useSecondaryAnim;
 
 	combatSys.ToHitProcessing(*d20a);

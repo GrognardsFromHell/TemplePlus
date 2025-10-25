@@ -2379,7 +2379,7 @@ objHndl LegacyCritterSystem::GetPrimaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapl;
 	else
 		return weapr;
@@ -2390,7 +2390,7 @@ objHndl LegacyCritterSystem::GetSecondaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapr;
 	else
 		return weapl;
@@ -2471,6 +2471,19 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 	// Otherwise, we're wielding a double weapon, or the offhand is
 	// null, either of which count as light.
 	return true;
+}
+
+// Checks that the left hand is actually the primary weapon. This includes
+// checking that there is an actual weapon equipped (single, shield or
+// double), because fighting with an empty off hand is currently not actually
+// supported.
+bool LegacyCritterSystem::LeftHandIsPrimary(objHndl critter)
+{
+	if (!critter || !objSystem->IsValidHandle(critter))
+		return false;
+
+	auto weapl = GetLeftWield(critter);
+	return weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary);
 }
 
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){
