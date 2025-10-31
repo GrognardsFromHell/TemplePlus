@@ -368,6 +368,21 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			pydataTuple.inc_ref();
 			condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)ElfHash::Hash(dispKey), PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
+		.def("replace_hook",
+			[](CondStructNew & condStr, uint32_t ix, uint32_t dispType, uint32_t dispKey, py::function &pycallback, py::tuple &pydataTuple) {
+			Expects(ix < condStr.numHooks);
+			Expects(condStr.subDispDefs[ix].dispCallback != PyModHookWrapper);
+
+			pydataTuple.inc_ref();
+
+			condStr.subDispDefs[ix] =
+				{ static_cast<enum_disp_type>(dispType)
+				, static_cast<D20DispatcherKey>(dispKey)
+				, PyModHookWrapper
+				, reinterpret_cast<uint32_t>(pycallback.ptr())
+				, reinterpret_cast<uint32_t>(pydataTuple.ptr())
+				};
+		}, "Replace an existing legacy hook with a python hook.")
 		.def("add_to_feat_dict", [](CondStructNew &condStr, int feat_enum, int feat_max, int feat_offset) {
 			condStr.AddToFeatDictionary((feat_enums)feat_enum, (feat_enums)feat_max, feat_offset);
 		}, py::arg("feat_enum"), py::arg("feat_list_max") = -1, py::arg("feat_list_offset") = 0)
