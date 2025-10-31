@@ -10,3 +10,4 @@ def NoAoO(critter, args, evt_obj):
 calm = PythonModifier()
 calm.ExtendExisting('sp-Calm Emotions')
 calm.AddHook(ET_OnD20Query, EK_Q_AOOPossible, NoAoO, ())
+calm.AddSpellCountdownStandardHook()
