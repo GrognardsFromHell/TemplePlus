@@ -920,6 +920,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def_readwrite("dc", &SpellPacketBody::dc)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
+			.def_readwrite("duration_remaining", &SpellPacketBody::durationRemaining)
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
 				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
 				})
