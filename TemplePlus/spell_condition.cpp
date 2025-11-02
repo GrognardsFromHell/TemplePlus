@@ -67,6 +67,8 @@ public:
 
 	static int MagicCirclePreventDamage(DispatcherCallbackArgs args);
 
+	static int RageBeginSpell(DispatcherCallbackArgs args);
+
 	static int SpikeStonesHitTrigger(DispatcherCallbackArgs args);
 	static int SpikeGrowthHitTrigger(DispatcherCallbackArgs args);
 
@@ -103,6 +105,9 @@ public:
 
 		// False life fails to use maximize and empower
 		replaceFunction(0x100CD6D0, Condition_sp_False_Life_Init);
+
+		// Rage wasn't breaking concentration
+		replaceFunction(0x100CF070, RageBeginSpell);
 
 		// Invisibility Sphere lacking a Dismiss handler
 		{
@@ -1333,6 +1338,26 @@ int SpellConditionFixes::MagicCirclePreventDamage(DispatcherCallbackArgs args)
 		return 0;
 	}
 	dispIo->damage.AddModFactor(0.0, DamageType::Unspecified, 104);
+	return 0;
+}
+
+int SpellConditionFixes::RageBeginSpell(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	auto target = args.objHndCaller;
+	SpellPacketBody spellPkt(spellId);
+
+	if (!spellPkt.spellEnum) return 0;
+
+	conds.AddTo(spellPkt.caster, "sp-Concentrating", { spellId, 0, 0 });
+	floatSys.FloatSpellLine(target, 20046u, FloatLineColor::Red);
+
+	if (!d20Sys.d20Query(target, DK_QUE_Critter_Is_Concentrating)) return 0;
+
+	auto otherId =
+		d20Sys.d20QueryReturnData(target, DK_QUE_Critter_Is_Concentrating);
+	d20Sys.d20SendSignal(target, DK_SIG_Remove_Concentration, otherId);
+
 	return 0;
 }
 

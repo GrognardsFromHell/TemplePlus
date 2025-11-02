@@ -80,6 +80,25 @@ def CheckCancelOut(obj, args, evt_obj):
 
 	return 0
 
+# Implements one condition preventing others. For instance, Neutralize
+# Poison prevents poison conditions from being added.
+#
+# Like the above hooks, any number of conditions are supported by providing
+# multiple parameters. The parameters should be the hash of the conditions
+# to be prevented.
+def CheckPrevent(obj, args, evt_obj):
+	ix = 0
+	key = args.get_param(ix)
+	while key != 0:
+		if evt_obj.is_modifier_hash(key):
+			evt_obj.return_val = 0 # don't add condition
+			break
+
+		ix += 1
+		key = args.get_param(ix)
+
+	return 0
+
 # Simply removes the condition
 def Remove(obj, args, evt_obj):
 	args.condition_remove()
