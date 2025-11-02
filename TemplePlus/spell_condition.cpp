@@ -1186,8 +1186,11 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 	
 	
 	auto tgt = d20a->d20ATarget;
+
+	auto casterParticles = spellPkt.targetListPartsysIds[0];
 	
 	if (spellSys.CheckSpellResistance(&spellPkt, tgt) == TRUE){
+		gameSystems->GetParticleSys().End(casterParticles);
 		args.RemoveSpellMod();
 		args.RemoveCondition();
 		return 0;
@@ -1195,6 +1198,7 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 
 	// Fixed target not getting a saving throw
 	if (spellPkt.SavingThrow(tgt, D20SavingThrowFlag::D20STF_SPELL_SCHOOL_NECROMANCY)){
+		gameSystems->GetParticleSys().End(casterParticles);
 		args.RemoveSpellMod();
 		args.RemoveCondition();
 		return 0;
@@ -1211,9 +1215,6 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 	if (!conds.AddTo(tgt, "sp-Ghoul Touch Stench", {spellId, duration, 0 , gtParticles })){
 		logger->debug("GhoulTouchAttackHandler: unable to add condition");
 	}
-
-	auto casterParticles = spellPkt.targetListPartsysIds[0];
-	
 
 	spellPkt.targetListHandles[0] = tgt;
 	spellPkt.targetListPartsysIds[0] = gtParticles;
