@@ -156,11 +156,15 @@ def casterIsConcentrating(spellId):
 # hook for ET_OnBeginRound. It decrements the condition's duration
 # only after concentration is broken by the caster.
 def countAfterConcentration(attachee, args, evt_obj):
-    if casterIsConcentrating(args.get_arg(0)): return 0
+    spellId = args.get_arg(0)
+    if casterIsConcentrating(spellId): return 0
 
     newDur = args.get_arg(1) - evt_obj.data1
     if newDur >= 0:
         args.set_arg(1, newDur)
+        packet = tpdp.SpellPacket(spellId)
+        packet.duration_remaining = newDur
+        packet.update_registry()
         return 0
 
     args.remove_spell_with_key(EK_S_Concentration_Broken)
