@@ -120,7 +120,7 @@ public:
 
 		static int(__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args) {
 			// fixes not removing Invisibility if target != caster
-			// fixes handling of Calm Emotions
+			// fixes handling of Calm Emotions, Rage
 
 			DispIoD20Signal *evtObj = nullptr;
 			if (args.dispIO)
@@ -234,6 +234,24 @@ public:
 				// todo: make this a template
 				spellSys.SpellEnd(spellId, 0);
 				args.RemoveSpellMod();
+				return 0;
+			}
+
+			// Rage
+			if (spPkt.spellEnum == 547) {
+				auto caster = spPkt.caster;
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+				d20Sys.d20SendSignal(caster, DK_SIG_Spell_End, spellId, 0);
+				spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)) {
+					logger->debug("Spell_Remove_Spell: could not end Rage");
+					return 0;
+				}
+				if (spellSys.SpellEnd(spellId, 0)) {
+					gameSystems->GetParticleSys().End(spPkt.casterPartsysId);
+					d20Sys.d20SendSignal(caster, DK_SIG_Remove_Concentration, spellId, 0);
+				}
+				args.RemoveCondition();
 				return 0;
 			}
 
