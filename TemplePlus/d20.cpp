@@ -83,6 +83,7 @@ public:
 	static ActionErrorCode ActionCheckFiveFootStep(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
 	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat);
 	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdRangedAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -147,6 +148,7 @@ public:
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameReload(D20Actn *d20a);
 	static BOOL ActionFrameRangedAttack(D20Actn* d20a);
 	static BOOL ActionFrameSpell(D20Actn* d20a);
 	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
@@ -482,8 +484,17 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
 
 	d20Type = D20A_RELOAD;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckReload;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameReload;
+	d20Defs[d20Type].flags = static_cast<D20ADF>(1704064u);
+	d20Defs[d20Type].flags = D20ADF_QueryForAoO;
+	d20Defs[d20Type].flags |= D20ADF_SimulsCompatible;
+	d20Defs[d20Type].flags |= D20ADF_DoLocationCheckAtDestination;
+	// TODO: action based; some reloads should not actually break concentration
+	d20Defs[d20Type].flags |= D20ADF_Breaks_Concentration;
 
 	d20Type = D20A_5FOOTSTEP;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
@@ -2084,6 +2095,12 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return FALSE;
 }
 
+BOOL D20ActionCallbacks::ActionFrameReload(D20Actn *d20a) {
+	PerformReload(d20a);
+
+	return TRUE;
+}
+
 /* 0x1008EB90 */
 BOOL D20ActionCallbacks::ActionFrameRangedAttack(D20Actn* d20a)
 {
@@ -2425,6 +2442,15 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 	if (d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Critter_Is_Immune_Critical_Hits)){
 		return AEC_TARGET_INVALID;
 	}
+
+	return AEC_OK;
+}
+ActionErrorCode D20ActionCallbacks::ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat)
+{
+	/* Note: do not do this. It seems to cause problems with full attacks.
+	if (!combatSys.NeedsToReload(d20a->d20APerformer))
+		return AEC_INVALID_ACTION;
+	*/
 
 	return AEC_OK;
 }
