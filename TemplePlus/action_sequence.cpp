@@ -1912,7 +1912,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 }
 
 // Used to append reload actions necessary before an attack
-ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Actn *d20a, TurnBasedStatus *tbStat)
+ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Actn *d20a)
 {
 	// first stand up if prone
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)) {
@@ -1930,10 +1930,9 @@ ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Act
 		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = reload;
 	}
 
-	auto result = TurnBasedStatusUpdate(tbStat, d20a);
-	if (result) return static_cast<ActionErrorCode>(result);
-
-	AttackAppend(actSeq, d20a, tbStat, tbStat->attackModeCode);
+	D20Actn attack = *d20a;
+	attack.data1 = 1;
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = attack;
 
 	return AEC_OK;
 }
@@ -3765,7 +3764,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 			if (acp.hourglassCost)
 			{
 				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
+				return AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
 		FullAttackCostCalculate(&d20aCopy, &tbStatCopy, &junk, &junk, &numAttacks, &junk );

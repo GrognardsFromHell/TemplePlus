@@ -173,7 +173,7 @@ struct ActionSequenceSystem : temple::AddressTable
 		splits up the movement to move -> aoo movement -> move as necessary
 	*/
 	void ProcessSequenceForAoOs(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
-	ActionErrorCode AppendReloadAttack(ActnSeq *, D20Actn *, TurnBasedStatus *);
+	ActionErrorCode AppendReloadAttack(ActnSeq *, D20Actn *);
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, int idx, TurnBasedStatus* tbStat);
 	//10097C20
 	

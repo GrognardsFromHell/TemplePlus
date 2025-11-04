@@ -489,7 +489,6 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameReload;
-	d20Defs[d20Type].flags = static_cast<D20ADF>(1704064u);
 	d20Defs[d20Type].flags = D20ADF_QueryForAoO;
 	d20Defs[d20Type].flags |= D20ADF_SimulsCompatible;
 	d20Defs[d20Type].flags |= D20ADF_DoLocationCheckAtDestination;
@@ -3895,7 +3894,7 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 			// if reloading isn't free, we can do at most one attack
 			if (acp.hourglassCost) {
 				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
+				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
 
