@@ -3889,11 +3889,11 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 		ActionCostPacket acp;
 		d20aCopy.d20Caf |= D20CAF_RANGED;
 		if (inventory.IsLoadableWeapon(weapon))	{
+			d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
 
 			// if reloading isn't free, we can do at most one attack
 			if (acp.hourglassCost) {
-				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
