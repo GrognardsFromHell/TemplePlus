@@ -1748,12 +1748,19 @@ ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedSt
 {
 	// free action by default
 	acp->hourglassCost = static_cast<int>(ActionCostType::Null);
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0.0;
 
-	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return AEC_OK;
+	if (d20->d20Caf & D20CAF_FREE_ACTION) return AEC_OK;
 	if (!combatSys.isCombatActive()) return AEC_OK;
 
 	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
 	if (!weapon) return AEC_OK;
+
+	tbStat->baseAttackNumCode = 0;
+	tbStat->attackModeCode = 0;
+	tbStat->numBonusAttacks = 0;
+	tbStat->surplusMoveDistance = 0;
 
 	// TODO: rapid reload is actually a per-weapon feat per the SRD
 	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
