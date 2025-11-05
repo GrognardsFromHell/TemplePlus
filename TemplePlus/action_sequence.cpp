@@ -1800,6 +1800,16 @@ ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedSt
 	return AEC_OK;
 }
 
+ActionErrorCode ActionSequenceSystem::ActionCheckReload(D20Actn *d20, TurnBasedStatus *tbStat)
+{
+	/* Note: do not do this. It seems to cause problems with full attacks.
+	if (!combatSys.NeedsToReload(d20a->d20APerformer))
+		return AEC_INVALID_ACTION;
+	*/
+
+	return AEC_OK;
+}
+
 void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a)
 {
 	AoOPacket aooPacket;

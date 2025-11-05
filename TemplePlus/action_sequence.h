@@ -228,6 +228,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
 	ActionErrorCode ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
+	ActionErrorCode ActionCheckReload(D20Actn *d20, TurnBasedStatus *tbStat);
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
 	int ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a);

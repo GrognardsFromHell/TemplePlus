@@ -2446,12 +2446,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 }
 ActionErrorCode D20ActionCallbacks::ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat)
 {
-	/* Note: do not do this. It seems to cause problems with full attacks.
-	if (!combatSys.NeedsToReload(d20a->d20APerformer))
-		return AEC_INVALID_ACTION;
-	*/
-
-	return AEC_OK;
+	return actSeqSys.ActionCheckReload(d20a, tbStat);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat){
