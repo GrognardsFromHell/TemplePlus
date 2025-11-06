@@ -875,6 +875,9 @@ void LegacyCombatSystem::EndTurn()
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	logger->info("EndTurn: actor {}", actor);
 
+	// try to auto-reload
+	critterSys.AutoReload(actor, true);
+
 	if (party.IsInParty(actor)){
 		static auto uiCombatInitiativePortraitsReset = temple::GetRef<int(__cdecl*)(int)>(0x10AA83FC);
 		uiCombatInitiativePortraitsReset(0);

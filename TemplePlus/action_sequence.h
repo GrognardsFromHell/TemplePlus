@@ -173,7 +173,7 @@ struct ActionSequenceSystem : temple::AddressTable
 		splits up the movement to move -> aoo movement -> move as necessary
 	*/
 	void ProcessSequenceForAoOs(ActnSeq*actSeq, D20Actn * d20a); // actSeq@<ebx>
-	ActionErrorCode AppendReloadAttack(ActnSeq *, D20Actn *, TurnBasedStatus *);
+	ActionErrorCode AppendReloadAttack(ActnSeq *, D20Actn *);
 	uint32_t SequencePathSthgSub_10096450(ActnSeq * actSeq, int idx, TurnBasedStatus* tbStat);
 	//10097C20
 	
@@ -228,6 +228,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);
 	ActionErrorCode ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
+	ActionErrorCode ActionCheckReload(D20Actn *d20, TurnBasedStatus *tbStat);
 	int ActionCostFullAttack(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
 	int ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a);

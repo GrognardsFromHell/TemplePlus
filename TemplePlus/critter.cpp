@@ -23,6 +23,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "ai.h"
+#include "action_sequence.h"
 #include "party.h"
 #include "ui\ui.h"
 #include "temple_functions.h"
@@ -331,12 +332,33 @@ void LegacyCritterSystem::Attack(objHndl provoked, objHndl agitator, int rangeTy
 	aiSys.ProvokeHostility(provoked, agitator, rangeType, flags);
 }
 
-bool LegacyCritterSystem::AutoReload(objHndl critter)
+bool LegacyCritterSystem::AutoReload(objHndl critter, bool combat)
 {
 	if (!critter || IsDeadOrUnconscious(critter)) return false;
 	// TODO: more conditions blocking?
 
 	if (!combatSys.NeedsToReload(critter)) return false;
+
+	if (combatSys.isCombatActive()) {
+		if (!combat) return false;
+
+		auto curStatus = actSeqSys.curSeqGetTurnBasedStatus();
+		if (!curStatus) return false;
+
+		D20Actn d20a;
+		d20a.d20ActType = D20A_RELOAD;
+		d20a.d20APerformer = critter;
+		auto tbStatus = *curStatus;
+		ActionCostPacket acp;
+
+		actSeqSys.ActionCostReload(&d20a, &tbStatus, &acp);
+
+		auto timeLeft = tbStatus.hourglassState;
+		auto cost = acp.hourglassCost;
+		auto invalid = actSeqSys.ActionCheckReload(&d20a, &tbStatus);
+
+		if (timeLeft < cost || invalid) return false;
+	}
 
 	if (!combatSys.AmmoMatchesItemAtSlot(critter, WeaponPrimary)) {
 		// out of ammo
@@ -344,8 +366,6 @@ bool LegacyCritterSystem::AutoReload(objHndl critter)
 		objects.floats->FloatCombatLine(critter, 44);
 		return false;
 	}
-
-	if (combatSys.isCombatActive()) return false;
 
 	auto weapon = inventory.ItemWornAt(critter, WeaponPrimary);
 	weapons.SetLoaded(weapon);
