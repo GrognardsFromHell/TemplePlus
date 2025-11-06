@@ -117,6 +117,7 @@ AiSystem::AiSystem()
 	rebase(aiTacticDefs,0x102E4398); 
 	rebase(_AiRemoveFromList, 0x1005A070);
 	rebase(_FleeAdd, 0x1005DE60);
+	rebase(_StopFleeing, 0x1005DEA0);
 	rebase(_ShitlistAdd, 0x1005CC10);
 	rebase(_StopAttacking, 0x1005E6A0);
 	rebase(aiParams, 0x10AA4BD0);
@@ -448,6 +449,10 @@ void AiSystem::FleeAdd(objHndl npc, objHndl target) {
 
 void AiSystem::StopAttacking(objHndl npc) {
 	_StopAttacking(npc);
+}
+
+void AiSystem::StopFleeing(objHndl npc) {
+	_StopFleeing(npc);
 }
 
 void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags){

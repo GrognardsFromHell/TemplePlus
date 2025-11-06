@@ -166,6 +166,7 @@ struct AiSystem : temple::AddressTable
 	BOOL AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind); // search for tgt in ai list field. 0 is for enemies, 1 is for allies
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
+	void StopFleeing(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
 	void TryLockOnTarget(objHndl handle, objHndl leader, objHndl target, int isAlways1, int isFlags1Set, int skipAiStatusUpdate);
 	void TargetLockUnset(objHndl handle);
@@ -284,6 +285,7 @@ private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
+	void (__cdecl *_StopFleeing)(objHndl npc);
 	void (__cdecl *_StopAttacking)(objHndl npc);
 	bool Is5FootStepWorth(AiTactic * aiTac);
 	IdxTable< AiStrategy> mAiStrategiesCustom;

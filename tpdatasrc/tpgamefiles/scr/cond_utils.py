@@ -99,6 +99,27 @@ def CheckPrevent(obj, args, evt_obj):
 
 	return 0
 
+# Implements coalescing of conditions based on their relative durations. If a
+# copy of the same condition is added, it will either be prevented, or the
+# existing condition will remove itself, depending on which will result in the
+# longest resulting duration.
+def Coalesce(obj, args, evt_obj):
+	key = args.get_param(0)
+
+	my_dur = args.get_arg(0)
+
+	if not evt_obj.is_modifier(args.get_cond_name()): return 0
+
+	# new condition has longer duration
+	if my_dur < evt_obj.arg1:
+		args.condition_remove()
+	# we have longer duration
+	else:
+		evt_obj.return_val = 0
+
+	return 0
+
+
 # Simply removes the condition
 def Remove(obj, args, evt_obj):
 	args.condition_remove()
@@ -196,6 +217,11 @@ class CondFunctions(BasicPyMod):
 		params = (tpdp.hash(name), distinct)
 		
 		self.add_hook(ET_OnGetEffectTooltip, EK_NONE, KeyedEffectTooltip, params)
+
+	# Adds a hook that will coalesce multiple copies of the conditions,
+	# preferring the longer duration.
+	def AddCoalesce(self):
+		self.add_hook(ET_OnConditionAddPre, EK_NONE, Coalesce, ())
 
 	def AddCountdownRemove(self):
 		self.add_hook(ET_OnBeginRound, EK_NONE, CountdownRemoveSelf, ())
