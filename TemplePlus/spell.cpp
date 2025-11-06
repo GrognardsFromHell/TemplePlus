@@ -3485,9 +3485,14 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 	}
 
 	// does spell allow SR (force flag will check anyway)
-	if ((dispIo.spellEntry.spellResistanceCode != 1) && !forceCheck)
+	switch (dispIo.spellEntry.spellResistanceCode)
 	{
-		return 0;
+	case 1: // Yes
+	case 2: // In-code; this is not called from targeting.
+		break;
+	default: // something else, assume no
+	case 0: // No
+		if (!forceCheck) return 0;
 	}
 	
 	// obtain bonuses
