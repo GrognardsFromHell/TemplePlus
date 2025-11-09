@@ -4016,6 +4016,15 @@ static PyObject* PyObjHandle_AiStopFleeing(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AiProcess(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	aiSys.AiProcess(self->handle);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4652,6 +4661,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_stop_fleeing", PyObjHandle_AiStopFleeing, METH_VARARGS, NULL },
 
 	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
+	{ "ai_process", PyObjHandle_AiProcess, METH_VARARGS, NULL },
 
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },

@@ -3275,10 +3275,17 @@ bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
 	if (!d20Sys.d20Query(handle, DK_QUE_Critter_Is_Confused))
 		return false;
 
-	auto spellId = (int)d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Confused);
+	auto qdata = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Confused);
+	int spellId = 0;
+	objHndl designated = objHndl::null;
+
+	if (confusionState == 13) {
+		designated = qdata;
+	} else {
+		spellId = static_cast<int>(qdata);
+	}
+
 	SpellPacketBody spPkt(spellId);
-	if (!spPkt.spellEnum)
-		return false;
 
 	if (confusionState == 11){
 		switch (Dice::Roll(1,6)-1){
@@ -3295,6 +3302,10 @@ bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
 		default:
 			confusionState = 5; break;
 		}
+	}
+
+	if (!spPkt.spellEnum) {
+		if (confusionState == 5) confusionState = 7;
 	}
 
 	auto confusionTgt = objHndl::null;
@@ -3335,6 +3346,9 @@ bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
 	case 12: 
 		confusionTgt = handle;
 		break;
+	case 13:
+		confusionTgt = designated;
+		break;
 	case 6: // do whatever was doing last I guess
 	case 10:
 	case 11:
@@ -3343,6 +3357,11 @@ bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
 		return false;
 	}
 
+	// TODO: It seems like this just doesn't work well. I suspect that if the
+	// target would normally be designated as friendly, the AI system ignores
+	// it and picks a different target. Needless to say, this doesn't actually
+	// play well with confusion, which is supposed to sometimes lead to your
+	// party attacking one another.
 	if (confusionTgt){
 		aiSys.StrategyParse(handle, confusionTgt);
 	}

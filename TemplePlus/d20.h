@@ -227,6 +227,7 @@ struct D20Actn{
 	int FilterSpellTargets(SpellPacketBody& spellPkt); // returns number of remaining targets
 	D20ADF GetActionDefinitionFlags();
 	bool IsMeleeHit();
+	bool IsHarmful();
 
 	// Python action section
 	D20DispatcherKey GetPythonActionEnum();

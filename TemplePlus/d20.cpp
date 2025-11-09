@@ -4301,6 +4301,53 @@ bool D20Actn::IsMeleeHit(){
 	return ((d20Caf & D20CAF_HIT) && !(d20Caf & D20CAF_RANGED));
 }
 
+bool D20Actn::IsHarmful() {
+	SpellPacketBody pkt(spellId);
+
+	switch (d20ActType)
+	{
+	case D20A_CAST_SPELL:
+		return spellSys.IsSpellHarmful(pkt.spellEnum, d20APerformer, d20ATarget);
+	case D20A_PYTHON_ACTION:
+		// TODO: more complicated logic
+		return false;
+
+	case D20A_UNSPECIFIED_ATTACK:
+	case D20A_STANDARD_ATTACK:
+	case D20A_FULL_ATTACK:
+	case D20A_STANDARD_RANGED_ATTACK:
+	case D20A_CLEAVE:
+	case D20A_ATTACK_OF_OPPORTUNITY:
+	case D20A_WHIRLWIND_ATTACK:
+	case D20A_TOUCH_ATTACK:
+	case D20A_CHARGE:
+	case D20A_TURN_UNDEAD:
+	case D20A_DEATH_TOUCH:
+	case D20A_COUP_DE_GRACE:
+	case D20A_STUNNING_FIST:
+	case D20A_SMITE_EVIL:
+	case D20A_TRIP:
+	case D20A_SPELL_CALL_LIGHTNING:
+	case D20A_AOO_MOVEMENT:
+	case D20A_THROW:
+	case D20A_THROW_GRENADE:
+	case D20A_FEINT:
+	case D20A_DISARM:
+	case D20A_SUNDER:
+	case D20A_BULLRUSH:
+	case D20A_TRAMPLE:
+	case D20A_GRAPPLE:
+	case D20A_PIN:
+	case D20A_OVERRUN:
+	case D20A_SHIELD_BASH:
+	case D20A_QUIVERING_PALM:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 D20DispatcherKey D20Actn::GetPythonActionEnum()
 {
 	// Python action enum will now be stored in distTraversed

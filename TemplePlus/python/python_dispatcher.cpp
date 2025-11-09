@@ -736,6 +736,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			return createProjAndThrow(startLoc.location, protoNum, 0, 0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
 		})
 		.def("projectile_append", &D20Actn::ProjectileAppend)
+		.def("is_harmful", &D20Actn::IsHarmful)
 		;
 
 
