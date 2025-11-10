@@ -85,7 +85,7 @@ def actionFrame(attachee, args, evt_obj):
     damage_dice = dice_new("1d6")
     damage_dice.number = 3
     wisScore = attachee.stat_level_get(stat_wisdom)
-    damage_dice.bonus = math.floor((wisScore - 10)/2)
+    damage_dice.bonus = (wisScore - 10)/2
     target.spell_damage_weaponlike( attachee, D20DT_FORCE, damage_dice, D20DAP_UNSPECIFIED, 100, D20A_CAST_SPELL, currentSequence.spell_packet.spell_id , return_val, 0) #index of target??
         
     return 0

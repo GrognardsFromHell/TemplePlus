@@ -23,6 +23,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "ai.h"
+#include "action_sequence.h"
 #include "party.h"
 #include "ui\ui.h"
 #include "temple_functions.h"
@@ -331,12 +332,33 @@ void LegacyCritterSystem::Attack(objHndl provoked, objHndl agitator, int rangeTy
 	aiSys.ProvokeHostility(provoked, agitator, rangeType, flags);
 }
 
-bool LegacyCritterSystem::AutoReload(objHndl critter)
+bool LegacyCritterSystem::AutoReload(objHndl critter, bool combat)
 {
 	if (!critter || IsDeadOrUnconscious(critter)) return false;
 	// TODO: more conditions blocking?
 
 	if (!combatSys.NeedsToReload(critter)) return false;
+
+	if (combatSys.isCombatActive()) {
+		if (!combat) return false;
+
+		auto curStatus = actSeqSys.curSeqGetTurnBasedStatus();
+		if (!curStatus) return false;
+
+		D20Actn d20a;
+		d20a.d20ActType = D20A_RELOAD;
+		d20a.d20APerformer = critter;
+		auto tbStatus = *curStatus;
+		ActionCostPacket acp;
+
+		actSeqSys.ActionCostReload(&d20a, &tbStatus, &acp);
+
+		auto timeLeft = tbStatus.hourglassState;
+		auto cost = acp.hourglassCost;
+		auto invalid = actSeqSys.ActionCheckReload(&d20a, &tbStatus);
+
+		if (timeLeft < cost || invalid) return false;
+	}
 
 	if (!combatSys.AmmoMatchesItemAtSlot(critter, WeaponPrimary)) {
 		// out of ammo
@@ -344,8 +366,6 @@ bool LegacyCritterSystem::AutoReload(objHndl critter)
 		objects.floats->FloatCombatLine(critter, 44);
 		return false;
 	}
-
-	if (combatSys.isCombatActive()) return false;
 
 	auto weapon = inventory.ItemWornAt(critter, WeaponPrimary);
 	weapons.SetLoaded(weapon);
@@ -2424,7 +2444,7 @@ objHndl LegacyCritterSystem::GetPrimaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapl;
 	else
 		return weapr;
@@ -2435,7 +2455,7 @@ objHndl LegacyCritterSystem::GetSecondaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapr;
 	else
 		return weapl;
@@ -2516,6 +2536,19 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 	// Otherwise, we're wielding a double weapon, or the offhand is
 	// null, either of which count as light.
 	return true;
+}
+
+// Checks that the left hand is actually the primary weapon. This includes
+// checking that there is an actual weapon equipped (single, shield or
+// double), because fighting with an empty off hand is currently not actually
+// supported.
+bool LegacyCritterSystem::LeftHandIsPrimary(objHndl critter)
+{
+	if (!critter || !objSystem->IsValidHandle(critter))
+		return false;
+
+	auto weapl = GetLeftWield(critter);
+	return weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary);
 }
 
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){

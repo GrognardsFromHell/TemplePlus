@@ -83,6 +83,7 @@ public:
 	static ActionErrorCode ActionCheckFiveFootStep(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
 	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat);
 	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdRangedAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -147,6 +148,7 @@ public:
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameReload(D20Actn *d20a);
 	static BOOL ActionFrameRangedAttack(D20Actn* d20a);
 	static BOOL ActionFrameSpell(D20Actn* d20a);
 	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
@@ -514,8 +516,16 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
 
 	d20Type = D20A_RELOAD;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckReload;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameReload;
+	d20Defs[d20Type].flags = D20ADF_QueryForAoO;
+	d20Defs[d20Type].flags |= D20ADF_SimulsCompatible;
+	d20Defs[d20Type].flags |= D20ADF_DoLocationCheckAtDestination;
+	// TODO: action based; some reloads should not actually break concentration
+	d20Defs[d20Type].flags |= D20ADF_Breaks_Concentration;
 
 	d20Type = D20A_5FOOTSTEP;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
@@ -1351,7 +1361,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
-	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary))
+	if (critterSys.LeftHandIsPrimary(d20a->d20APerformer))
 		useSecondaryAnim = !useSecondaryAnim;
 
 	combatSys.ToHitProcessing(*d20a);
@@ -2116,6 +2126,12 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return FALSE;
 }
 
+BOOL D20ActionCallbacks::ActionFrameReload(D20Actn *d20a) {
+	PerformReload(d20a);
+
+	return TRUE;
+}
+
 /* 0x1008EB90 */
 BOOL D20ActionCallbacks::ActionFrameRangedAttack(D20Actn* d20a)
 {
@@ -2459,6 +2475,10 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 	}
 
 	return AEC_OK;
+}
+ActionErrorCode D20ActionCallbacks::ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat)
+{
+	return actSeqSys.ActionCheckReload(d20a, tbStat);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat){
@@ -3896,12 +3916,12 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 		ActionCostPacket acp;
 		d20aCopy.d20Caf |= D20CAF_RANGED;
 		if (inventory.IsLoadableWeapon(weapon))	{
+			d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
 
 			// if reloading isn't free, we can do at most one attack
 			if (acp.hourglassCost) {
-				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
+				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
 

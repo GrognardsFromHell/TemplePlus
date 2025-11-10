@@ -891,6 +891,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			return spEntry.GetLowestSpellLevel(spEntry.spellEnum);
 		})
 		.def_readwrite("spellRangeType", &SpellEntry::spellRangeType)
+		.def_readwrite("spell_range_type", &SpellEntry::spellRangeType)
+		.def_readwrite("spell_range", &SpellEntry::spellRange)
 		.def("get_spell_range_exact", [](SpellEntry &spEntry, int casterLevel, objHndl &caster)->int
 		{
 			return spellSys.GetSpellRangeExact(spEntry.spellRangeType, casterLevel, caster);
@@ -1078,14 +1080,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
-		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl {
+		.def("get_obj_from_args", [](DispIoD20Signal& evtObj)->objHndl {
 			
 			auto handle = objHndl::FromUpperAndLower(evtObj.data2, evtObj.data1);
 			if (!gameSystems->GetObj().IsValidHandle(handle))
 				handle = objHndl::null;
 			return handle;
 			}, "Used for python signals that have a handle as the parameter.")
-		.def("set_args_from_obj", [](DispIoD20Query& evtObj, objHndl & handle)->void {
+		.def("set_args_from_obj", [](DispIoD20Signal& evtObj, objHndl & handle)->void {
 
 				if (objSystem->IsValidHandle(handle)) {
 					evtObj.data1 = handle.GetHandleLower();

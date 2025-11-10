@@ -489,11 +489,28 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum, spellClass);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
-		SpellEntry spellEntry;
-		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
-			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
+		auto wideFactor = metaMagicData.metaMagicWidenSpellCount + 1;
+		auto enlargeFactor = metaMagicData.metaMagicEnlargeSpellCount + 1;
+		SpellEntry spellEntry(spellEnum);
+
+		switch (spellEntry.spellRangeType)
+		{
+		case SRT_Specified:
+			// Specified is used for cones and lines, which widen applies to. For
+			// some reason cones don't use radius to determine the cone length.
+			spellEntry.spellRange *= wideFactor;
+			break;
+
+		case SRT_Close:
+		case SRT_Medium:
+		case SRT_Long:
+			// enlarge spell only applies to these range types
+			curSeq->spellPktBody.spellRange *= enlargeFactor;
+		default:
+			spellEntry.radiusTarget *= wideFactor;
+			break;
 		}
+
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
@@ -1731,12 +1748,19 @@ ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedSt
 {
 	// free action by default
 	acp->hourglassCost = static_cast<int>(ActionCostType::Null);
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0.0;
 
-	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return AEC_OK;
+	if (d20->d20Caf & D20CAF_FREE_ACTION) return AEC_OK;
 	if (!combatSys.isCombatActive()) return AEC_OK;
 
 	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
 	if (!weapon) return AEC_OK;
+
+	tbStat->baseAttackNumCode = 0;
+	tbStat->attackModeCode = 0;
+	tbStat->numBonusAttacks = 0;
+	tbStat->surplusMoveDistance = 0;
 
 	// TODO: rapid reload is actually a per-weapon feat per the SRD
 	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
@@ -1772,6 +1796,16 @@ ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedSt
 	}
 
 	acp->hourglassCost = static_cast<int>(cost);
+
+	return AEC_OK;
+}
+
+ActionErrorCode ActionSequenceSystem::ActionCheckReload(D20Actn *d20, TurnBasedStatus *tbStat)
+{
+	/* Note: do not do this. It seems to cause problems with full attacks.
+	if (!combatSys.NeedsToReload(d20a->d20APerformer))
+		return AEC_INVALID_ACTION;
+	*/
 
 	return AEC_OK;
 }
@@ -1888,7 +1922,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 }
 
 // Used to append reload actions necessary before an attack
-ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Actn *d20a, TurnBasedStatus *tbStat)
+ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Actn *d20a)
 {
 	// first stand up if prone
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)) {
@@ -1906,10 +1940,9 @@ ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Act
 		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = reload;
 	}
 
-	auto result = TurnBasedStatusUpdate(tbStat, d20a);
-	if (result) return static_cast<ActionErrorCode>(result);
-
-	AttackAppend(actSeq, d20a, tbStat, tbStat->attackModeCode);
+	D20Actn attack = *d20a;
+	attack.data1 = 1;
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = attack;
 
 	return AEC_OK;
 }
@@ -3741,7 +3774,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 			if (acp.hourglassCost)
 			{
 				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
+				return AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
 		FullAttackCostCalculate(&d20aCopy, &tbStatCopy, &junk, &junk, &numAttacks, &junk );

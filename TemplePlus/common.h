@@ -290,6 +290,16 @@ enum class UiPickerType : uint64_t {
 	PickOrigin = 0x8000 // New! denotes that the spell's point of origin can be freely chosen
 };
 
+constexpr UiPickerType operator &(UiPickerType l, UiPickerType r)
+{
+	return static_cast<UiPickerType>(static_cast<uint64_t>(l) & static_cast<uint64_t>(r));
+}
+
+constexpr bool operator !(UiPickerType p)
+{
+	return p == UiPickerType::None;
+}
+
 struct ObjListResultItem {
 	objHndl handle;
 	ObjListResultItem *next;
@@ -351,7 +361,9 @@ struct ObjListResult
 	int CountResults();
 	void ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleMax, int filter);
 	void ListRaycast(LocAndOffsets &origin, LocAndOffsets &endPt, float rangeInches, float radiusInches);
-
+	bool ContainsHandle(objHndl tgt);
+	bool AnyHandle(std::function<bool(objHndl)> pred);
+	bool AllHandles(std::function<bool(objHndl)> pred);
 };
 
 struct PickerResult {
@@ -364,7 +376,10 @@ struct PickerResult {
 	int fieldbc;
 
 	void FreeObjlist();
-
+	void MultiAppend(objHndl tgt);
+	uint32_t MultiGetCount();
+	objHndl FirstHandle();
+	bool AnyHandle(std::function<bool(objHndl)> pred);
 };
 
 

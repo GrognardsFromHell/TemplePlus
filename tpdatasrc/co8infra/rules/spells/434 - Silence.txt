@@ -1,0 +1,21 @@
+School: Illusion
+Subschool: Glamer
+Level: Brd 2
+Level: Clr 2
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Long
+Saving Throw: Willpower
+Spell Resistance: In-Code
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+mode_Target: Area or Obj
+radius_Target: 20
+ai_type: ai_action_offensive
+source: PHB

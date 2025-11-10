@@ -1,7 +1,6 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-import math
 
 # Natural Bond:   Complete Adventurer, p. 111
 
@@ -13,7 +12,7 @@ def QueryNaturalBond(attachee, args, evt_obj):
 	#Add Druid Level to Ranger effective druid level
 	rangerLevel = attachee.stat_level_get(stat_level_ranger) 
 	if rangerLevel >= 4:
-		animalCompanionLevel = math.floor(rangerLevel / 2)
+		animalCompanionLevel = rangerLevel / 2
 	animalCompanionLevel += attachee.stat_level_get(stat_level_druid)
 
 	characterLevel = attachee.stat_level_get(stat_level)

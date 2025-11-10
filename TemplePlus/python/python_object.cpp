@@ -3810,34 +3810,42 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 
-	feat_enums feat;
-
 	if (PyTuple_GET_SIZE(args) < 1) {
-		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		auto msg = "has_feat called with no arguments!";
+		PyErr_SetString(PyExc_RuntimeError, msg);
 		return PyInt_FromLong(0);
 	}
 
-	PyObject* arg = PyTuple_GET_ITEM(args, 0);
-	if (PyString_Check(arg)) {
-		auto argString = fmt::format("{}", PyString_AsString(arg));
-		feat = (feat_enums)ElfHash::Hash(argString);
-	}
+	feat_enums feat;
+	int chosen = 0;
 
-	else if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
-		return 0;
+	PyObject *arg = PyTuple_GET_ITEM(args, 0);
+
+	if (PyString_Check(arg)) {
+		char *name;
+		if (!PyArg_ParseTuple(args, "s|i:objHndl.has_feat", &name, &chosen)) {
+			return PyInt_FromLong(0);
+		}
+		auto argString = fmt::format("{}", name);
+		feat = static_cast<feat_enums>(ElfHash::Hash(argString));
+	} else {
+		if (!PyArg_ParseTuple(args, "i|i:objHndl.has_feat", &feat, &chosen)) {
+			return PyInt_FromLong(0);
+		}
 	}
 
 	if (!objects.IsCritter(self->handle)) {
-		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), self->handle);
+		auto msg = "Python has_feat ({}) called with non critter object: {}";
+		logger->warn(msg, feats.GetFeatName(feat), self->handle);
 		return PyInt_FromLong(0);
 	}
 
-	Stat levelRaised = (Stat)0;
-	uint32_t domain1 = 0;
-	uint32_t domain2 = 0;
-	uint32_t alignmentChoice = 0;
-
-	auto result = feats.HasFeatCountByClass(self->handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
+	uint32_t result = 0;
+	if (chosen) {
+		result = feats.HasFeatCount(self->handle, feat);
+	} else {
+		result = feats.HasFeatCountByClass(self->handle, feat);
+	}
 
 	return PyInt_FromLong(result);
 }
