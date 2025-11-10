@@ -8587,11 +8587,6 @@ void Conditions::AddConditionsToTable(){
 		grappled.ExtendExisting("Grappled");
 		// set DK_QUE_Helpless to NoOp, grappled is not helpless
 		grappled.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
-
-		static CondStructNew stunned;
-		stunned.ExtendExisting("Stunned");
-		// set DK_QUE_Helpless to NoOp, stunned is not helpless
-		stunned.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
 	}
 
 	{
