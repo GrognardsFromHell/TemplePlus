@@ -1691,23 +1691,40 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 
 	// Following arguments all have to be integers and gel with the condition argument count
 	vector<int> condArgs(cond->numArgs, 0);
-	for (unsigned int i = 0; i < cond->numArgs; ++i) {
-		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
-			auto item = PyTuple_GET_ITEM(args, i + 1);
-			if (PyLong_Check(item)){
-				condArgs[i] = PyLong_AsLong(item);
-				continue;
-			}
+	size_t j = 0;
+	for (unsigned int i = 0; j < cond->numArgs; ++i) {
+		// no more arguments
+		if (static_cast<uint32_t>(PyTuple_GET_SIZE(args)) <= i+1)
+			break;
 
-			if (!PyInt_Check(item)) {
-				auto itemRepr = PyObject_Repr(item);
-				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int or long: %s",
-				             i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
-				Py_DECREF(itemRepr);
+		auto item = PyTuple_GET_ITEM(args, i + 1);
+		if (PyLong_Check(item)){
+			condArgs[j++] = PyLong_AsLong(item);
+			continue;
+		}
+
+		if (PyInt_Check(item)) {
+			condArgs[j++] = PyInt_AsLong(item);
+			continue;
+		}
+
+		objHndl obj;
+		if (ConvertObjHndl(item, &obj)) {
+			if (j+1 < cond->numArgs) {
+				condArgs[j++] = obj.GetHandleUpper();
+				condArgs[j++] = obj.GetHandleLower();
+				continue;
+			} else {
+				PyErr_Format(PyExc_ValueError, "Object argument %d for condition %s cannot fit into %d arguments. Objects take two arguments.", i + 1, condName, cond->numArgs);
 				return false;
 			}
-			condArgs[i] = PyInt_AsLong(item);
 		}
+
+		auto itemRepr = PyObject_Repr(item);
+		PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int, long or object: %s",
+								 i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
+		Py_DECREF(itemRepr);
+		return false;
 	}
 
 	condStructOut = cond;
@@ -2416,6 +2433,22 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_Banish(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	auto killer = objHndl::null;
+	bool awardXp = true;
+	if (!PyArg_ParseTuple(args, "|O&i:objhndl.critter_banish", &ConvertObjHndl, &killer, awardXp)) {
+		return 0;
+	}
+
+	critterSys.Banish(self->handle, killer, awardXp);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -2688,9 +2721,33 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 
 
 static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto fname = "d20_query_with_object";
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		Py_RETURN_NONE;
+	}
+
+	if (PyTuple_GET_SIZE(args) < 2) {
+		auto err = "%s called with too few arguments!";
+		PyErr_Format(PyExc_RuntimeError, err, fname);
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		objHndl obj;
+		PyObject *arg = PyTuple_GET_ITEM(args, 1);
+		if (ConvertObjHndl(arg, &obj)) {
+			auto result = d20Sys.D20QueryPython(self->handle, argString, obj);
+			return PyInt_FromLong(result);
+		} else {
+			auto err = "%s could not decode object argument: %s";
+			auto argRepr = PyObject_Repr(arg);
+			PyErr_Format(PyExc_ValueError, err, fname, argRepr);
+			Py_DECREF(argRepr);
+			return PyInt_FromLong(0);
+		}
 	}
 
 	int queryKey;
@@ -3958,6 +4015,24 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AiStopFleeing(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	aiSys.StopFleeing(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiProcess(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	aiSys.AiProcess(self->handle);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4591,8 +4666,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{ "ai_stop_fleeing", PyObjHandle_AiStopFleeing, METH_VARARGS, NULL },
 
 	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
+	{ "ai_process", PyObjHandle_AiProcess, METH_VARARGS, NULL },
 
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
@@ -4644,6 +4721,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL },
 	{ "critter_kill", PyObjHandle_Kill, METH_VARARGS, NULL },
 	{ "critter_kill_by_effect", PyObjHandle_KillByEffect, METH_VARARGS, NULL },
+	{ "critter_banish", PyObjHandle_Banish, METH_VARARGS, NULL },
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },

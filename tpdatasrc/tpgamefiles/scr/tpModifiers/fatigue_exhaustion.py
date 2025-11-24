@@ -108,10 +108,25 @@ def FatigueRemove(attachee, args, evt_obj):
 	return 0
 	
 def FatigueAddHeal(attachee, args, evt_obj):
-	val = evt_obj.is_modifier("sp-Heal")
-	if val:
+	is_heal = evt_obj.is_modifier("sp-Heal")
+	is_restore = evt_obj.is_modifier("sp-Restoration")
+	is_grestore = evt_obj.is_modifier("sp-Greater Restoration")
+	if is_heal or is_restore or is_grestore:
 		attachee.float_text_line("Fatigue Removed")
 		args.condition_remove()
+
+	if evt_obj.is_modifier("sp-Lesser Restoration"):
+		rage_fatigue_dur = args.get_arg(0)
+		fatigue_dur = args.get_arg(1)
+		exhaust_dur = args.get_arg(2)
+		if exhaust_dur != 0:
+			args.set_arg(2, 0)
+			args.set_arg(1, exhaust_dur)
+			attachee.float_text_line("Fatigue Decreased")
+		else:
+			attachee.float_text_line("Fatigue Removed")
+			args.condition_remove()
+
 	return 0
 	
 def BarbarianFatiguedQuery(attachee, args, evt_obj):
@@ -143,7 +158,7 @@ def AddBarbarianFatigueSignal(attachee, args, evt_obj):
 	return 0
 
 def AddFatigueSignal(attachee, args, evt_obj):
-	if evt_obj.data1 == 0:
+	if evt_obj.data2 == 0:
 		fatigueDurationNew = evt_obj.data1
 	else:
 		fatigueDurationNew = -1
@@ -160,7 +175,7 @@ def AddFatigueSignal(attachee, args, evt_obj):
 		else:
 			attachee.float_text_line("Already Fatigued")
 	else:
-		target_item.obj.float_text_line("Already Fatigued")
+		attachee.float_text_line("Already Fatigued")
 		
 	return 0
 

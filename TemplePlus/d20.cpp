@@ -273,6 +273,33 @@ LegacyD20System d20Sys;
 D20ActionDef d20ActionDefsNew[1000];
 TabFileStatus _d20actionTabFile;
 
+// port of logic from 0x100C5D90 to avoid stacking 20% penalties
+bool DeafnessSpellInterrupted(objHndl critter, SpellStoreData *spellData)
+{
+	if (!d20Sys.d20Query(critter, DK_QUE_Critter_Is_Deafened))
+		return false;
+
+	if (!(spellData->GetSpellComponentFlags() & SpellComponent_Verbal))
+		return false;
+
+	auto roll = Dice(1, 100, 0).Roll();
+	auto interrupt = roll <= 20;
+	auto mesResult = 0;
+
+	if (interrupt) {
+		histSys.CreateRollHistoryLineFromMesfile(0x23, critter, objHndl::null);
+		floatSys.FloatCombatLine(critter, 78);
+		mesResult = 78;
+	} else {
+		mesResult = 62;
+	}
+	auto hid = histSys.RollHistoryAddType5PercentChanceRoll(
+			critter, objHndl::null, 20, 79, roll, mesResult, 192);
+	histSys.CreateRollHistoryString(hid);
+
+	return interrupt;
+}
+
 bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellStoreData* spellData){
 
 	if (spellSys.IsSpellLike(spellData->spellEnum)
@@ -302,6 +329,11 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
+
+	// check deafness failure here to avoid stacking penalties
+	if (DeafnessSpellInterrupted(d20a->d20APerformer, spellData))
+		return true;
+
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
 		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0; // can be set to 1 by Casting Defensively and Armor Spell Failure
 }
@@ -4287,6 +4319,53 @@ D20ADF D20Actn::GetActionDefinitionFlags(){
 
 bool D20Actn::IsMeleeHit(){
 	return ((d20Caf & D20CAF_HIT) && !(d20Caf & D20CAF_RANGED));
+}
+
+bool D20Actn::IsHarmful() {
+	SpellPacketBody pkt(spellId);
+
+	switch (d20ActType)
+	{
+	case D20A_CAST_SPELL:
+		return spellSys.IsSpellHarmful(pkt.spellEnum, d20APerformer, d20ATarget);
+	case D20A_PYTHON_ACTION:
+		// TODO: more complicated logic
+		return false;
+
+	case D20A_UNSPECIFIED_ATTACK:
+	case D20A_STANDARD_ATTACK:
+	case D20A_FULL_ATTACK:
+	case D20A_STANDARD_RANGED_ATTACK:
+	case D20A_CLEAVE:
+	case D20A_ATTACK_OF_OPPORTUNITY:
+	case D20A_WHIRLWIND_ATTACK:
+	case D20A_TOUCH_ATTACK:
+	case D20A_CHARGE:
+	case D20A_TURN_UNDEAD:
+	case D20A_DEATH_TOUCH:
+	case D20A_COUP_DE_GRACE:
+	case D20A_STUNNING_FIST:
+	case D20A_SMITE_EVIL:
+	case D20A_TRIP:
+	case D20A_SPELL_CALL_LIGHTNING:
+	case D20A_AOO_MOVEMENT:
+	case D20A_THROW:
+	case D20A_THROW_GRENADE:
+	case D20A_FEINT:
+	case D20A_DISARM:
+	case D20A_SUNDER:
+	case D20A_BULLRUSH:
+	case D20A_TRAMPLE:
+	case D20A_GRAPPLE:
+	case D20A_PIN:
+	case D20A_OVERRUN:
+	case D20A_SHIELD_BASH:
+	case D20A_QUIVERING_PALM:
+		return true;
+
+	default:
+		return false;
+	}
 }
 
 D20DispatcherKey D20Actn::GetPythonActionEnum()

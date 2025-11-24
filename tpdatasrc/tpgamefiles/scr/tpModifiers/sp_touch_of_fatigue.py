@@ -12,12 +12,12 @@ print "Registering sp_touch_of_fatigue"
 
 def TouchOfFatigueTooltip(attachee, args, evt_obj):
 	# Set the tooltip
-	evt_obj.append("Touch of Fatigue (" + str(args.get_arg(1)) + " rounds)")
+	evt_obj.append("Touch of Fatigue")
 	return 0
 	
 def TouchOfFatigueEffectTooltip(attachee, args, evt_obj):
 	# Set the tooltip
-	evt_obj.append(tpdp.hash("TOUCH_OF_FATIGUE"), -2, " (" + str(args.get_arg(1)) + " rounds)")
+	evt_obj.append(tpdp.hash("TOUCH_OF_FATIGUE"), -2, "")
 	return 0
 	
 def TouchOfFatigueHasSpellActive(attachee, args, evt_obj):
@@ -94,6 +94,4 @@ TouchOfFatigue.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, TouchOfFatigueSpellCast,
 TouchOfFatigue.AddHook(ET_OnConditionAdd, EK_NONE, TouchOfFatigueConditionAdd, ())
 TouchOfFatigue.AddSpellDispellCheckHook()
 TouchOfFatigue.AddSpellTouchAttackDischargeRadialMenuHook()
-TouchOfFatigue.AddSpellCountdownStandardHook()
-
 
