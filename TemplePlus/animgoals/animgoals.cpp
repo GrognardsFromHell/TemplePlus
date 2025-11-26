@@ -2357,79 +2357,109 @@ AnimationGoals::AnimationGoals()
 		.OnFailure(T_POP_ALL);
 
 	// ag_attempt_spell_w_cast_anim
+	//
+	// Spell casting animation state machine.
+	//
+	// There are two animations for each spell, "conjuring" and "casting".
+	//
+	// 1. Conjuring is a loopable animation of the creature's arms swinging.
+	// 2. Casting is the animation to play when the spell is about to happen.
+	//
+	// The state machine makes use of 3 animation flags.
+	//
+	//   1. 0x4 is set when an 'action' should happen during the animation.
+	//   2. 0x8 is set when we're ready to transition from the conjuring to
+	//      the casting animation.
+	//   3. 0x10 is set when an animation is in progress.
+	//
+	// Note that 0x4 can be set _before_ 0x10 is cleared (the latter indicating
+	// that the animation has ended).
+	//
+	// For conjuring, the 'action' seems to be a point in the middle of the
+	// animation at which transition to casting should take place. The original
+	// machine made the mistake of restarting the conjuration animation at this
+	// point when it was looping (which happens during interruption).
+	//
+	// For casting, the 'action' seems to be when the spell 'attempt' should be
+	// activated, which triggers the actual effects of the spell. In general
+	// there will still be frames left of the casting animation after this
+	// point.
+	//
+	// The logic of the machine is roughly as follows:
+	//
+	//   - play the conjuring animation through at least once, starting with
+	//     the 'trigger' action; the trigger should happen only once, though
+	//   - once the conjuration animation has completed, set flag 0x8 and
+	//     restart the animation
+	//   - when the conjuring action happens, check if the spell has been
+	//     interrupted
+	//     - if so, just unset 0x4 and keep animating
+	//     - if not, and 0x8 is set, switch to the casting animation
+	//   - when the casting animation action happens, 'attempt' the spell
 	auto attempt_spell_w_cast_anim = AnimGoalBuilder(goals_[ag_attempt_spell_w_cast_anim])
 		.SetPriority(AGP_4)
 		.SetRelatedGoals(ag_throw_spell);
 	attempt_spell_w_cast_anim.AddCleanup(GoalCastConjureEnd)
 		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
 		.SetFlagsData(1);
+	// test if we're animating something
 	attempt_spell_w_cast_anim.AddState(GoalIsSlotFlag10NotSet) // Index 0
 		.SetArgs(AGDATA_SELF_OBJ)
-		.OnSuccess(T_GOTO_STATE(10))
-		.OnFailure(T_GOTO_STATE(1));
-	attempt_spell_w_cast_anim.AddState(GoalUnconcealAnimate) // Index 1
+		.OnSuccess(T_GOTO_STATE(1)) // not animating yet
+		.OnFailure(T_GOTO_STATE(3)); // animating
+	// see if we've already animated conjuration
+	attempt_spell_w_cast_anim.AddState(GoalTestCompletedOnce) // Index 1
 		.SetArgs(AGDATA_SELF_OBJ)
-		.OnSuccess(T_GOTO_STATE(3))
-		.OnFailure(T_GOTO_STATE(7), DELAY_SLOT);
-	attempt_spell_w_cast_anim.AddState(AlwaysSucceed) // Index 2
-		.SetArgs(AGDATA_SELF_OBJ)
-		.OnSuccess(T_REWIND)
-		.OnFailure(T_GOTO_STATE(12));
-	attempt_spell_w_cast_anim.AddState(GoalSlotFlagSet8If4AndNotSetYet) // Index 3
+		.OnSuccess(T_GOTO_STATE(7)) // we have
+		.OnFailure(T_GOTO_STATE(2)); // newly arrived
+	// first animation, trigger spell
+	attempt_spell_w_cast_anim.AddState(GoalTriggerSpell) // Index 2
+		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
+		.OnSuccess(T_REWIND)    // start animating
+		.OnFailure(T_POP_GOAL); // something went wrong
+	// advance one frame
+	attempt_spell_w_cast_anim.AddState(GoalUnconcealAnimate) // Index 3
 		.SetArgs(AGDATA_SELF_OBJ, AGDATA_ANIM_ID_PREV)
-		.OnSuccess(T_GOTO_STATE(13))
+		.OnSuccess(T_GOTO_STATE(4))  // animation continuing
+		.OnFailure(T_GOTO_STATE(10)); // animation ended or failed somehow
+	// test for animation action
+	attempt_spell_w_cast_anim.AddState(GoalTestAction) // Index 4
+		.SetArgs(AGDATA_SELF_OBJ)
+		.OnSuccess(T_GOTO_STATE(5)) // action indicated
 		.OnFailure(T_REWIND, DELAY_SLOT);
-	attempt_spell_w_cast_anim.AddState(GoalReturnFalse) // Index 4
-		.SetArgs(AGDATA_SKILL_DATA)
-		.OnSuccess(T_GOTO_STATE(5))
+	// test for interruption on action
+	attempt_spell_w_cast_anim.AddState(GoalWasInterrupted) // Index 5
+		.SetArgs(AGDATA_SELF_OBJ)
+		.OnSuccess(T_GOTO_STATE(6)) // just clear flag 0x4
 		.OnFailure(T_GOTO_STATE(8));
-	attempt_spell_w_cast_anim.AddState(GoalSpawnFireball) // Index 5
-		.SetArgs(AGDATA_SELF_OBJ, SELF_OBJ_PRECISE_LOC)
-		.SetFlagsData(5)
-		.OnSuccess(T_GOTO_STATE(6))
-		.OnFailure(T_GOTO_STATE(7));
-	attempt_spell_w_cast_anim.AddState(GoalStateCallback1) // Index 6
-		.SetArgs(AGDATA_SCRATCH_OBJ, AGDATA_SELF_OBJ)
-		.SetFlagsData(38)
+	// unset action flag
+	attempt_spell_w_cast_anim.AddState(GoalUnsetAction) // Index 6
 		.OnSuccess(T_REWIND, DELAY_SLOT)
-		.OnFailure(T_POP_ALL, DELAY_SLOT);
-	attempt_spell_w_cast_anim.AddState(AlwaysSucceed) // Index 7
-		.SetArgs(AGDATA_SELF_OBJ)
-		.OnSuccess(T_POP_GOAL)
-		.OnFailure(T_POP_ALL);
-	attempt_spell_w_cast_anim.AddState(GoalAttemptSpell) // Index 8
-		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
+		.OnFailure(T_REWIND, DELAY_SLOT);
+	// begin a spell animation without trigger
+	// casting animation will be started if 0x8 and 0x4
+	attempt_spell_w_cast_anim.AddState(GoalBeginSpellAnim) // index 7
+		.SetArgs(AGDATA_SELF_OBJ, AGDATA_ANIM_ID_PREV)
 		.OnSuccess(T_REWIND)
-		.OnFailure(T_GOTO_STATE(7));
-	attempt_spell_w_cast_anim.AddState(GoalActionPerform3) // Index 9
-		.SetArgs(AGDATA_SELF_OBJ)
-		.SetFlagsData(1)
-		.OnSuccess(T_POP_ALL)
-		.OnFailure(T_POP_ALL);
-	attempt_spell_w_cast_anim.AddState(AlwaysSucceed) // Index 10
-		.SetArgs(AGDATA_SKILL_DATA)
-		.OnSuccess(T_GOTO_STATE(11))
-		.OnFailure(T_GOTO_STATE(12));
-	attempt_spell_w_cast_anim.AddState(GoalTriggerSpell) // Index 11
-		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
-		.OnSuccess(T_GOTO_STATE(2))
-		.OnFailure(T_GOTO_STATE(12));
-	attempt_spell_w_cast_anim.AddState(GoalAttemptSpell) // Index 12
-		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
-		.OnSuccess(T_POP_ALL)
-		.OnFailure(T_POP_ALL);
-	attempt_spell_w_cast_anim.AddState(GoalWasInterrupted) // Index 13
-		.SetArgs(AGDATA_SELF_OBJ)
-		.OnSuccess(T_GOTO_STATE(10))
-		.OnFailure(T_GOTO_STATE(14));
-	attempt_spell_w_cast_anim.AddState(GoalIsAnimatingConjuration) // Index 14
+		.OnFailure(T_POP_GOAL);
+	// animation action, check which animation is playing
+	attempt_spell_w_cast_anim.AddState(GoalTestAnimatingCasting) // index 8
 		.SetArgs(AGDATA_SELF_OBJ, AGDATA_ANIM_ID_PREV)
-		.OnSuccess(T_GOTO_STATE(15))
-		.OnFailure(T_GOTO_STATE(4));
-	attempt_spell_w_cast_anim.AddState(GoalStartConjurationAnim) // Index 15
-		.SetArgs(AGDATA_SELF_OBJ, AGDATA_ANIM_ID_PREV)
-		.OnSuccess(T_REWIND, DELAY_SLOT)
+		.OnSuccess(T_GOTO_STATE(9)) // attempt spell
+		.OnFailure(T_GOTO_STATE(7)); // start casting animation
+	attempt_spell_w_cast_anim.AddState(GoalAttemptSpell) // index 9
+		.SetArgs(AGDATA_SELF_OBJ, AGDATA_SKILL_DATA)
+		.OnSuccess(T_GOTO_STATE(6)) // clear action flag
 		.OnFailure(T_POP_ALL);
+	// animation stopped, check if proper end or error
+	attempt_spell_w_cast_anim.AddState(GoalTestAnimating) // index 10
+		.OnSuccess(T_POP_GOAL)  // bail-out
+		.OnFailure(T_GOTO_STATE(11)); // proper end
+	// mark conjuration animation as done once
+	attempt_spell_w_cast_anim.AddState(GoalSpellAnimCompleted) // index 11
+		.SetArgs(AGDATA_SELF_OBJ, AGDATA_ANIM_ID_PREV)
+		.OnSuccess(T_GOTO_STATE(7)) // conjuration, restart animation
+		.OnFailure(T_POP_GOAL); // casting, goal finished
 
 	// ag_throw_spell_w_cast_anim_2ndary
 	auto throw_spell_w_cast_anim_2ndary = AnimGoalBuilder(goals_[ag_throw_spell_w_cast_anim_2ndary])
