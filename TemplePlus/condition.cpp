@@ -81,7 +81,6 @@ int QueryHasCondition(DispatcherCallbackArgs args);
 int SpellOverrideBy(DispatcherCallbackArgs args);
 int SpellDispelledBy(DispatcherCallbackArgs args);
 
-
 struct ConditionSystemAddresses : temple::AddressTable
 {
 	void(__cdecl*SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
@@ -3676,6 +3675,12 @@ void ConditionSystem::RegisterNewConditions()
 		condPara.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.FloatCombatLine, 149, FloatLineColor::Red);
 		condPara.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 354, 1);
 
+		static CondStructNew condParaScore;
+		condParaScore.ExtendExisting("Paralyzed - Ability Score");
+		condParaScore.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 354, 0);
+		condParaScore.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 354, 0);
+		condParaScore.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 354, 0);
+
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus, 355, 0);
@@ -4229,6 +4234,8 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
+	if (dispIo->flags & NoHelpless) return 0;
+
 	auto reason = args.GetData1();
 	if (reason == 0) reason = 109;
 
@@ -4262,8 +4269,9 @@ int HelplessNoDodge(DispatcherCallbackArgs args)
 int HeldCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
+	if (dispIo->flags & NoHelpless) return 0;
 
+	auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
 	if (d20Sys.d20Query(args.objHndCaller, free)) return 0;
 
 	auto reason = args.GetData1();
@@ -4376,13 +4384,20 @@ int ParalyzeCoalesce(DispatcherCallbackArgs args)
 	return 0;
 }
 
-// Triggers the HP changed event when removing a 'helpless' condition, because
-// they cap other stats that will cause an additional paralysis effect to be
-// added. The change event is the trigger to recalculate whether the
-// stat-based effect should be applied or not.
+// Triggers the HP changed event when removing a 'helpless' condition. The
+// purpose of this is that these conditions cap stats to 0, and there is
+// logic to avoid adding a redundant `Paralyzed - Ability Score` condition
+// due to that. However, when the other helplessness condition is removed,
+// the target may still have a 0 ability score that now warrants adding the
+// condition, so we need to re-check.
+//
+// The change event is the trigger to recalculate the situation.
 int HelplessConditionRemoved(DispatcherCallbackArgs args)
 {
-	// manually set expired to avoid capping stats
+	// This is not redundant. Although the check sets a flag that causes
+	// helpless conditions to not 0 out scores, it also needs this one
+	// specifically to not report that the creature is helpless (since it is
+	// about to be removed). We expire ourselves to accomplish this.
 	args.SetExpired();
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
 

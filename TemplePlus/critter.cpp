@@ -186,6 +186,11 @@ private:
 		replaceFunction<int(__cdecl)(objHndl)>(0x100B70A0, [](objHndl critter) {
 			return critterSys.AutoReload(critter) ? 1 : 0;
 		});
+
+		replaceFunction<int(__cdecl)(objHndl)>(0x1004E9F0, [](objHndl critter) {
+			auto test = critterSys.ShouldParalyzeByAbilityScore(critter, false);
+			return test ? TRUE : FALSE;
+		});
 	}
 
 private:
@@ -785,18 +790,33 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
 	}
 }
 
- /* 0x1004E9F0 */
-bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
+// Originally 0x1004E9F0
+//
+// This checks if ability score paralysis should be applied. The `avoidDup`
+// flag controls whether a dispatch should be done to see if some other
+// condition already makes the character helpless, in which case it is
+// probably unnecessary. However, this is only appropriate when deciding
+// whether to _add_ the condition, because ability score paralysis itself
+// will render the creature helpless.
+//
+// The game uses this same check to determine whether the condition should be
+// _removed_. Since it is desirable for this condition to zero out certain
+// scores, we need a mechanism to check if non-paralysis conditions would
+// make a creature's score 0, which is the purpose of the flag used in the
+// dispatch.
+bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle, bool avoidDup)
 {
 	// If another condition is causing helplessness, it will likely set a
 	// score to 0, but adding paralysis would just be noise.
-	if (d20Sys.d20Query(handle, DK_QUE_Helpless)) return false;
+	if (avoidDup && d20Sys.d20Query(handle, DK_QUE_Helpless)) return false;
 
 	for (auto stat = (int)stat_strength; stat <= stat_charisma; ++stat) {
 		if (stat == stat_constitution) {
 			continue; // negative CON kills, rather than paralyzes
 		}
-		if (objects.abilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
+		DispIoBonusList dispIo;
+		dispIo.flags = NoHelpless;
+		if (objects.abilityScoreLevelGet(handle, (Stat)stat, &dispIo) <= 0) {
 			return true;
 		}
 	}

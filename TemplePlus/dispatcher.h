@@ -292,7 +292,25 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 	}
 };
 
+enum BonusListFlags : uint32_t {
+	Unk1 = 0x1, // set in Dispatch46GetSpellDcBase (0x1004FF90)
+	//Unk2 = 0x2, // checked in 0x100C5C30 to ignore eagle's splendor
+	BaseLevel = 0x4,
+	NoHelpless = 0x8 // don't set stats to 0 due to helplessness
+};
 
+constexpr BonusListFlags operator |(BonusListFlags l, BonusListFlags r)
+{
+	auto ul = static_cast<uint32_t>(l);
+	auto ur = static_cast<uint32_t>(r);
+	return static_cast<BonusListFlags>(ul | ur);
+}
+
+inline BonusListFlags & operator |=(BonusListFlags & l, BonusListFlags r)
+{
+	l = l | r;
+	return l;
+}
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
@@ -302,10 +320,10 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 	  I haven't seen that flag set anywhere though
 	  Temple+ : added flag 0x4 for statLevelBase query that includes permanent effect items (e.g. "Attribute Enhancement Bonus" condition)
 	*/
-	uint32_t flags; 
+	BonusListFlags flags; 
 	DispIoBonusList(){
 		dispIOType = dispIOTypeBonusList;
-		flags = 0;
+		flags = static_cast<BonusListFlags>(0u);
 	}
 };
 

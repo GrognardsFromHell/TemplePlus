@@ -300,7 +300,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	m.def("dispatch_stat", [](objHndl obj, uint32_t stat, BonusList& bonList)-> int {
 		DispIoBonusList evtObjAbScore;
-		evtObjAbScore.flags |= 1; // effect unknown??
+		evtObjAbScore.flags |= BonusListFlags::Unk1; // effect unknown??
 		evtObjAbScore.bonlist = bonList;
 		auto result = objects.abilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
 		bonList = evtObjAbScore.bonlist;

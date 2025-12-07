@@ -1069,7 +1069,7 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 	DispIoBonusList dispIo;
 	if (!eventObj) {
 		dispIo.dispIOType = dispIOTypeBonusList;
-		dispIo.flags = 0;
+		dispIo.flags = static_cast<BonusListFlags>(0);
 		eventObj = &dispIo;
 	}
 

@@ -877,7 +877,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	auto dc = 10 + evtObjDcBase.Dispatch(spellPkt.caster, dispTypeSpellDcBase); // as far as I know this is always 0
 
 	DispIoBonusList evtObjAbScore;
-	evtObjAbScore.flags |= 1; // effect unknown??
+	evtObjAbScore.flags |= BonusListFlags::Unk1; // effect unknown??
 
 	auto spellStat = stat_wisdom;
 	if (!spellSys.isDomainSpell(spellPkt.spellClass)){
@@ -1024,7 +1024,9 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 
 	auto spellStat = d20ClassSys.GetSpellStat(classCode);
 	DispIoBonusList evtObj;
-	evtObj.flags |= 0x4; // new! accounts for permanent item bonuses (see expanded Attribute Enhancement Bonus)
+	// new! accounts for permanent item bonuses (see expanded Attribute
+	// Enhancement Bonus)
+	evtObj.flags |= BaseLevel;
 	auto spellStatLevel = objects.StatLevelGetBaseWithModifiers(objHnd, spellStat, &evtObj);
 
 	if (spellStatLevel - 10 < result)
