@@ -5,11 +5,14 @@ from cond_utils import CondPythonModifier
 
 print "Registering standalone fear condition"
 
+# Chill touch fear acts as 'panic' where the object flees any source of danger.
+# Taking advantage of this to not need to store the caster for now, since
+# object handles do not persist across reloads.
 def FearTarget(critter, args, evt_obj):
 	evt_obj.return_val = 1
 
-	scared_of = args.get_obj_from_args(2)
-	dist = critter.distance_to(scared_of)
+	scared_of = OBJ_HANDLE_NULL
+	dist = 0
 	for other in game.obj_list_vicinity(critter.location, OLC_CRITTERS):
 		if critter.is_friendly(other): continue
 
@@ -38,8 +41,8 @@ def ResetAI(critter, args, evt_obj):
 #
 # arg0 = duration
 # arg1 = particles
-# arg2-3 = chill touch user
-chill_fear = CondPythonModifier("Chill Touch Fear", 5)
+# arg2-7 = spare, possibly storing caster objid in the future
+chill_fear = CondPythonModifier("Chill Touch Fear", 8)
 chill_fear.AddBeginParticles()
 chill_fear.AddEndParticles()
 chill_fear.AddCoalesce()

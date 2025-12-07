@@ -1301,9 +1301,7 @@ int SpellConditionFixes::ChillTouchAttackHandler(DispatcherCallbackArgs args)
 			// saving throw failed
 			floatSys.FloatSpellLine(target, 30002, FloatLineColor::White);
 			Dice dice(1, 4, spellPkt.casterLevel);
-			auto atklo = static_cast<int>(attacker.GetHandleLower());
-			auto atkhi = static_cast<int>(attacker.GetHandleUpper());
-			vector<int> args = { dice.Roll(), 0, atklo, atkhi };
+			vector<int> args = { dice.Roll(), 0 };
 			conds.AddTo(target, "Chill Touch Fear", args);
 		}
 	} else {
