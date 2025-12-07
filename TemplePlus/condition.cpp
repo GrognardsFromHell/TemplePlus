@@ -75,6 +75,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
 int ConditionPreventNonStrict(DispatcherCallbackArgs args);
+int DyingCombatEnd(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
 int QueryHasCondition(DispatcherCallbackArgs args);
 int SpellOverrideBy(DispatcherCallbackArgs args);
@@ -466,6 +467,7 @@ public:
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
+		replaceFunction(0x100E8010, DyingCombatEnd);
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
 		replaceFunction(0x100C43D0, QueryHasCondition);
 		replaceFunction(0x100DC0A0, SpellOverrideBy);
@@ -945,6 +947,28 @@ int ConditionOverrideBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
 		args.RemoveCondition();
+	}
+
+	return 0;
+}
+
+// Port of 0x100E8010. The check for the unconsciousness condition needed to
+// be fixed due to extension.
+int DyingCombatEnd(DispatcherCallbackArgs args)
+{
+	auto critter = args.objHndCaller;
+
+	auto uncon = conds.GetByName("Unconscious");
+	auto thisCond = args.subDispNode->condNode->condStruct;
+
+	if (party.IsInParty(critter)) {
+		if (thisCond != uncon) {
+			auto argsCopy = args;
+			argsCopy.RemoveCondition();
+			conds.AddTo(critter, "Unconscious", {});
+		}
+	} else if (objects.StatLevelGet(critter, stat_hp_current) < 0) {
+		critterSys.Kill(critter);
 	}
 
 	return 0;
@@ -3633,6 +3657,7 @@ void ConditionSystem::RegisterNewConditions()
 		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 353, 0);
 		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 353, 0);
 		condHeld.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+		condHeld.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 353, 1);
 
 		// 'Paralyzed' is a standalone effect inflicted by e.g.
 		// 'Monster Melee Paralysis'. Has 3 arguments but vanilla only the first
@@ -3649,12 +3674,22 @@ void ConditionSystem::RegisterNewConditions()
 		condPara.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeCheckRemove);
 		condPara.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
 		condPara.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.FloatCombatLine, 149, FloatLineColor::Red);
+		condPara.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 354, 1);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus, 355, 0);
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 355, 0);
 		condSleeping.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
+		condSleeping.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 355, 0);
+
+		static CondStructNew condUncon;
+		condUncon.ExtendExisting("Unconscious");
+		condUncon.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 356, 0);
+
+		static CondStructNew condDying;
+		condDying.ExtendExisting("Dying");
+		condDying.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 356, 0);
 
 		static CondStructNew condSlow;
 		condSlow.ExtendExisting("sp-Slow");
@@ -4198,6 +4233,26 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 	if (reason == 0) reason = 109;
 
 	dispIo->bonlist.SetOverallCap(1, 0, 0, reason);
+
+	return 0;
+}
+
+int HelplessNoDodge(DispatcherCallbackArgs args)
+{
+	// If data2 is set, freedom of movement can override
+	if (args.GetData2()) {
+		const auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
+		if (d20Sys.d20Query(args.objHndCaller, free)) return 0;
+	}
+
+	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto reason = args.GetData1();
+	if (reason == 0) reason = 109;
+
+	// 0 dodge AC
+	dispIo->bonlist.AddCap(8, 0, reason);
 
 	return 0;
 }
@@ -8709,6 +8764,12 @@ void Conditions::AddConditionsToTable(){
 		static CondStructNew condColorSprayBlind;
 		condColorSprayBlind.ExtendExisting("sp-Color Spray Blind");
 		condColorSprayBlind.AddHook(dispTypeTurnBasedStatusInit, DK_NONE, TurnBasedStatusInitNoActions);
+
+		static CondStructNew condColorSprayUncon;
+		condColorSprayUncon.ExtendExisting("sp-Color Spray Unconscious");
+		condColorSprayUncon.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus, 356, 0);
+		condColorSprayUncon.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 356, 0);
+		condColorSprayUncon.AddHook(dispTypeGetAC, DK_NONE, HelplessNoDodge, 356, 0);
 	}
 
 	// New Conditions!
