@@ -3630,8 +3630,8 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
 		condHeld.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 1, 0);
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 1, 0);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 353, 0);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 353, 0);
 		condHeld.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
 
 		// 'Paralyzed' is a standalone effect inflicted by e.g.
@@ -3644,15 +3644,16 @@ void ConditionSystem::RegisterNewConditions()
 		condPara.ExtendExisting("Paralyzed");
 		condPara.subDispDefs[0].dispCallback = ParalyzeCoalesce;
 		condPara.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
-		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 2, 0);
-		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 2, 0);
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus, 354, 0);
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus, 354, 0);
 		condPara.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeCheckRemove);
 		condPara.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
 		condPara.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.FloatCombatLine, 149, FloatLineColor::Red);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
-		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 3, 0);
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus, 355, 0);
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus, 355, 0);
 		condSleeping.AddHook(dispTypeConditionRemove2, DK_NONE, HelplessConditionRemoved);
 
 		static CondStructNew condSlow;
@@ -4186,17 +4187,6 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
 
-std::string GetHelplessStatCapReason(int data1)
-{
-	switch (data1)
-	{
-	case 1: return ": ~Held~[TAG_HELD]";
-	case 2: return ": ~Paralyzed~[TAG_PARALYZED]";
-	case 3: return ": ~Sleeping~[TAG_SLEEPING]";
-	default: return "";
-	}
-}
-
 // Port of 0x100E7F80. Was used in Unconscious but missing in similar
 // conditions. Helpless critters should have 0 effective dexterity, and
 // paralyzed creatures should have 0 effective strength.
@@ -4204,9 +4194,10 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
-	std::string reason = GetHelplessStatCapReason(args.GetData1());
+	auto reason = args.GetData1();
+	if (reason == 0) reason = 109;
 
-	dispIo->bonlist.SetOverallCap(1, 0, 0, 109, reason.c_str());
+	dispIo->bonlist.SetOverallCap(1, 0, 0, reason);
 
 	return 0;
 }
@@ -4220,9 +4211,10 @@ int HeldCapStatBonus(DispatcherCallbackArgs args)
 
 	if (d20Sys.d20Query(args.objHndCaller, free)) return 0;
 
-	std::string reason = GetHelplessStatCapReason(args.GetData1());
+	auto reason = args.GetData1();
+	if (reason == 0) reason = 109;
 
-	dispIo->bonlist.SetOverallCap(1, 0, 0, 109, reason.c_str());
+	dispIo->bonlist.SetOverallCap(1, 0, 0, reason);
 
 	return 0;
 }
