@@ -15,3 +15,8 @@
 {349}{Hiding in Combat}
 {350}{Tower Shield}
 {351}{~Shield~[TAG_SHIELD_BONUS] bonus lost: ~shield bashed~[TAG_SHIELD_BASH] this round}
+{352}{~Weakness~[TAG_WEAKNESS]}
+{353}{~Held~[TAG_HELD]}
+{354}{~Paralyzed~[TAG_PARALYZED]}
+{355}{~Sleeping~[TAG_SLEEPING]}
+{356}{~Unconscious~[TAG_UNCONSCIOUS]}

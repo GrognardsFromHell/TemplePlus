@@ -1,0 +1,5 @@
+ID_string: RAY_OF_CLUMSINESS
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Ray of Enfeeblement.tga
+help_topic: TAG_SPELLS_RAY_OF_CLUMSINESS
+tooltip_base_text: Ray of Clumsiness

@@ -93,13 +93,27 @@ struct JumpPointPacket {
 
 #pragma pack(pop)
 
+// Idea: reserve the top 16 bits of the bonus type for specifying behavior.
+// E.G. penalties not being able to reduce below 1.
+//
+// 65536 bonus types should be more than enough, since we're currently using
+// ~40 with 100 in reserve for people. Even with individuals spells/effects
+// having their own type to avoid 'untyped' self-stacking, we'd never get
+// close to exhausting that many.
+//
+// In the future I think it would be possible to split bonType into two uint16
+// values if desired since the layout would be compatible.
+enum BonusEntryFlags : int32_t {
+	// Penalties of this type cannot reduce the overall value below 1
+	PenaltyCapPositive = 0x10000
+};
 
 struct BonusEntry
 {
 	int32_t bonValue;
-	int32_t bonType; // types 0, 8 and 21 can stack ( 100E6490 ); use negative number for modifier
+	int32_t bonType; // types 0, 8 and 21 can stack ( 100E6490 )
 	const char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
-	char * bonusDescr; // e.g. "Magic Full Plate +1"
+	const char * bonusDescr; // e.g. "Magic Full Plate +1"
 
 	BonusEntry() {
 		this->bonValue = 0;
@@ -124,6 +138,13 @@ struct BonusCap
 	}
 };
 
+enum BonusFlags : uint32_t {
+	OverallCapHighSet = 0x1,
+	OverallCapLowSet = 0x2,
+	// reset cap even if it is not a restriction of the previous cap
+	ForceCapOverride = 0x4,
+};
+
 struct BonusList
 {
 	BonusEntry bonusEntries[40];
@@ -134,7 +155,7 @@ struct BonusList
 	uint32_t zeroBonusCount;
 	BonusEntry overallCapHigh; // init to largest  positive int; controlls what the sum of all the modifiers of various types cannot exceed
 	BonusEntry overallCapLow; //init to most negative int
-	uint32_t bonFlags; // init 0; 0x1 - overallCapHigh set; 0x2 - overallCapLow set; 0x4 - force cap override (otherwise it can only impose restrictions i.e. it will only change the cap if it's lower than the current one)
+	uint32_t bonFlags;
 
 	BonusList()	{
 		Reset();
@@ -145,6 +166,15 @@ struct BonusList
 	int GetEffectiveBonusSum() const;
 	int GetHighestBonus() const; // including cap effects and such; used for Blindness miss chance calculation
 	int GetLargestPenalty() const;
+
+	// Calling this simplifies entries in the bonus list with regard to certain
+	// constraints. Notably, penalties that are not allowed to reduce the final
+	// result below 1 have their values changed so that doing a more naive sum
+	// will give the correct value.
+	//
+	// This should have no effect on GetEffectiveBonusSum; the simplifications
+	// follow the same logic used to calculate the sum there.
+	void Simplify();
 
 	/**
 	 * Gets the base value (bonus type 1) scaled by the factor, using the other
@@ -167,6 +197,9 @@ struct BonusList
 	bool IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const;
 	bool IsPenaltyCapped(size_t bonusIdx, size_t* cappedByIdx) const; // same but for penalties
 
+	// Tests if a penalty cannot reduce the overall value below 1
+	bool IsPenaltyCappedPositive(size_t bonusIdx) const;
+
 	/*
 		Adds a bonus of a particular type.
 		Will register in the D20 roll history using the specified line from bonus.mes
@@ -184,7 +217,7 @@ struct BonusList
 	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, const char* capDescr);
 	int AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string &textArg);
 
-	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
+	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, const char *capDescr = nullptr);
 	static const char* GetBonusMesLine(int lineNum);
 };
 

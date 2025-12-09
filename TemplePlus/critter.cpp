@@ -186,6 +186,11 @@ private:
 		replaceFunction<int(__cdecl)(objHndl)>(0x100B70A0, [](objHndl critter) {
 			return critterSys.AutoReload(critter) ? 1 : 0;
 		});
+
+		replaceFunction<int(__cdecl)(objHndl)>(0x1004E9F0, [](objHndl critter) {
+			auto test = critterSys.ShouldParalyzeByAbilityScore(critter, false);
+			return test ? TRUE : FALSE;
+		});
 	}
 
 private:
@@ -724,6 +729,47 @@ void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
+void LegacyCritterSystem::Banish(objHndl target, objHndl killer, bool xp)
+{
+	// if not dead yet, take care of some death stuff.
+	if (!IsDeadNullDestroyed(target) && killer && xp) {
+		AwardXpFor(killer, target);
+	}
+
+	gameSystems->GetParticleSys().CreateAtObj("Fizzle", target);
+	auto critter = objSystem->GetObject(target);
+	auto aiFlags = critter->GetInt64(obj_f_npc_ai_flags64);
+	aiFlags |= AiFlag::RunningOff;
+	critter->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	objects.FadeTo(target, 0, 2, 5, 1);
+}
+
+// port of 0x100B88E0
+void LegacyCritterSystem::AwardXpFor(objHndl killer, objHndl critter)
+{
+	auto LogbookDefeat = temple::GetRef<int(objHndl, objHndl)>(0x1009A910);
+	LogbookDefeat(killer, critter);
+
+	if (!party.IsInParty(killer)) return;
+
+	if (IsPC(critter)) return;
+
+	auto summoned = conds.GetByName("sp-Summoned");
+	if (d20Sys.d20QueryWithData(critter, DK_QUE_Critter_Has_Condition, summoned, 0))
+		return;
+
+	auto flags = objects.getInt32(critter, obj_f_critter_flags);
+	if (flags & OCF_EXPERIENCE_AWARDED) return;
+
+	auto cr = objects.getInt32(critter, obj_f_npc_challenge_rating);
+	cr += objects.StatLevelGet(critter, stat_level);
+
+	auto AwardXpForCR = temple::GetRef<void(int)>(0x100B8880);
+	AwardXpForCR(cr);
+	flags |= OCF_EXPERIENCE_AWARDED;
+	objects.setInt32(critter, obj_f_critter_flags, flags);
+}
+
 /* 0x100B8AA0 */
 void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
 {
@@ -744,14 +790,33 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
 	}
 }
 
- /* 0x1004E9F0 */
-bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
+// Originally 0x1004E9F0
+//
+// This checks if ability score paralysis should be applied. The `avoidDup`
+// flag controls whether a dispatch should be done to see if some other
+// condition already makes the character helpless, in which case it is
+// probably unnecessary. However, this is only appropriate when deciding
+// whether to _add_ the condition, because ability score paralysis itself
+// will render the creature helpless.
+//
+// The game uses this same check to determine whether the condition should be
+// _removed_. Since it is desirable for this condition to zero out certain
+// scores, we need a mechanism to check if non-paralysis conditions would
+// make a creature's score 0, which is the purpose of the flag used in the
+// dispatch.
+bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle, bool avoidDup)
 {
+	// If another condition is causing helplessness, it will likely set a
+	// score to 0, but adding paralysis would just be noise.
+	if (avoidDup && d20Sys.d20Query(handle, DK_QUE_Helpless)) return false;
+
 	for (auto stat = (int)stat_strength; stat <= stat_charisma; ++stat) {
 		if (stat == stat_constitution) {
 			continue; // negative CON kills, rather than paralyzes
 		}
-		if (objects.abilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
+		DispIoBonusList dispIo;
+		dispIo.flags = NoHelpless;
+		if (objects.abilityScoreLevelGet(handle, (Stat)stat, &dispIo) <= 0) {
 			return true;
 		}
 	}

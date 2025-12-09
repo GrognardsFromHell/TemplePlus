@@ -87,7 +87,7 @@ struct SpellPacketBody{
 	bool InsertToTargetList(uint32_t idx, objHndl tgt);
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
-	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
+	bool SavingThrow(objHndl target, D20SavingThrowFlag flags, BonusList *bonExtra = nullptr);
 	bool CheckSpellResistance(objHndl tgt, bool forceCheck = false);
 	const char* GetName(); // get the spell name
 

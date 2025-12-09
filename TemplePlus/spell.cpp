@@ -589,9 +589,9 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 	return false;
 }
 
-bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
+bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags, BonusList *bonExtra) {
 	SpellEntry spEntry(spellEnum);
-	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
+	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId, bonExtra);
 }
 
 bool SpellPacketBody::CheckSpellResistance(objHndl tgt, bool forceCheck){
@@ -877,7 +877,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	auto dc = 10 + evtObjDcBase.Dispatch(spellPkt.caster, dispTypeSpellDcBase); // as far as I know this is always 0
 
 	DispIoBonusList evtObjAbScore;
-	evtObjAbScore.flags |= 1; // effect unknown??
+	evtObjAbScore.flags |= BonusListFlags::Unk1; // effect unknown??
 
 	auto spellStat = stat_wisdom;
 	if (!spellSys.isDomainSpell(spellPkt.spellClass)){
@@ -1024,7 +1024,9 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 
 	auto spellStat = d20ClassSys.GetSpellStat(classCode);
 	DispIoBonusList evtObj;
-	evtObj.flags |= 0x4; // new! accounts for permanent item bonuses (see expanded Attribute Enhancement Bonus)
+	// new! accounts for permanent item bonuses (see expanded Attribute
+	// Enhancement Bonus)
+	evtObj.flags |= BaseLevel;
 	auto spellStatLevel = objects.StatLevelGetBaseWithModifiers(objHnd, spellStat, &evtObj);
 
 	if (spellStatLevel - 10 < result)
@@ -3512,9 +3514,14 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 	}
 
 	// does spell allow SR (force flag will check anyway)
-	if ((dispIo.spellEntry.spellResistanceCode != 1) && !forceCheck)
+	switch (dispIo.spellEntry.spellResistanceCode)
 	{
-		return 0;
+	case 1: // Yes
+	case 2: // In-code; this is not called from targeting.
+		break;
+	default: // something else, assume no
+	case 0: // No
+		if (!forceCheck) return 0;
 	}
 	
 	// obtain bonuses

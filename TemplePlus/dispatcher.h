@@ -103,6 +103,7 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoMoveSpeed * DispIoCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIoCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
+	DispIoAbilityLoss* DispIoCheckIoType19(DispIO *dispIo);
 	DispIoAttackDice* DispIoCheckIoType20(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
@@ -140,6 +141,7 @@ struct DispatcherSystem : temple::AddressTable
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
 	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
+	int DispatchAbilityLoss(objHndl obj, DispIoAbilityLoss *dispIo);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null, LevelDrainType omit = LevelDrainType::NoDrainedLevel); // get level after accounting for level drain effects
 
@@ -265,11 +267,13 @@ struct DispatcherCallbackArgs {
 	void* GetCondArgPtr(uint32_t argIdxI);
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
+	CondStruct *GetData1Cond() const; // get condition from data1
 	void SetCondArg(uint32_t argIdx, int value);
 	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
 	void RemoveCondition(); // note: this is the low level function
 	void RemoveSpellMod();
 	void RemoveSpell(); // general spell remover
+	void SetExpired(); // set expired flag on condnode
 	
 };
 
@@ -288,7 +292,25 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 	}
 };
 
+enum BonusListFlags : uint32_t {
+	Unk1 = 0x1, // set in Dispatch46GetSpellDcBase (0x1004FF90)
+	//Unk2 = 0x2, // checked in 0x100C5C30 to ignore eagle's splendor
+	BaseLevel = 0x4,
+	NoHelpless = 0x8 // don't set stats to 0 due to helplessness
+};
 
+constexpr BonusListFlags operator |(BonusListFlags l, BonusListFlags r)
+{
+	auto ul = static_cast<uint32_t>(l);
+	auto ur = static_cast<uint32_t>(r);
+	return static_cast<BonusListFlags>(ul | ur);
+}
+
+inline BonusListFlags & operator |=(BonusListFlags & l, BonusListFlags r)
+{
+	l = l | r;
+	return l;
+}
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
@@ -298,10 +320,10 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 	  I haven't seen that flag set anywhere though
 	  Temple+ : added flag 0x4 for statLevelBase query that includes permanent effect items (e.g. "Attribute Enhancement Bonus" condition)
 	*/
-	uint32_t flags; 
+	BonusListFlags flags; 
 	DispIoBonusList(){
 		dispIOType = dispIOTypeBonusList;
-		flags = 0;
+		flags = static_cast<BonusListFlags>(0u);
 	}
 };
 
@@ -369,6 +391,7 @@ struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hov
 	char strings[10][256];
 	uint32_t numStrings;
 	void Append(std::string& cs);
+	void AppendDistinct(std::string& cs);
 };
 const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 
@@ -492,7 +515,21 @@ struct DispIoSpellsPerDay : DispIO // type 18
 	DispIoSpellsPerDay();
 };
 
+// Apparent meanings of flags based on Dispatch59 code in DLL
+enum class AbilityLossFlags : int {
+	None = 0x0,
+	Damage = 0x1, // heals over time
+	Drain = 0x2,  // heals only by magic
+	Inflict = 0x4, // seems to be a holdover
+	Heal = 0x8, // reduce damage/drain
+	HealFully = 0x10, // unlimited healing amount
 
+	// combinations
+	HealDamage = 0x9,
+	HealDrain = 0xA,
+	HealDamageFully = 0x19,
+	HealDrainFully = 0x1A
+};
 
 struct DispIoAbilityLoss: DispIO//  type 19
 {
@@ -500,7 +537,7 @@ struct DispIoAbilityLoss: DispIO//  type 19
 	Stat statDamaged;
 	int fieldC;
 	int spellId;
-	int flags; // 8 - marked at the beginning of dispatch; 0x10 - checks against this in the Temp/Perm ability damage
+	AbilityLossFlags flags;
 
 	DispIoAbilityLoss(){
 		dispIOType = dispIOType19;
@@ -508,7 +545,7 @@ struct DispIoAbilityLoss: DispIO//  type 19
 		statDamaged = Stat::stat_strength;
 		fieldC = 0;
 		spellId = 0;
-		flags = 0;
+		flags = AbilityLossFlags::None;
 	}
 
 };
@@ -578,6 +615,8 @@ struct DispIoEffectTooltip: DispIO // type 24
 	see uiParty.IndicatorTextGet
 	*/
 	void Append(int effectTypeId, int spellEnum, const char* text) const;
+	// only appends if effectTypeId is not already in the list
+	void AppendDistinct(int effectTypeId, int spellEnum, const char* text) const;
 };
 
 

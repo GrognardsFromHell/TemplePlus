@@ -110,6 +110,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return ElfHash::Hash(text);
 	});
 
+	m.def("cache_name", [](std::string & text) {
+		bonusSys.CacheCustomText(text);
+		return ElfHash::Hash(text);
+	}, "Caches the given string for reference by hash. Returns the hash.");
+
 	m.def("class_enum_to_casting_class", [](int class_enum) {
 		return spellSys.GetSpellClass(class_enum);
 	});
@@ -295,7 +300,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	m.def("dispatch_stat", [](objHndl obj, uint32_t stat, BonusList& bonList)-> int {
 		DispIoBonusList evtObjAbScore;
-		evtObjAbScore.flags |= 1; // effect unknown??
+		evtObjAbScore.flags |= BonusListFlags::Unk1; // effect unknown??
 		evtObjAbScore.bonlist = bonList;
 		auto result = objects.abilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
 		bonList = evtObjAbScore.bonlist;
@@ -363,6 +368,21 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			pydataTuple.inc_ref();
 			condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)ElfHash::Hash(dispKey), PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
+		.def("replace_hook",
+			[](CondStructNew & condStr, uint32_t ix, uint32_t dispType, uint32_t dispKey, py::function &pycallback, py::tuple &pydataTuple) {
+			Expects(ix < condStr.numHooks);
+			Expects(condStr.subDispDefs[ix].dispCallback != PyModHookWrapper);
+
+			pydataTuple.inc_ref();
+
+			condStr.subDispDefs[ix] =
+				{ static_cast<enum_disp_type>(dispType)
+				, static_cast<D20DispatcherKey>(dispKey)
+				, PyModHookWrapper
+				, reinterpret_cast<uint32_t>(pycallback.ptr())
+				, reinterpret_cast<uint32_t>(pydataTuple.ptr())
+				};
+		}, "Replace an existing legacy hook with a python hook.")
 		.def("add_to_feat_dict", [](CondStructNew &condStr, int feat_enum, int feat_max, int feat_offset) {
 			condStr.AddToFeatDictionary((feat_enums)feat_enum, (feat_enums)feat_max, feat_offset);
 		}, py::arg("feat_enum"), py::arg("feat_list_max") = -1, py::arg("feat_list_offset") = 0)
@@ -422,18 +442,18 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
 		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
 		.def("set_args_from_obj", &DispatcherCallbackArgs::SetCondArgObjHndl)
-		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
+		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx, int dflt){
 			PyObject*tuplePtr = (PyObject*)args.GetData2();
 			
 			//return tuplePtr;
 			if (!tuplePtr || paramIdx >= PyTuple_Size(tuplePtr)){
-				return 0;
+				return dflt;
 			}
 				
 			auto tupItem = PyTuple_GetItem(tuplePtr, paramIdx);
 			auto result = (int)PyLong_AsLong(tupItem);
 			return result;
-		})
+		}, py::arg("index"), py::arg("default") = 0)
 		.def_readwrite("evt_obj", &DispatcherCallbackArgs::dispIO)
 		.def("condition_remove", [](DispatcherCallbackArgs& args)
 		{
@@ -525,6 +545,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
 				 }, "Adds cap for a particular bonus type")
 			.def_readwrite("flags", &BonusList::bonFlags)
+			.def("saving_throw", [](BonusList & bonlist, objHndl tgt, objHndl atk, int dc, int ty, int flags)->bool {
+					auto typ = static_cast<SavingThrowType>(ty);
+					return damage.SavingThrow(tgt, atk, dc, typ, flags, &bonlist);
+				}, "Roll a saving throw using this bonus list as a basis")
 			;
 
 	 py::class_<AttackPacket>(m, "AttackPacket")
@@ -712,6 +736,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			return createProjAndThrow(startLoc.location, protoNum, 0, 0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
 		})
 		.def("projectile_append", &D20Actn::ProjectileAppend)
+		.def("is_harmful", &D20Actn::IsHarmful)
 		;
 
 
@@ -898,6 +923,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def_readwrite("dc", &SpellPacketBody::dc)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
+			.def_readwrite("duration_remaining", &SpellPacketBody::durationRemaining)
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
 				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
 				})
@@ -993,6 +1019,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			auto isEqual = evtObj.condStruct == cond;
 			return isEqual ? TRUE : FALSE;
 		}, "Used for checking condition equality. The condition to be checked against is specified by its string ID")
+	.def("is_modifier_hash", [](DispIoCondStruct& evtObj, int key)->int {
+			auto cond = conds.GetById(key);
+			if (!cond) {
+				logger->error("Unknown Modifier specified: {}", key);
+				return 0;
+			}
+			auto isEqual = evtObj.condStruct == cond;
+			return isEqual ? TRUE : FALSE;
+		}, "Used for checking condition equality. Use tpdp.hash on the condition name to get the right key for a condition")
 		;
 
 
@@ -1112,6 +1147,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoTooltip, DispIO>(m, "EventObjTooltip", "Tooltip event for mouse-overed objects.")
 		.def("append", &DispIoTooltip::Append, "Appends a string")
+		.def("append_distinct", &DispIoTooltip::AppendDistinct, "Appends a string if not already in the list")
 		.def_readwrite("num_strings", &DispIoTooltip::numStrings);
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
@@ -1198,6 +1234,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoEffectTooltip, DispIO>(m, "EventObjEffectTooltip", "Used for tooltips when hovering over the status effect indicators in the party portrait row")
 		.def("append", &DispIoEffectTooltip::Append)
+		.def("append_distinct", &DispIoEffectTooltip::AppendDistinct)
 		;
 
 	py::class_<EvtObjSpellCaster>(m, "EventObjSpellCaster", "Used for retrieving spell caster specs. New for Temple+!")

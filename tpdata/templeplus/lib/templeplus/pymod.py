@@ -3,6 +3,13 @@ import tpdp
 class PythonModifier(tpdp.ModifierSpec):
 	def AddHook(self, eventType, eventKey, callbackFcn, argsTuple ):
 		self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
+	def ReplaceHook(self, ix, eventType, eventKey, callback, params):
+		# Replaces a hook with a python hook.
+		#
+		# Should only be used to replace hooks already in place from
+		# a modifier created with `ExtendExisting`. Trying to replace a
+		# python hook will crash.
+		self.replace_hook(ix, eventType, eventKey, callback, params)
 	def ExtendExisting(self, condName):
 		self.extend_existing(condName)
 	def AddItemForceRemoveHandler(self): # in charge of backing up condition args

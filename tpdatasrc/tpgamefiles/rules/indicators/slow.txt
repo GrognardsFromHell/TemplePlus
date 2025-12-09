@@ -1,0 +1,5 @@
+ID_string: SLOW
+effect_type: 1
+texture_file: art\interface\Player_Conditions\Ailments\Spell Slow.tga
+help_topic: TAG_SPELLS_SLOW
+tooltip_base_text: Slow
