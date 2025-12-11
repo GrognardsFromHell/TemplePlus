@@ -2226,6 +2226,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 
 int32_t ActionSequenceSystem::ProvokeAooFrom(objHndl provoker, objHndl enemy)
 {
+	if (!provoker || !enemy) return 0;
 	if (objects.GetFlags(enemy) & OF_INVULNERABLE) // see above
 		return 0;
 
