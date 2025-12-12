@@ -14,9 +14,8 @@ def DropHeld(critter, args, evt_obj):
 		item = critter.item_worn_at(pos)
 		if item == OBJ_HANDLE_NULL: continue
 
-		# TODO: wrong argument passing convention
-		# critter.condition_add('Disarmed', item)
 		critter.item_worn_unwield(pos, 1) # drop item
+		critter.condition_add('Disarmed', item.handle_lower, item.handle_upper)
 
 	return 0
 
