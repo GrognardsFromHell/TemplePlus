@@ -3205,7 +3205,7 @@ static PyObject* PyObjHandle_GetCharacterBaseClassesSet(PyObject* obj, PyObject*
 	return GetCharacterClassesSet([](Stat classEnum) { return d20ClassSys.IsBaseClass(classEnum); }, obj, args);
 }
 
-static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
+static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
@@ -3213,7 +3213,7 @@ static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(self->handle.GetHandleLower());
 }
 
-static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, PyObject* args) {
+static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
@@ -5399,6 +5399,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},
 	{"rotation", PyObjHandle_GetRotation, PyObjHandle_SetRotation, NULL},
 	{"map", PyObjHandle_GetMap, NULL, NULL, NULL},
+	{"handle_upper", PyObjHandle_GetHandleUpper, NULL, NULL},
+	{"handle_lower", PyObjHandle_GetHandleLower, NULL, NULL},
 	{"hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
 	{"hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
 	{"get_size", PyObjHandle_GetSize, NULL, NULL},
