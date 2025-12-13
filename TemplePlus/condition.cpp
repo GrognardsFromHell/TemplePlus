@@ -341,6 +341,9 @@ public:
 	static int SmiteEvilToHitBonus(DispatcherCallbackArgs args);
 
 	static int SneakAttackDamage(DispatcherCallbackArgs args);
+
+	static int ClassBAB(DispatcherCallbackArgs args);
+	static int ClassSave(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
 class RaceAbilityCallbacks
@@ -500,7 +503,18 @@ public:
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
-		
+
+		// replace class saving throw functions with calls that pull
+		// information from moddable files
+		replaceFunction(0x100FE070, ClassAbilityCallbacks::ClassSave);
+		replaceFunction(0x100FE0C0, ClassAbilityCallbacks::ClassSave);
+
+		// replace class BAB functions with calls that pull information from
+		// python files
+		replaceFunction(0x100FDF90, ClassAbilityCallbacks::ClassBAB);
+		replaceFunction(0x100FDFD0, ClassAbilityCallbacks::ClassBAB);
+		replaceFunction(0x100FE020, ClassAbilityCallbacks::ClassBAB);
+
 		//Subdual and lethal damage checkboxes
 		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
 		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
@@ -8616,6 +8630,41 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		}
 	}
 	
+
+	return 0;
+}
+
+// replacement for dll BAB hooks to pull data from python specs
+int ClassAbilityCallbacks::ClassBAB(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto cls = static_cast<Stat>(args.GetData1());
+	auto critter = args.objHndCaller;
+	auto lvl = objects.StatLevelGet(critter, cls);
+	auto bab = d20ClassSys.GetBaseAttackBonus(cls, lvl);
+
+	dispIo->bonlist.AddBonus(bab, 0, 137);
+
+	return 0;
+}
+
+// replacement for dll saving throw procs to pull data from python specs
+int ClassAbilityCallbacks::ClassSave(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto cls = static_cast<Stat>(args.GetData1());
+	auto critter = args.objHndCaller;
+	auto lvl = objects.StatLevelGet(critter, cls);
+	auto save = static_cast<D20SavingThrow>(args.dispKey - DK_SAVE_FORTITUDE);
+
+	auto amount =
+		d20ClassSys.IsSaveFavoredForClass(cls, save) ? (lvl + 4)/2 : lvl/3;
+
+	dispIo->bonlist.AddBonus(amount, 0, 137);
 
 	return 0;
 }
