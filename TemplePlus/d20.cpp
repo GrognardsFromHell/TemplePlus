@@ -1183,6 +1183,15 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 			return 2;
 	}
 
+	bool isStdAtk = d20a->d20ActType == D20A_STANDARD_ATTACK;
+	isStdAtk = isStdAtk || d20a->d20ActType == D20A_UNSPECIFIED_ATTACK;
+	isStdAtk = isStdAtk || d20a->d20ActType == D20A_CHARGE;
+
+	// If the action is not a standard melee attack, the checks below for being
+	// armed are irrelevant. The action is the 'provoke from all surrounding'
+	// variety. TODO: switch to a flag for type result=2 actions?
+	if (!isStdAtk) return 1;
+
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
 		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
 		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
