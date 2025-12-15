@@ -252,8 +252,8 @@ void XPTableForHighLevels::GiveXPAwards(){
 			}
 			
 		}
-		xpForxpPile += xpGainRaw;
 		xpGainRaw = int((float)(xpGainRaw) / fNumLivingPartyMembers);
+		xpForxpPile += xpGainRaw;
 		//if (templeFuncs.ObjXPGainProcess(objHnd, xpGainRaw)) {
 		if (xpawarddd->XpGainProcess(objHnd, xpGainRaw)){
 			auto obj = objSystem->GetObject(objHnd);
