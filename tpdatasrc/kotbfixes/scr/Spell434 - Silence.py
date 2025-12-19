@@ -24,6 +24,8 @@ def	OnSpellEffect( spell ):
 	part_name = 'sp-Silence'
 	if spell.spell_radius > 20:
 		part_name = part_name + '-WIDE'
+	else:
+		part_name = part_name + '-FIXED'
 
 	caster = spell.caster
 	packet = tpdp.SpellPacket(spell.id)
