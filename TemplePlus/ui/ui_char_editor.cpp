@@ -554,13 +554,8 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		auto handle = chargen.GetEditedChar();
 		auto &charPkt = chargen.GetCharEditorSelPacket();
 
-		auto featList = feats.GetFeats(handle);
-
-		bool hasMMFeat = false;
-		for (auto feat : featList) {
-			if (feats.IsMetamagicFeat(feat)) {
-				featCount++;
-			}
+		for (auto mmfeat : feats.metamagicFeats) {
+			featCount += feats.HasFeatCountByClass(handle, mmfeat);
 		}
 
 		if (feats.IsMetamagicFeat(charPkt.feat0)) {
