@@ -144,6 +144,7 @@ namespace TemplePlusConfig
           "WildshapeUsableItems", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty DisableReachWeaponDonutProperty = DependencyProperty.Register(
           "DisableReachWeaponDonut", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty HighlightContainersProperty = DependencyProperty.Register("HighlightContainers", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty DumpFullMemoryProperty = DependencyProperty.Register(
           "DumpFullMemory", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -467,6 +468,12 @@ namespace TemplePlusConfig
             set { SetValue(DisableReachWeaponDonutProperty, value); }
         }
 
+        public bool HighlightContainers
+        {
+            get { return (bool)GetValue(HighlightContainersProperty); }
+            set { SetValue(HighlightContainersProperty, value); }
+        }
+
         public bool DumpFullMemory
         {
             get { return (bool)GetValue(DumpFullMemoryProperty); }
@@ -746,6 +753,7 @@ namespace TemplePlusConfig
 
             DisableReachWeaponDonut = TryReadBool("disableReachWeaponDonut");
 
+            HighlightContainers = TryReadBool("highlightContainers");
         }
 
     public void SaveToIni(IniData iniData)
@@ -820,6 +828,7 @@ namespace TemplePlusConfig
             tpData["showTargetingCirclesInFogOfWar"] = ShowTargetingCirclesInFogOfWar ? "true" : "false";
             tpData["wildShapeUsableItems"] = WildshapeUsableItems ? "true" : "false";
             tpData["disableReachWeaponDonut"] = DisableReachWeaponDonut ? "true" : "false";
+            tpData["highlightContainers"] = HighlightContainers ? "true" : "false";
 
 
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
