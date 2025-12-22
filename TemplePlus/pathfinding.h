@@ -220,6 +220,7 @@ struct Pathfinding : temple::AddressTable {
 		Use in combat only.
 	*/
 	bool TargetSurrounded(Path* pqr, PathQuery* pq);
+	bool TargetSurroundedCheck(Path* pqr, PathQuery* pq);
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
 	
