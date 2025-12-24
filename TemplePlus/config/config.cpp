@@ -264,6 +264,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(stricterRulesEnforcement),
 	CONF_BOOL(preferPoisonSpecFile),
 	CONF_BOOL(disableReachWeaponDonut),
+	CONF_BOOL(highlightContainers),
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),
 	CONF_BOOL(disableMulticlassXpPenalty),

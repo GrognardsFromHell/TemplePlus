@@ -25,6 +25,7 @@
                         <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
                         <CheckBox VerticalAlignment="Center" Content="Disable Door Re-Locking" IsChecked="{Binding DisableDoorRelocking}" Margin="0,5,0,5" ToolTip="Doors that were unlocked via the Open Lock skill will no longer become re-locked when you come back again."/>
                         <CheckBox VerticalAlignment="Center" Content="Disable Screen Shakes" IsChecked="{Binding DisableScreenShakes}" Margin="0,5,10,5" ToolTip="Disables the screen shake effect from animations. For example from the Hill Giant movement - useful when using Hill Giant PCs."/>
+                        <CheckBox VerticalAlignment="Center" Content="HighlightContainers" IsChecked="{Binding HighlightContainers}" Margin="0,5,10,5" ToolTip="Include containers in highlighting when tab is pressed."/>
 
                     </StackPanel>
                     <GridSplitter x:Name="GridSplitter_Gen" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
