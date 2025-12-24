@@ -1392,6 +1392,45 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_ActionPossible(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python action_possible called with null object");
+		Py_RETURN_NONE;
+	}
+
+	objHndl target;
+	D20ActionType actionType = D20A_NONE;
+	if (!PyArg_ParseTuple(args, "O&|ii:objhndl.action_possible", &ConvertObjHndl, &target, &actionType)) {
+		return 0;
+	}
+
+	if (!target) {
+		logger->warn("Python action_possible called with null target");
+		Py_RETURN_NONE;
+	}
+
+	ActionErrorCode actionErrorCode = ActionErrorCode::AEC_INVALID_ACTION;
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	do {
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(actionType, 0);
+
+		actionErrorCode = d20Sys.GlobD20ActnSetTarget(target, 0);
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+
+		actionErrorCode = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+
+		actionErrorCode = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+	} while (false);
+
+	actSeqSys.ActionSequenceRevertPath(initialActNum);
+	auto result = PyInt_FromLong((int)actionErrorCode);
+	return result;
+}
+
 static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2066,6 +2105,31 @@ static PyObject* PyObjHandle_IsFlankedBy(PyObject* obj, PyObject* args) {
 
 	auto result = combatSys.IsFlankedBy(self->handle, critter);
 	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_TargetIsSurrounded(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.target_is_surrounded", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
+
+	PathQuery pq;
+	Path pqr;
+	pq.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TARGET_OBJ | PQF_ADJUST_RADIUS);
+	pq.critter = self->handle;
+	pq.targetObj = critter;
+	pathfindingSys.PathInit(&pqr, &pq);
+	pq.tolRadius += critterSys.GetReach(self->handle, D20A_UNSPECIFIED_ATTACK);
+	if (pathfindingSys.TargetSurroundedCheck(&pqr, &pq))
+	{
+		return PyInt_FromLong(1);
+	}
+
+	return PyInt_FromLong(0);
 }
 
 
@@ -4687,6 +4751,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "arcane_spontaneous_spell_level_can_cast", PyObjHandle_ArcaneSpontaniousSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "arcane_vancian_spell_level_can_cast", PyObjHandle_ArcaneVancianSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
+	{ "action_possible", PyObjHandle_ActionPossible, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
 
@@ -4924,6 +4989,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
 	{"turn_towards_loc", PyObjHandle_TurnTowardsLoc, METH_VARARGS, NULL},
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
+	{"target_is_surrounded", PyObjHandle_TargetIsSurrounded, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
 	{ "use_item", PyObjHandle_UseItem, METH_VARARGS, NULL },
