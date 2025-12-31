@@ -47,9 +47,10 @@ void ConfigHooks::AddSetting(GameConfig*, const char * key, const char * default
 
 const char * ConfigHooks::GetString(const GameConfig*, const char * key)
 {	
-	static char sSetting[4096];
-	strcpy_s(sSetting, config.GetVanillaString(key).c_str());
-	return &sSetting[0];
+	static std::string sSetting;
+
+	sSetting = config.GetVanillaString(key);
+	return sSetting.c_str();
 }
 
 void ConfigHooks::SetString(GameConfig*, const char * key, const char * value)
