@@ -31,6 +31,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty AntiAliasingProperty = DependencyProperty.Register(
             "AntiAliasing", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty VSyncProperty = DependencyProperty.Register(
+            "VSync", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public static readonly DependencyProperty SoftShadowsProperty = DependencyProperty.Register(
             "SoftShadows", typeof (bool), typeof (IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -233,6 +236,12 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(AntiAliasingProperty); }
             set { SetValue(AntiAliasingProperty, value); }
+        }
+
+        public bool VSync
+        {
+            get { return (bool)GetValue(VSyncProperty); }
+            set { SetValue(VSyncProperty, value); }
         }
 
         public bool SoftShadows
@@ -624,6 +633,7 @@ namespace TemplePlusConfig
 
             SoftShadows = tpData["softShadows"] == "true";
             AntiAliasing = tpData["antialiasing"] == "true";
+            VSync = tpData["vsync"] == "true";
             WindowedMode = tpData["windowed"] == "true";
             WindowedLockCursor = tpData["windowedLockCursor"] == "true";
             DungeonMaster = tpData["dungeonMaster"] == "true";
@@ -838,6 +848,7 @@ namespace TemplePlusConfig
             tpData["windowWidth"] = RenderWidth.ToString();
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["antialiasing"] = AntiAliasing? "true" : "false";
+            tpData["vsync"] = VSync ? "true" : "false";
             tpData["softShadows"] = SoftShadows ? "true" : "false";
             tpData["windowedLockCursor"] = WindowedLockCursor ? "true" : "false";
             tpData["dungeonMaster"] = DungeonMaster ? "true" : "false";

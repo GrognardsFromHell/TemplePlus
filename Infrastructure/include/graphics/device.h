@@ -316,6 +316,7 @@ namespace gfx {
 		void SetCurrentCamera(WorldCameraPtr camera);
 
 		void SetAntiAliasing(bool enable, uint32_t samples, uint32_t quality);
+		void SetVSync(bool enable);
 		
 		template<typename T>
 		void UpdateBuffer(VertexBuffer &buffer, gsl::span<T> data) {
