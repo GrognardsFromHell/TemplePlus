@@ -271,8 +271,8 @@ public:
          if (len <= 0) continue; // empty line
 
          // comments
-				 if (line[0] == '#') continue;
-				 if (line[0] == '/' && len > 1 && line[1] == '/') continue;
+         if (line[0] == '#') continue;
+         if (line[0] == '/' && len > 1 && line[1] == '/') continue;
 
          if (line[0] == '[')  //Section
          {
