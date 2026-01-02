@@ -150,3 +150,11 @@ int GoalMoveNearUpdateRadiusToReach(AnimSlot &slot); // Originally @ 0x1001bf70
 int GoalAttackEndTurnIfUnreachable(AnimSlot &slot); // Originally @ 0x1001c100
 int AlwaysSucceed(AnimSlot &slot); // Originally @ 0x101f5850
 int AlwaysFail(AnimSlot &slot); // Originally @ 0x10262530
+
+int GoalTestAction(AnimSlot &slot);
+int GoalTestCompletedOnce(AnimSlot &slot);
+int GoalTestAnimating(AnimSlot &slot);
+int GoalUnsetAction(AnimSlot &slot);
+int GoalSpellAnimCompleted(AnimSlot &slot);
+int GoalBeginSpellAnim(AnimSlot &slot);
+int GoalTestAnimatingCasting(AnimSlot &slot);
