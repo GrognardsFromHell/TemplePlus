@@ -2,6 +2,7 @@ School: Evocation
 Descriptor: Sonic
 Level: Brd 5
 Level: Sor 5
+Level: Wiz 5
 Component: V
 Component: S
 Casting Time: 1 action
