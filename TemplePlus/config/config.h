@@ -48,6 +48,7 @@ struct TemplePlusConfig
 	bool noRandomEncounters = false; // Previously -norandom
 	bool noMsMouseZ = false; // Previously -nomsmousez
 	bool antialiasing = true; // Previously -noantialiasing
+	bool vsync = true;
 	uint32_t displayAdapter = 0; // Which adapter to use. 0 = default
 	uint8_t msaaSamples = 4; // If antialiasing is true
 	uint8_t msaaQuality = 0; // For vendor specific AA

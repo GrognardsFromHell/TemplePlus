@@ -1,4 +1,3 @@
-
 #include "graphics/device.h"
 #include "graphics/bufferbinding.h"
 #include "graphics/dynamictexture.h"
@@ -77,6 +76,7 @@ struct RenderingDevice::Impl {
 
 	// Anti Aliasing Settings
 	bool antiAliasing = false;
+	bool vsync = true;
 	uint32_t msaaSamples = 4;
 	uint32_t msaaQuality = 0;
 
@@ -273,6 +273,10 @@ void RenderingDevice::SetAntiAliasing(bool enable, uint32_t samples, uint32_t qu
 		mD3d11Device->CreateRasterizerState(&gpuDesc, &entry.second->mGpuState);
 	}
   }
+}
+
+void RenderingDevice::SetVSync(bool enable) {
+  mImpl->vsync = enable;
 }
 
 void RenderingDevice::UpdateResource(ID3D11Resource *resource, const void *data,
@@ -545,7 +549,7 @@ void RenderingDevice::PresentForce() {
   return false;
   }*/
 
-  D3DLOG(mSwapChain->Present(0, 0));
+  D3DLOG(mSwapChain->Present(mImpl->vsync, 0));
 }
 
 void RenderingDevice::Flush()

@@ -209,6 +209,7 @@ static ConfigSetting configSettings[] = {
 	//CONF_BOOL(editor),
 	CONF_BOOL(windowed),
 	CONF_BOOL(antialiasing),
+	CONF_BOOL(vsync),
 	CONF_BOOL(softShadows),
 	CONF_BOOL(noSound),
 	CONF_BOOL(featPrereqWarnings),
