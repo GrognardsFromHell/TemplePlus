@@ -58,7 +58,7 @@ struct Objects : temple::AddressTable {
 		return (PortalFlag)getInt32(obj, obj_f_portal_flags);
 	}
 
-	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *);
+	uint32_t abilityScoreLevelGet(objHndl, Stat, DispIO *dispIO = nullptr);
 	locXY GetLocation(objHndl handle) {
 		return locXY::fromField(_GetInternalFieldInt64(handle, obj_f_location));
 	}
