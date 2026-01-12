@@ -1099,6 +1099,8 @@ BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg) {
 
 			feat = (feat_enums)mSelectableFeats[featIdx].featEnum;
 
+			// don't add the feat if already picked
+			if (FeatAlreadyPicked(feat)) break;
 
 			if (IsSelectingNormalFeat() && selPkt.feat0 == FEAT_NONE) {
 				selPkt.feat0 = feat;
