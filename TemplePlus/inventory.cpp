@@ -1633,6 +1633,32 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
+bool InventorySystem::IsFinesse(objHndl wielder, objHndl weapon) const
+{
+	// natural weapons are light
+	if (!weapon) return true;
+
+	auto wieldType = GetWieldType(wielder, weapon, true);
+	auto weapType =
+		static_cast<WeaponTypes>(objects.getInt32(weapon, obj_f_weapon_type));
+
+	if (wieldType == 0) return true; // light weapon
+
+	// base sizes, to ignore enlarge/reduce
+	auto weapSize = objects.getInt32(weapon, obj_f_size);
+	auto wieldSize = objects.getInt32(wielder, obj_f_size);
+
+	switch (weapType)
+	{
+	case wt_rapier:
+	case wt_spike_chain:
+		// rapiers and spiked chains of appropriate size can be finessed
+		return weapSize <= wieldSize;
+	default:
+		return false;
+	}
+}
+
 bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool special){
 	if (!weapon) return false;
 

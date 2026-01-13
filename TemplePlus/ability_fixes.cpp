@@ -29,6 +29,7 @@ public:
 
 	static int CombatExpertiseAcBonus(DispatcherCallbackArgs args);
 	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
+	static int __cdecl FinesseToHit(DispatcherCallbackArgs args);
 
 	static int __cdecl CombatReflexesAooReset(DispatcherCallbackArgs args);
 	static int __cdecl AOOWillTake(DispatcherCallbackArgs args);
@@ -164,25 +165,8 @@ public:
 			return 0;
 		});
 
-		// fix for negative str mod still accounting in the bon list
-		static int(*orgWeaponFinesseToHitBonus)(DispatcherCallbackArgs) =
-			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100F80C0, [](DispatcherCallbackArgs args)->int
-		{
-			auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
-			int bonCount = dispIo->bonlist.bonCount;
-			int result = orgWeaponFinesseToHitBonus(args);
-			if (bonCount != dispIo->bonlist.bonCount) // dex bonus added
-			{
-				int strMod = objects.GetModFromStatLevel(objects.abilityScoreLevelGet(args.objHndCaller, stat_strength, 0));
-				if (strMod < 0) {
-					dispIo->bonlist.ModifyBonus(-strMod, 2, 103);
-				}
-			}
-			return result;
-		});
-
-
-		
+		// Fix for negative str mod and weapon sizing.
+		replaceFunction(0x100F80C0, FinesseToHit);
 	}
 } abilityConditionFixes;
 
@@ -431,6 +415,51 @@ int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
 	int newValue = max(currentArg1Value, currentSetValue); 
 	
 	args.SetCondArg(1, newValue);
+	return 0;
+}
+
+// Port of 0x100F80C0. Fixes:
+//   1. Zeroes out negative str modifier when using weapon finesse, since it
+//      would otherwise stack.
+//   2. Regard sizing when Enlarge/Reduce Person is active, since it's
+//      supposed to do the same to the weapon.
+//   3. Check if shield armor check penalty would reduce modifier to below
+//      the strength modifier, in which case it's disadvantageous to use
+//      finesse.
+int AbilityConditionFixes::FinesseToHit(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	auto featEnum = static_cast<feat_enums>(args.GetCondArg(0));
+	auto weapon = dispIo->attackPacket.GetWeaponUsed();
+	auto critter = args.objHndCaller;
+
+	if (!inventory.IsFinesse(critter, weapon)) return 0;
+
+	auto strMod = objects.StatLevelGet(critter, stat_str_mod);
+	auto dexMod = objects.StatLevelGet(critter, stat_dex_mod);
+
+	// Armor check penalty from shields applies to finesse.
+	auto shield = inventory.ItemWornAt(critter, EquipSlot::Shield);
+	auto penalty = GetArmorCheckPenalty(shield);
+
+	// Compare penalized score against strength, just in case the
+	// combination is worse.
+	if (dexMod + penalty <= strMod) return 0;
+
+	auto featName = feats.GetFeatName(featEnum);
+
+	dispIo->bonlist.AddCapWithDescr(2, 0, 114, featName);
+	// If the strength modifier is a penalty, it will not be capped, so
+	// modify it back to 0.
+	if (strMod < 0) dispIo->bonlist.ModifyBonus(-strMod, 2, 103);
+
+	if (dexMod != 0)
+		dispIo->bonlist.AddBonusWithDesc(dexMod, 3, 104, featName);
+	if (penalty != 0) {
+		auto desc = description.getDisplayName(shield, critter);
+		dispIo->bonlist.AddBonusWithDesc(penalty, 0, 125, desc);
+	}
+
 	return 0;
 }
 

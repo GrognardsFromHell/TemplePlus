@@ -203,6 +203,7 @@ struct InventorySystem : temple::AddressTable
 	*/
 	int GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement = false) const;
 	bool IsWieldedTwoHanded(objHndl item, objHndl wielder, bool special = false);
+	bool IsFinesse(objHndl wielder, objHndl weapon) const;
 	/*
 	 * Special indicates that the motivation is a SpecialN attack, e.g. Brother
 	 * Smyth's forge animation.
