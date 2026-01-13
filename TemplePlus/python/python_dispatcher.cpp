@@ -600,9 +600,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
+		.def_readonly("dice_count", &DamagePacket::diceCount)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
 		.def("critical_multiplier_apply", &DamagePacket::CriticalMultiplierApply)
 		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_")
+		.def("reset", [](DamagePacket & damPkt) {
+				damage.DamagePacketInit(&damPkt);
+				}, "resets a damage packet, indicating that an attack cannot do damage");
 	;
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
