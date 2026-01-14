@@ -1859,6 +1859,21 @@ uint32_t LegacyCritterSystem::IsUndead(objHndl objHnd){
 	return IsCategoryType(objHnd, mc_type_undead);
 }
 
+// Tests if the creature is a good outsider (celestial may not be strictly
+// accurate).
+uint32_t LegacyCritterSystem::IsCelestial(objHndl critter) {
+	auto align = objects.getInt32(critter, obj_f_critter_alignment);
+	return IsCategoryType(critter, mc_type_outsider)
+		&& (align & ALIGNMENT_GOOD);
+}
+
+// Tests if the creature is an evil outsider.
+uint32_t LegacyCritterSystem::IsFiend(objHndl critter) {
+	auto align = objects.getInt32(critter, obj_f_critter_alignment);
+	return IsCategoryType(critter, mc_type_outsider)
+		&& (align & ALIGNMENT_EVIL);
+}
+
 uint32_t LegacyCritterSystem::IsOoze(objHndl objHnd)
 {
 	return IsCategoryType(objHnd, mc_type_ooze);

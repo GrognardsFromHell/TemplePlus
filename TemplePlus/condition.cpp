@@ -256,6 +256,8 @@ public:
 	static int __cdecl WeaponToHitBonus(DispatcherCallbackArgs args);
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
 
+	static int __cdecl HolyWaterDamage(DispatcherCallbackArgs args, bool holy);
+
 	int (*oldMaxDexBonus)(objHndl armor) = nullptr;
 	int (*oldArmorCheckPenalty)(objHndl armor) = nullptr;
 
@@ -593,6 +595,18 @@ public:
 		// Fixes Weapon To Hit/Damage Bonus for ammo items
 		replaceFunction(0x100FFDF0, itemCallbacks.WeaponToHitBonus);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
+
+		// Fixes some issues with (un)holy water
+		replaceFunction<int(DispatcherCallbackArgs)>(0x101045B0,
+				[](DispatcherCallbackArgs args) {
+					// holy water
+					return itemCallbacks.HolyWaterDamage(args, true);
+				});
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104660,
+				[](DispatcherCallbackArgs args) {
+					// unholy water
+					return itemCallbacks.HolyWaterDamage(args, false);
+				});
 
 		// Allow silent moves and shadow armor to have multipe levels
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10102370, itemCallbacks.ArmorShadowSilentMovesSkillBonus);
@@ -7283,6 +7297,60 @@ int ItemCallbacks::WeaponDamageBonus(DispatcherCallbackArgs args){
 	}
 	return 0;
 }
+
+// Ports of (un)holy water OnDamage hooks. These look at the target and
+// decide whether to apply actual damage. The vanilla ones had some
+// oversights.
+//
+// - They applied acid damage, which is resisted by a lot of the targets
+//   for these items. Changed to positive/negative energy.
+// - They didn't check that the grenade was actually being used in the
+//   attack, so just holding them in your off hand would cause your main
+//   weapon to deal extra damage.
+// - These also apply an 'attack power' type, in case regeneration avoied
+//   by (un)holy damage is in play. At least, that's the intention.
+int ItemCallbacks::HolyWaterDamage(DispatcherCallbackArgs args, bool holy)
+{
+	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+	if (!dispIo) return 0;
+
+	// check that the attacker/target exist
+	auto target = dispIo->attackPacket.victim;
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!target || !attacker) return 0;
+
+	// check that the weapon was actually used in the attack
+	auto weapon = dispIo->attackPacket.weaponUsed;
+	auto self = inventory.GetItemAtInvIdx(attacker, args.GetCondArg(2));
+	if (!weapon || !self || weapon != self) return 0;
+
+	bool validTarget = false;
+	if (holy) {
+		validTarget = critterSys.IsUndead(target) || critterSys.IsFiend(target);
+	} else {
+		validTarget = critterSys.IsCelestial(target);
+	}
+
+	auto power = AttackPowerType::Holy;
+	auto dtype = DamageType::PositiveEnergy;
+	if (!holy) {
+		power = AttackPowerType::Unholy;
+		dtype = DamageType::NegativeEnergy;
+	}
+
+	if (validTarget) {
+		Dice dmg(2,4);
+		auto desc = description.getDisplayName(weapon, attacker);
+		dispIo->damage.AddAttackPower(static_cast<int>(power));
+		dispIo->damage.AddDamageDice(dmg.ToPacked(), dtype, 121, desc);
+	} else {
+		// reset damage packet to ensure all damage is nullified
+		damage.DamagePacketInit(&dispIo->damage);
+	}
+
+	return 0;
+}
+
 #pragma endregion 
 
 
