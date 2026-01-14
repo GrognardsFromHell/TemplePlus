@@ -2875,7 +2875,8 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
 	int strMod = objects.GetModFromStatLevel(strScore);
 	D20CAF flags = dispIo->attackPacket.flags;
-	if (!(flags & D20CAF_RANGED) || (flags & D20CAF_THROWN))
+	if (!(flags & D20CAF_RANGED)
+	    || (flags & D20CAF_THROWN && !(flags & D20CAF_THROWN_GRENADE)))
 	{
 		int attackCode = dispIo->attackPacket.dispKey;
 		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
