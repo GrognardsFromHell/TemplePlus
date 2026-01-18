@@ -421,6 +421,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	MonsterSubcategoryFlag GetSubcategoryFlags(objHndl handle);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	uint32_t IsCategorySubtype(objHndl objHnd, MonsterSubcategoryFlag categoryType);
+	uint32_t IsCelestial(objHndl objHnd);
+	uint32_t IsFiend(objHndl objHnd);
 	uint32_t IsUndead(objHndl objHnd);
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);

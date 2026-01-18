@@ -296,6 +296,15 @@ def float_hp_damage(attacker, tgt, damTot, subdualDamTot):
         tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
     return
 
+# Check if the attack could deal damage _at all_. Some messages are only
+# displayed if that is the case.
+#
+# The current check looks for a condition that should only occur if
+# `damage_packet.reset()` (or an equivalent) has been called, e.g. for holy
+# water.
+def could_damage(evt_obj_dam):
+    return evt_obj_dam.damage_packet.dice_count > 0
+
 def damage_critter(attacker, tgt, evt_obj_dam):
     if not tgt:
         return
@@ -307,6 +316,8 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     tgtFlags = tgt.object_flags_get()
     if tgtFlags & OF_INVULNERABLE:
         evt_obj_dam.damage_packet.add_mod_factor(0.0, D20DT_UNSPECIFIED, 104)
+
+    disp_msg = could_damage(evt_obj_dam)
 
     #Dispatch Damage
     evt_obj_dam.damage_packet.calc_final_damage()
@@ -328,8 +339,9 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     tgt.set_hp_damage(hpDam)
 
     #History Roll Window
-    history_roll_id = roll_history.add_damage_roll(attacker, tgt, evt_obj_dam.damage_packet)
-    game.create_history_from_id(history_roll_id)
+    if disp_msg:
+        history_roll_id = roll_history.add_damage_roll(attacker, tgt, evt_obj_dam.damage_packet)
+        game.create_history_from_id(history_roll_id)
 
     #Send Signal HP_Changed
     tgt.d20_send_signal(S_HP_Changed, -damTot, -1 if damTot > 0 else 0)
@@ -355,7 +367,8 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     tgt.d20_send_signal(S_HP_Changed, subdualDamTot, -1 if subdualDamTot > 0 else 0)
 
     #Create Floatline
-    float_hp_damage(attacker, tgt, damTot, subdualDamTot)
+    if disp_msg:
+        float_hp_damage(attacker, tgt, damTot, subdualDamTot)
 
     #Push hit Animation
     if attacker:
