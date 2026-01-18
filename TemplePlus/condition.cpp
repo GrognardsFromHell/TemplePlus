@@ -343,6 +343,9 @@ public:
 	static int SmiteEvilToHitBonus(DispatcherCallbackArgs args);
 
 	static int SneakAttackDamage(DispatcherCallbackArgs args);
+
+	static int ClassBAB(DispatcherCallbackArgs args);
+	static int ClassSave(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
 class RaceAbilityCallbacks
@@ -350,6 +353,7 @@ class RaceAbilityCallbacks
 public:
 	static int __cdecl HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args);
 	static int GlobalMonsterToHit(DispatcherCallbackArgs args);
+	static int AbilityMod(DispatcherCallbackArgs args);
 } raceCallbacks;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -501,7 +505,18 @@ public:
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
-		
+
+		// replace class saving throw functions with calls that pull
+		// information from moddable files
+		replaceFunction(0x100FE070, ClassAbilityCallbacks::ClassSave);
+		replaceFunction(0x100FE0C0, ClassAbilityCallbacks::ClassSave);
+
+		// replace class BAB functions with calls that pull information from
+		// python files
+		replaceFunction(0x100FDF90, ClassAbilityCallbacks::ClassBAB);
+		replaceFunction(0x100FDFD0, ClassAbilityCallbacks::ClassBAB);
+		replaceFunction(0x100FE020, ClassAbilityCallbacks::ClassBAB);
+
 		//Subdual and lethal damage checkboxes
 		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
 		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
@@ -3822,6 +3837,98 @@ void ConditionSystem::RegisterNewConditions()
 		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellDispelledBy, lrest, 0);
 		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, rest, 0);
 		enfeeble.AddHook(dispTypeConditionAddPre, DK_NONE, SpellOverrideBy, grest, 0);
+	}
+#pragma endregion
+
+#pragma region Races
+	{
+		// Replace/add hooks to make racial ability scores pull from the
+		// mod-configurable data from python. This only needs to be done for
+		// core races, because the conditions for others are defined in python
+		// and programmatically incorporate the configurable data.
+
+		// Adding hooks even for races normally without modifiers, to
+		// facilitate modding.
+		static CondStructNew human;
+		human.ExtendExisting("Human");
+		human.AddHook(dispTypeAbilityScoreLevel, DK_NONE, RaceAbilityCallbacks::AbilityMod, race_human, 0);
+
+		static CondStructNew dwarf;
+		dwarf.ExtendExisting("Dwarf");
+		// set (base) ability score mods to pull from racial data
+		dwarf.subDispDefs[1].dispKey = DK_NONE;
+		dwarf.subDispDefs[1].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		dwarf.subDispDefs[1].data1.usVal = race_dwarf;
+
+		dwarf.subDispDefs[3].dispKey = DK_NONE;
+		dwarf.subDispDefs[3].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		dwarf.subDispDefs[3].data1.usVal = race_dwarf;
+
+		// clear extra ability score hooks
+		dwarf.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+		dwarf.subDispDefs[4].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew elf;
+		elf.ExtendExisting("Elf");
+
+		elf.subDispDefs[2].dispKey = DK_NONE;
+		elf.subDispDefs[2].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		elf.subDispDefs[2].data1.usVal = race_elf;
+
+		elf.subDispDefs[4].dispKey = DK_NONE;
+		elf.subDispDefs[4].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		elf.subDispDefs[4].data1.usVal = race_elf;
+
+		elf.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+		elf.subDispDefs[5].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew gnome;
+		gnome.ExtendExisting("Gnome");
+
+		gnome.subDispDefs[1].dispKey = DK_NONE;
+		gnome.subDispDefs[1].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		gnome.subDispDefs[1].data1.usVal = race_gnome;
+
+		gnome.subDispDefs[3].dispKey = DK_NONE;
+		gnome.subDispDefs[3].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		gnome.subDispDefs[3].data1.usVal = race_gnome;
+
+		gnome.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+		gnome.subDispDefs[4].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew helf;
+		helf.ExtendExisting("Halfelf");
+		helf.AddHook(dispTypeAbilityScoreLevel, DK_NONE, RaceAbilityCallbacks::AbilityMod, race_halfelf, 0);
+
+		static CondStructNew horc;
+		horc.ExtendExisting("Halforc");
+
+		horc.subDispDefs[1].dispKey = DK_NONE;
+		horc.subDispDefs[1].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		horc.subDispDefs[1].data1.usVal = race_halforc;
+
+		horc.subDispDefs[4].dispKey = DK_NONE;
+		horc.subDispDefs[4].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		horc.subDispDefs[4].data1.usVal = race_halforc;
+
+		horc.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+		horc.subDispDefs[3].dispCallback = genericCallbacks.NoOp;
+		horc.subDispDefs[5].dispCallback = genericCallbacks.NoOp;
+		horc.subDispDefs[6].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew halfling;
+		halfling.ExtendExisting("Halfling");
+
+		halfling.subDispDefs[1].dispKey = DK_NONE;
+		halfling.subDispDefs[1].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		halfling.subDispDefs[1].data1.usVal = race_halfling;
+
+		halfling.subDispDefs[3].dispKey = DK_NONE;
+		halfling.subDispDefs[3].dispCallback = RaceAbilityCallbacks::AbilityMod;
+		halfling.subDispDefs[3].data1.usVal = race_halfling;
+
+		halfling.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+		halfling.subDispDefs[4].dispCallback = genericCallbacks.NoOp;
 	}
 #pragma endregion
 
@@ -8596,6 +8703,41 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	return 0;
 }
 
+// replacement for dll BAB hooks to pull data from python specs
+int ClassAbilityCallbacks::ClassBAB(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto cls = static_cast<Stat>(args.GetData1());
+	auto critter = args.objHndCaller;
+	auto lvl = objects.StatLevelGet(critter, cls);
+	auto bab = d20ClassSys.GetBaseAttackBonus(cls, lvl);
+
+	dispIo->bonlist.AddBonus(bab, 0, 137);
+
+	return 0;
+}
+
+// replacement for dll saving throw procs to pull data from python specs
+int ClassAbilityCallbacks::ClassSave(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto cls = static_cast<Stat>(args.GetData1());
+	auto critter = args.objHndCaller;
+	auto lvl = objects.StatLevelGet(critter, cls);
+	auto save = static_cast<D20SavingThrow>(args.dispKey - DK_SAVE_FORTITUDE);
+
+	auto amount =
+		d20ClassSys.IsSaveFavoredForClass(cls, save) ? (lvl + 4)/2 : lvl/3;
+
+	dispIo->bonlist.AddBonus(amount, 0, 137);
+
+	return 0;
+}
+
 int ClassAbilityCallbacks::FeatCraftRodRadial(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, CraftRod, "TAG_CRAFT_ROD", 5069);
 };
@@ -8960,6 +9102,53 @@ int RaceAbilityCallbacks::GlobalMonsterToHit(DispatcherCallbackArgs args)
 	auto racialBab = critterSys.GetRacialAttackBonus(args.objHndCaller);
 	if (racialBab > 0) {
 		dispIo->bonlist.AddBonus(racialBab, 0, 118); // ~Base Attack~[TAG_MULTIPLE_ATTACKS]
+	}
+
+	return 0;
+}
+
+int RaceAbilityCallbacks::AbilityMod(DispatcherCallbackArgs args)
+{
+	// if not actually dispatched on a stat, do nothing
+	if (args.dispKey < DK_STAT_STRENGTH || args.dispKey > DK_STAT_CHARISMA)
+		return 0;
+
+	auto stat = args.dispKey-1;
+	if (stat < stat_intelligence) {
+		// original race only affects mental stats when polymorphed
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed)) return 0;
+	}
+
+	auto race = static_cast<Race>(args.GetData1());
+	int mod = d20RaceSys.GetStatModifier(race, stat);
+
+	if (mod == 0) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto critter = objSystem->GetObject(args.objHndCaller);
+
+	// get the base value
+	//
+	// note: testing the base int32 makes this insensitive to order of
+	// applied conditions, so it no longer matters if the racial condition
+	// is earlier than any other penalties.
+	int base = critter->GetInt32(obj_f_critter_abilities_idx, stat);
+
+	// Racial penalties can't take a character below 3 int, as that is the
+	// minimum necessary for speech.
+	if (base + mod < 3 && mod < 0 && stat == stat_intelligence) {
+		// if the ability is below 3 for some reason, don't give a bonus
+		mod = std::min(0, 3 - base);
+	}
+
+	if (mod > 0) {
+		dispIo->bonlist.AddBonus(mod, 0, 139);
+	} else if (mod < 0) {
+		// a negative isn't really a bonus, is it?
+		std::string desc = "Racial Penalty";
+		dispIo->bonlist.AddBonus(mod, 0, desc);
 	}
 
 	return 0;
