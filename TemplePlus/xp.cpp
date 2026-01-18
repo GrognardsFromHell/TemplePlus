@@ -55,13 +55,12 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	histSys.CreateFromFreeText( (text + "\n").c_str());
 
 	auto xpNew = obj->GetInt32(obj_f_critter_experience) + xpGain;
-	auto curLvl = critterSys.GetEffectiveLevel(handle);
+	auto curLvl = static_cast<uint32_t>(critterSys.GetEffectiveLevel(handle));
 	
-	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
-	if (curLvl >= (int)config.maxLevel)
-		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
+	auto overlvlCap = std::min(curLvl + 2, config.maxLevel + 1);
+	auto xpCap = d20LevelSys.GetXpRequireForLevel(overlvlCap) - 1;
 
-	if (!config.allowXpOverflow && xpNew > (int)xpCap)
+	if (!config.allowXpOverflow && xpNew > static_cast<int>(xpCap))
 		xpNew = xpCap;
 
 	d20Sys.d20SendSignal(handle, DK_SIG_Experience_Awarded, xpNew, 0);
