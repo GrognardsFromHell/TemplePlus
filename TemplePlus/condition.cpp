@@ -2309,7 +2309,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	if (combatSys.IsFlankedBy(dispIo->attackPacket.victim, dispIo->attackPacket.attacker))
 	{
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 201);
-		*(int*)(&dispIo->attackPacket.flags ) |= (int)D20CAF_FLANKED;
+		dispIo->attackPacket.flags |= D20CAF_FLANKED;
 	}
 
 	// size bonus / penalty
@@ -4669,7 +4669,7 @@ int DealNormalDamageAttackPenalty(DispatcherCallbackArgs args)
 			return 0;
 
 		//No penalty if a touch attack.  This was a vanilla bug that enabled the penalty for spells.
-		if ((dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
+		if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
 			return 0;
 
 		// Monks don't have the penalty
@@ -5157,7 +5157,7 @@ int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
 	const bool enoughAmmo = (ammoCount > 1);
 	
 	//Note:  Not checking attackPacket.dispKey == 1 like the original code.  Instead checking final attack roll flag.
-	const bool finalAttackRoll = (dispIo->attackPacket.flags & D20CAF_FINAL_ATTACK_ROLL);
+	const bool finalAttackRoll = dispIo->attackPacket.flags & D20CAF_FINAL_ATTACK_ROLL;
 
 	const auto distance = locSys.DistanceToObj(dispIo->attackPacket.attacker, dispIo->attackPacket.victim);
 	const bool closeEnough = (distance < 30.0);
@@ -5165,7 +5165,7 @@ int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
 	if (correctAmmoType && notFullAttack && standardRangedAttack && enoughAmmo && finalAttackRoll && closeEnough) {
 		const int arrowsToFire = std::min(arrowsSelected, ammoCount-1);  //Penalty based on the number of arrows that can actually be fired
 		dispIo->bonlist.AddBonus(-2*(arrowsToFire +1), 0, 304);  //Was -2 in the original code, now correctly varies based on #arrows
-		dispIo->attackPacket.flags = static_cast<D20CAF>(dispIo->attackPacket.flags | D20CAF_MANYSHOT);
+		dispIo->attackPacket.flags |= D20CAF_MANYSHOT;
 	}
 
 	return 0;
@@ -5188,8 +5188,10 @@ int ConditionFunctionReplacement::ManyShotDamage(DispatcherCallbackArgs args)
 
 		histSys.CreateFromFreeText(message.c_str());
 
-		D20CAF flags = static_cast<D20CAF>(damagePacket->attackPacket.flags 
-			& ~(D20CAF_MANYSHOT | D20CAF_CRITICAL) | D20CAF_NO_PRECISION_DAMAGE);
+		D20CAF flags =
+			damagePacket->attackPacket.flags 
+				& ~(D20CAF_MANYSHOT | D20CAF_CRITICAL)
+				| D20CAF_NO_PRECISION_DAMAGE;
 
 		const int arrowsSelected = args.GetCondArg(0);
 		int ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
@@ -6792,7 +6794,7 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
 
-	if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+	if (dispIo->attackPacket.flags & D20CAF_RANGED)
 		return 0;
 
 	if (!weaponUsed)
@@ -6929,7 +6931,7 @@ int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 
 		auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
 
-		if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+		if (dispIo->attackPacket.flags & D20CAF_RANGED)
 			return 0;
 
 		if (!weaponUsed)
