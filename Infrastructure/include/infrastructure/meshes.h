@@ -272,7 +272,7 @@ namespace gfx {
 
 		SpellAnimType GetSpellAnimType() const {
 
-			return (SpellAnimType)( (mId & 0xFFFFFFF) + 64 );
+			return (SpellAnimType)( (mId & 0xFFFFFFF) + 65 );
 		}
 
 		bool IsWeaponAnim() const {

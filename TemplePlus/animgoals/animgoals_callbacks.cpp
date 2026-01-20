@@ -226,20 +226,38 @@ int GoalUnconcealAnimate(AnimSlot &slot) {
 	}
 
 	auto animId = aasHandle->GetAnimId();
+	auto normalAnim = animId.GetNormalAnimType();
 
 	if ((!objects.IsCritter(obj) ||
 		!(objects.getInt32(obj, obj_f_critter_flags) &
 		(OCF_PARALYZED | OCF_STUNNED)) ||
 		!animId.IsWeaponAnim() &&
-		(animId.GetNormalAnimType() == gfx::NormalAnimType::Death ||
-			animId.GetNormalAnimType() == gfx::NormalAnimType::Death2 ||
-			animId.GetNormalAnimType() == gfx::NormalAnimType::Death3))) {
+		(normalAnim == gfx::NormalAnimType::Death ||
+			normalAnim == gfx::NormalAnimType::Death2 ||
+			normalAnim == gfx::NormalAnimType::Death3))) {
 		static auto anim_frame_advance_maybe =
 			temple::GetPointer<BOOL(objHndl, AnimSlot & runSlot,
 				uint32_t animHandle, uint32_t * eventOut)>(
 					0x10016530);
 		uint32_t eventOut = 0;
 		anim_frame_advance_maybe(obj, slot, aasHandle->GetHandle(), &eventOut);
+
+		// This is a special hack for Conjuration conjuring. It seems to have a
+		// never-ending 'animation' that always sets the action flag. So instead
+		// we'll set the 0x8 flag ourselves simulate a complete animation cycle.
+		// The spell casting animgoal will then switch to the casting animation
+		// after that time. The actual 'animation' is just standing motionless
+		// for some reason, so we don't really need to worry about waiting for a
+		// complete cycle
+		//
+		// We don't actually want to restart the animation, because it seems
+		// to stack up the spell particles.
+		//
+		// Perhaps this is just a bugged animation. If it could be fixed, this
+		// hack could be removed.
+		if (normalAnim == gfx::NormalAnimType::ConjurationConjuring) {
+			slot.flags |= AnimSlotFlag::ASF_UNK4;
+		}
 
 		// This is the ACTION trigger
 		if (eventOut & 1) {
@@ -256,13 +274,15 @@ int GoalUnconcealAnimate(AnimSlot &slot) {
 
 
 
-		if (animId.IsWeaponAnim() && (animId.GetWeaponAnim() == gfx::WeaponAnim::Idle)) {
-			//	// We will continue anyway down below, because the character is idling, so log a message
-			if (!(eventOut & 2)) {
-				logger->info("Ending wait for animation action/end in goal {}, because the idle animation would never end.",
-					slot.pCurrentGoal->goalType);
+		if (animId.IsWeaponAnim()) {
+			if (animId.GetWeaponAnim() == gfx::WeaponAnim::Idle) {
+				//	// We will continue anyway down below, because the character is idling, so log a message
+				if (!(eventOut & 2)) {
+					logger->info("Ending wait for animation action/end in goal {}, because the idle animation would never end.",
+						slot.pCurrentGoal->goalType);
+				}
+				looping = true;
 			}
-			looping = true;
 		}
 
 		// This is the END trigger
@@ -1294,3 +1314,94 @@ int AlwaysFail(AnimSlot &slot) {
 	return org(slot);
 }
  
+int GoalTestAction(AnimSlot &slot) {
+	return (slot.flags & AnimSlotFlag::ASF_ACTION) ? TRUE : FALSE;
+}
+
+int GoalTestCompletedOnce(AnimSlot &slot) {
+	return (slot.flags & AnimSlotFlag::ASF_UNK4) ? TRUE : FALSE;
+}
+
+// tests whether the flag indicating an animation in progress is set
+int GoalTestAnimating(AnimSlot &slot) {
+	return (slot.flags & AnimSlotFlag::ASF_ANIMATING) ? TRUE : FALSE;
+}
+
+int GoalUnsetAction(AnimSlot &slot) {
+	slot.flags &= ~(AnimSlotFlag::ASF_ACTION);
+	return 1;
+}
+
+int GoalTestAnimatingCasting(AnimSlot &slot) {
+	auto obj = slot.param1.obj;
+
+	if (!obj) {
+		logger->error("GoalBeginCastingAnim: null object param");
+		gameSystems->GetAnim().Debug();
+		return FALSE;
+	}
+
+	auto aasHandle = objects.GetAnimHandle(obj);
+
+	if (!aasHandle) {
+		logger->error("GoalBeginCastingAnim: null AAS handle");
+		gameSystems->GetAnim().Debug();
+		return FALSE;
+	}
+
+	auto animId = aasHandle->GetAnimId();
+
+	gfx::EncodedAnimId spellAnimId(animId.GetSpellAnimType());
+	return spellAnimId.IsCastingAnimation() ? TRUE : FALSE;
+}
+
+// Sets flag 0x8 indicating completed conjuration animation
+// Yields TRUE when completing conjuration, and FALSE when completing
+// casting.
+int GoalSpellAnimCompleted(AnimSlot &slot) {
+	slot.flags |= AnimSlotFlag::ASF_UNK4;
+
+	return !GoalTestAnimatingCasting(slot);
+}
+
+int GoalBeginSpellAnim(AnimSlot &slot) {
+	auto obj = slot.param1.obj;
+	auto prevId = slot.pCurrentGoal->animIdPrevious.number;
+
+	bool animating = slot.flags & AnimSlotFlag::ASF_ANIMATING;
+	bool repeated = slot.flags & AnimSlotFlag::ASF_UNK4;
+
+	// if this is the first time through, don't do anything
+	if (animating && !repeated) return TRUE;
+
+	bool action = slot.flags & AnimSlotFlag::ASF_ACTION;
+	bool cast = action && repeated;
+
+	if (!obj) {
+		logger->error("GoalBeginCastingAnim: null object param");
+		gameSystems->GetAnim().Debug();
+		return FALSE;
+	}
+
+	auto aasHandle = objects.GetAnimHandle(obj);
+	auto aasId = aasHandle ? aasHandle->GetAnimId() : 0;
+	if (!aasId) {
+		logger->error("GoalBeginCastingAnim: null AAS handle");
+		gameSystems->GetAnim().Debug();
+		return FALSE;
+	}
+
+	auto &aas = gameSystems->GetAAS();
+	gfx::EncodedAnimId encodedId(prevId - (cast ? 65 : 64));
+
+	objects.SetAnimId(obj, encodedId);
+
+	static auto PlayRipples = temple::GetRef<char(__cdecl)(objHndl)>(0x100166F0);
+	PlayRipples(obj);
+	slot.path.someDelay = 33;
+	slot.gametimeSth = gameSystems->GetTimeEvent().GetAnimTime();
+	slot.flags &= ~(AnimSlotFlag::ASF_ACTION);
+	slot.flags |= AnimSlotFlag::ASF_ANIMATING;
+
+	return TRUE;
+}
