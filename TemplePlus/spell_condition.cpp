@@ -574,7 +574,7 @@ void SpellConditionFixes::VampiricTouchFix()
 }
 
 void SpellConditionFixes::SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags){
-	*(int*)&flags |= D20CAF_HIT;
+	flags |= D20CAF_HIT;
 	damage.DealWeaponlikeSpellDamage(tgt, caster, Dice::FromPacked(dicePacked), damType, attackPower, 100, 103, actionType, spellId, flags);
 }
 
@@ -1027,7 +1027,7 @@ int SpellConditionFixes::MelfsAcidArrowDamage(DispatcherCallbackArgs args){
 	SpellPacketBody spPkt(spellId);
 	floatSys.FloatCombatLine(args.objHndCaller, 46); // acid damage
 	Dice damDice(2, 4, 0);
-	int flags = D20CAF_HIT;
+	D20CAF flags = D20CAF_HIT;
 
 	if (isCritical){
 		flags |= D20CAF_CRITICAL;
@@ -1036,7 +1036,7 @@ int SpellConditionFixes::MelfsAcidArrowDamage(DispatcherCallbackArgs args){
 	if (spPkt.durationRemaining < spPkt.duration ) // only the first shot gets sneak attack damage
 		flags |= D20CAF_NO_PRECISION_DAMAGE;
 
-	damage.DealWeaponlikeSpellDamage(spPkt.targetListHandles[0], spPkt.caster, damDice, DamageType::Acid, 1, 100, 103, D20A_CAST_SPELL, spellId, (D20CAF)flags);
+	damage.DealWeaponlikeSpellDamage(spPkt.targetListHandles[0], spPkt.caster, damDice, DamageType::Acid, 1, 100, 103, D20A_CAST_SPELL, spellId, flags);
 
 	return 0;
 }
@@ -1318,7 +1318,7 @@ int SpellConditionFixes::ChillTouchAttackHandler(DispatcherCallbackArgs args)
 			, 103 // "Unknown"
 			, d20a->d20ActType
 			, spellId
-			, static_cast<D20CAF>(d20a->d20Caf)
+			, d20a->d20Caf
 			);
 
 		if (damage.SavingThrowSpell(target, caster, dc, type, flags, spellId)) {
