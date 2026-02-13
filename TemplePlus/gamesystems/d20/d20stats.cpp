@@ -76,6 +76,8 @@ class D20StatsHooks : public TempleFix{
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
 			switch (d20Stats.GetType(stat))
 			{
+			case StatType::AbilityMods:
+				return d20Stats.GetValue(handle, stat);
 			case StatType::Level:
 				return d20Stats.GetValue(handle, stat);
 			case StatType::SpellCasting:
@@ -194,7 +196,7 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 {
 	switch (GetType(stat)){
 	case StatType::Abilities:
-		return objects.abilityScoreLevelGet(handle, stat, nullptr);
+		return objects.abilityScoreLevelGet(handle, stat);
 	case StatType::Level:
 		return GetLevelStat(handle, stat);
 	case StatType::Money:
@@ -208,7 +210,10 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 	case StatType::HitPoints:
 		// todo!
 	case StatType::AbilityMods:
-		// todo
+		// Note: gets the actual ability modifier, _not_ the one capped by
+		// armor for dex, for example. Max dex bonus only applies to AC, so it
+		// makes little sense to return the dex AC modifier here.
+		return objects.GetModFromStatLevel(GetValue(handle, static_cast<Stat>(stat-stat_str_mod)));
 	case StatType::Speed:
 		//todo
 	case StatType::Race:

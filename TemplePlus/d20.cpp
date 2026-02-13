@@ -83,6 +83,7 @@ public:
 	static ActionErrorCode ActionCheckFiveFootStep(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
 	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat);
 	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckStdRangedAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -106,6 +107,7 @@ public:
 	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostReload(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -128,6 +130,7 @@ public:
 	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
 	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
 	static ActionErrorCode PerformPython(D20Actn* d20a);
+	static ActionErrorCode PerformReload(D20Actn* d20a);
 	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
 	static ActionErrorCode PerformSneak(D20Actn* d20a);
 	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
@@ -145,6 +148,7 @@ public:
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameReload(D20Actn *d20a);
 	static BOOL ActionFrameRangedAttack(D20Actn* d20a);
 	static BOOL ActionFrameSpell(D20Actn* d20a);
 	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
@@ -154,6 +158,7 @@ public:
 
 
 	// Projectile Hit
+	static BOOL ProjectileHitStandard(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitPython(D20Actn* d20a, objHndl projectile, objHndl obj2);
 
@@ -243,6 +248,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
+	int(__cdecl*ProjectileFunc_RangedAttack)(D20Actn*, objHndl, objHndl);
 	int * actSeqTargetsIdx;
 	objHndl * actSeqTargets; // size 32
 
@@ -258,6 +264,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(TargetWithinReachOfLoc, 0x100B86C0);
 		rebase(actSeqTargetsIdx, 0x118CD2A0);
 		rebase(actSeqTargets, 0x118CD2A8);
+		rebase(ProjectileFunc_RangedAttack, 0x100982E0);
 	}
 } addresses;
 
@@ -265,6 +272,33 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 LegacyD20System d20Sys;
 D20ActionDef d20ActionDefsNew[1000];
 TabFileStatus _d20actionTabFile;
+
+// port of logic from 0x100C5D90 to avoid stacking 20% penalties
+bool DeafnessSpellInterrupted(objHndl critter, SpellStoreData *spellData)
+{
+	if (!d20Sys.d20Query(critter, DK_QUE_Critter_Is_Deafened))
+		return false;
+
+	if (!(spellData->GetSpellComponentFlags() & SpellComponent_Verbal))
+		return false;
+
+	auto roll = Dice(1, 100, 0).Roll();
+	auto interrupt = roll <= 20;
+	auto mesResult = 0;
+
+	if (interrupt) {
+		histSys.CreateRollHistoryLineFromMesfile(0x23, critter, objHndl::null);
+		floatSys.FloatCombatLine(critter, 78);
+		mesResult = 78;
+	} else {
+		mesResult = 62;
+	}
+	auto hid = histSys.RollHistoryAddType5PercentChanceRoll(
+			critter, objHndl::null, 20, 79, roll, mesResult, 192);
+	histSys.CreateRollHistoryString(hid);
+
+	return interrupt;
+}
 
 bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellStoreData* spellData){
 
@@ -295,6 +329,11 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
+
+	// check deafness failure here to avoid stacking penalties
+	if (DeafnessSpellInterrupted(d20a->d20APerformer, spellData))
+		return true;
+
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
 		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0; // can be set to 1 by Casting Defensively and Armor Spell Failure
 }
@@ -465,6 +504,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckStdRangedAttack;
+	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitStandard;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameRangedAttack;
 	//d20Defs[d20Type].actionCost = d20Callbacks.TargetCheckStandardAttack;
 
 	d20Type = D20A_FULL_ATTACK;
@@ -473,6 +514,18 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_MOVE;
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
+
+	d20Type = D20A_RELOAD;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSimple;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckReload;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameReload;
+	d20Defs[d20Type].flags = D20ADF_QueryForAoO;
+	d20Defs[d20Type].flags |= D20ADF_SimulsCompatible;
+	d20Defs[d20Type].flags |= D20ADF_DoLocationCheckAtDestination;
+	// TODO: action based; some reloads should not actually break concentration
+	d20Defs[d20Type].flags |= D20ADF_Breaks_Concentration;
 
 	d20Type = D20A_5FOOTSTEP;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
@@ -1130,6 +1183,15 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 			return 2;
 	}
 
+	bool isStdAtk = d20a->d20ActType == D20A_STANDARD_ATTACK;
+	isStdAtk = isStdAtk || d20a->d20ActType == D20A_UNSPECIFIED_ATTACK;
+	isStdAtk = isStdAtk || d20a->d20ActType == D20A_CHARGE;
+
+	// If the action is not a standard melee attack, the checks below for being
+	// armed are irrelevant. The action is the 'provoke from all surrounding'
+	// variety. TODO: switch to a flag for type result=2 actions?
+	if (!isStdAtk) return 1;
+
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
 		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
 		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
@@ -1308,7 +1370,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
-	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary))
+	if (critterSys.LeftHandIsPrimary(d20a->d20APerformer))
 		useSecondaryAnim = !useSecondaryAnim;
 
 	combatSys.ToHitProcessing(*d20a);
@@ -1960,6 +2022,22 @@ ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
 	return (ActionErrorCode)dispIo.returnVal; 
 }
 
+// Note: rework this if dual wielding loaded weapons ever happens
+ActionErrorCode D20ActionCallbacks::PerformReload(D20Actn *d20a) {
+	DispIoD20ActionTurnBased dispIo(d20a);
+
+	auto critter = d20a->d20APerformer;
+	if (!combatSys.NeedsToReload(critter)) return AEC_OK;
+
+	objects.floats->FloatCombatLine(critter, 42);
+	histSys.CreateRollHistoryLineFromMesfile(2, critter, objHndl::null);
+
+	auto weapon = critterSys.GetWornItem(critter, EquipSlot::WeaponPrimary);
+	weapons.SetLoaded(weapon);
+
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
 	dispIo.DispatchPerform(DK_D20A_QUIVERING_PALM);
@@ -2055,6 +2133,12 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	} 
 		
 	return FALSE;
+}
+
+BOOL D20ActionCallbacks::ActionFrameReload(D20Actn *d20a) {
+	PerformReload(d20a);
+
+	return TRUE;
 }
 
 /* 0x1008EB90 */
@@ -2400,6 +2484,10 @@ ActionErrorCode D20ActionCallbacks::ActionCheckQuiveringPalm(D20Actn* d20a, Turn
 	}
 
 	return AEC_OK;
+}
+ActionErrorCode D20ActionCallbacks::ActionCheckReload(D20Actn *d20a, TurnBasedStatus *tbStat)
+{
+	return actSeqSys.ActionCheckReload(d20a, tbStat);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat){
@@ -3195,14 +3283,14 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	auto tgt = d20a->d20ATarget;
 	auto performer = d20a->d20APerformer;
 
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
+
 	if (!(d20a->d20Caf & D20CAF_HIT))	{
 		combatSys.FloatCombatLine(d20a->d20APerformer, 29); //miss
 		return FALSE;
 	}
-
-	histSys.CreateRollHistoryString(d20a->rollHistId1);
-	histSys.CreateRollHistoryString(d20a->rollHistId2);
-	histSys.CreateRollHistoryString(d20a->rollHistId0);
 
 	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
 	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
@@ -3236,6 +3324,11 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	}
 
 	return FALSE;
+}
+
+BOOL D20ActionCallbacks::ProjectileHitStandard(D20Actn *d20a, objHndl projectile, objHndl thrown)
+{
+	return addresses.ProjectileFunc_RangedAttack(d20a, projectile, thrown);
 }
 
 BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, objHndl obj2){
@@ -3831,11 +3924,13 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 	if (inventory.IsRangedWeapon(weapon)){
 		ActionCostPacket acp;
 		d20aCopy.d20Caf |= D20CAF_RANGED;
-		if (inventory.IsNormalCrossbow(weapon))	{
+		if (inventory.IsLoadableWeapon(weapon))	{
+			d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
-			if (acp.hourglassCost){
-				d20a->d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return (ActionErrorCode)actSeqSys.CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+
+			// if reloading isn't free, we can do at most one attack
+			if (acp.hourglassCost) {
+				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy);
 			}
 		}
 
@@ -4119,6 +4214,10 @@ ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatu
 	return AEC_OK;
 }
 
+ActionErrorCode D20ActionCallbacks::ActionCostReload(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp) {
+	return actSeqSys.ActionCostReload(d20a, tbStat, acp);
+}
+
 ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
 {
 	if (tbStat->tbsFlags & TBSF_SwiftActionPerformed) {
@@ -4229,6 +4328,53 @@ D20ADF D20Actn::GetActionDefinitionFlags(){
 
 bool D20Actn::IsMeleeHit(){
 	return ((d20Caf & D20CAF_HIT) && !(d20Caf & D20CAF_RANGED));
+}
+
+bool D20Actn::IsHarmful() {
+	SpellPacketBody pkt(spellId);
+
+	switch (d20ActType)
+	{
+	case D20A_CAST_SPELL:
+		return spellSys.IsSpellHarmful(pkt.spellEnum, d20APerformer, d20ATarget);
+	case D20A_PYTHON_ACTION:
+		// TODO: more complicated logic
+		return false;
+
+	case D20A_UNSPECIFIED_ATTACK:
+	case D20A_STANDARD_ATTACK:
+	case D20A_FULL_ATTACK:
+	case D20A_STANDARD_RANGED_ATTACK:
+	case D20A_CLEAVE:
+	case D20A_ATTACK_OF_OPPORTUNITY:
+	case D20A_WHIRLWIND_ATTACK:
+	case D20A_TOUCH_ATTACK:
+	case D20A_CHARGE:
+	case D20A_TURN_UNDEAD:
+	case D20A_DEATH_TOUCH:
+	case D20A_COUP_DE_GRACE:
+	case D20A_STUNNING_FIST:
+	case D20A_SMITE_EVIL:
+	case D20A_TRIP:
+	case D20A_SPELL_CALL_LIGHTNING:
+	case D20A_AOO_MOVEMENT:
+	case D20A_THROW:
+	case D20A_THROW_GRENADE:
+	case D20A_FEINT:
+	case D20A_DISARM:
+	case D20A_SUNDER:
+	case D20A_BULLRUSH:
+	case D20A_TRAMPLE:
+	case D20A_GRAPPLE:
+	case D20A_PIN:
+	case D20A_OVERRUN:
+	case D20A_SHIELD_BASH:
+	case D20A_QUIVERING_PALM:
+		return true;
+
+	default:
+		return false;
+	}
 }
 
 D20DispatcherKey D20Actn::GetPythonActionEnum()

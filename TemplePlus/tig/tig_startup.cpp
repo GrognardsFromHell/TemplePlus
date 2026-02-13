@@ -107,6 +107,7 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mRenderingDevice->SetAntiAliasing(config.antialiasing,
 		config.msaaSamples,
 		config.msaaQuality);
+	mRenderingDevice->SetVSync(config.vsync);
 
 	mDebugUI = std::make_unique<DebugUI>(*mRenderingDevice);
 	// Install a message filter for the debug UI

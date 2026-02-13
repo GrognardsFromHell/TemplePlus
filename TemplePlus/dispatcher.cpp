@@ -14,6 +14,7 @@
 #include "ui/ui_party.h"
 #include "python/python_dispatcher.h"
 #include <critter.h>
+#include <algorithm>
 
 // Dispatcher System Function Replacements
 class DispatcherReplacements : public TempleFix {
@@ -204,8 +205,48 @@ void DispatcherSystem::DispatchForItem(objHndl item, enum_disp_type dispType, D2
 	}
 }
 
+// A complicated dispatcher for wearable items.
+//
+// If the item is worn, its item conditions will be among the conditions for its
+// parent creature, so we can dispatch against the creature. If not, the item
+// conditions can only be checked by doing an item dispatch.
+//
+// This is common code for attributes like armor check penalty that might want
+// to work this way. At the moment, only item conditions (like masterwork or
+// nimbleness) influence the penalty, so we could just use an item dispatch.
+// This more complicated logic tries to allow for e.g. feats that would
+// influence the penalty for specific characters.
+void DispatcherSystem::DispatchForWearable(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO *dispIo) {
+	auto parent = gameSystems->GetObj().GetObject(inventory.GetParent(item));
+	auto critterParent = parent != nullptr && parent->IsCritter();
+	auto loc = inventory.GetInventoryLocation(item);
+
+	if (critterParent) {
+		auto dispatcher = parent->GetDispatcher();
+		if (dispatcher->IsValid()) {
+			DispatcherProcessor(dispatcher, dispType, key, dispIo);
+		} else {
+			// fall back to item dispatch
+			critterParent = false;
+		}
+	}
+
+	// if there is no parent critter, or the item isn't worn, we
+	// need to do item dispatch to incorporate item conditions
+	if (!critterParent || !inventory.IsInvIdxWorn(loc)) {
+		dispatch.DispatchForItem(item, dispType, key, dispIo);
+	}
+}
+
 int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
-	return dispatch.DispatchForCritter(handle, dispIo, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat+1));
+	auto key = static_cast<D20DispatcherKey>(stat+1);
+	auto dispType = dispTypeAbilityScoreLevel;
+	auto result = dispatch.DispatchForCritter(handle, dispIo, dispType, key);
+
+	// simplify bonuses for display
+	if (dispIo) dispIo->bonlist.Simplify();
+
+	return result;
 }
 
 int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag)
@@ -527,6 +568,13 @@ DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 	if (dispIo->dispIOType != dispIoTypeObjEvent)
 		return nullptr;
 	return static_cast<DispIoObjEvent*>(dispIo);
+}
+
+DispIoAbilityLoss* DispatcherSystem::DispIoCheckIoType19(DispIO *dispIo)
+{
+	if (dispIo->dispIOType != dispIOType19) return nullptr;
+
+	return static_cast<DispIoAbilityLoss *>(dispIo);
 }
 
 DispIoAttackDice* DispatcherSystem::DispIoCheckIoType20(DispIO* dispIo)
@@ -961,6 +1009,19 @@ int DispatcherSystem::DispatchD20ActionCheck(D20Actn* d20a, TurnBasedStatus* tur
 	return 0;
 }
 
+// port of 0x1004D480
+//
+// Omitting flag set, because everywhere else already seems to set it.
+int DispatcherSystem::DispatchAbilityLoss(objHndl obj, DispIoAbilityLoss *dispIo)
+{
+	auto dispatcher = objects.GetDispatcher(obj);
+	if (!dispatcherValid(dispatcher)) return 0;
+
+	DispatcherProcessor(dispatcher, dispTypeGetAbilityLoss, DK_NONE, dispIo);
+
+	return dispIo->result;
+}
+
 int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dispIo)
 {
 	BonusList localBonlist;
@@ -1008,7 +1069,7 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 	DispIoBonusList dispIo;
 	if (!eventObj) {
 		dispIo.dispIOType = dispIOTypeBonusList;
-		dispIo.flags = 0;
+		dispIo.flags = static_cast<BonusListFlags>(0);
 		eventObj = &dispIo;
 	}
 
@@ -1286,6 +1347,49 @@ void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* te
 	}
 }
 
+void DispIoEffectTooltip::AppendDistinct(int effectTypeId, int spellEnum, const char *text) const
+{
+	BuffDebuffSub *bdbSub = nullptr;
+	auto findSpec = uiParty.IndicatorSpecGet(effectTypeId);
+	switch (findSpec.type)
+	{
+	case IT_BUFF:
+		if (this->bdb->buffCount >= 8) return;
+		for (size_t i = 0; i < bdb->buffCount; i++) {
+			if (bdb->buffs[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->buffs[bdb->buffCount++];
+		break;
+	case IT_AILMENT:
+		if (bdb->debuffCount >= 8) return;
+		for (size_t i = 0; i < bdb->debuffCount; i++) {
+			if (bdb->debuffs[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->debuffs[bdb->debuffCount++];
+		break;
+	case IT_CONDITION:
+		if (bdb->innerCount >= 6) return;
+		for (size_t i = 0; i < bdb->innerCount; i++) {
+			if (bdb->innerStatuses[i].effectTypeId == effectTypeId) return;
+		}
+		bdbSub = &bdb->innerStatuses[bdb->innerCount++];
+		break;
+	}
+
+	if (bdbSub != nullptr) {
+		bdbSub->effectTypeId = effectTypeId;
+		bdbSub->spellEnum = spellEnum;
+		if (text) {
+			bdbSub->text = new char[strlen(text) + 1];
+			strcpy(const_cast<char*>(bdbSub->text), text);
+		} else {
+			bdbSub->text = nullptr;
+		}
+	} else {
+		logger->error("Unknown tooltip effect {}", effectTypeId);
+	}
+}
+
 void EvtObjActionCost::DispatchCost(D20DispatcherKey key){
 	if (!d20a || !d20a->d20APerformer) {
 		return;
@@ -1498,6 +1602,14 @@ int DispatcherCallbackArgs::GetData1() const
 	return subDispNode->subDispDef->data1;
 }
 
+// Gets a cond struct from the data1 of subDispDef, but updating
+// the pointer if the condition has been extended.
+CondStruct* DispatcherCallbackArgs::GetData1Cond() const
+{
+	auto orig = reinterpret_cast<CondStruct*>(GetData1());
+	return conds.GetByName(orig->condName);
+}
+
 int DispatcherCallbackArgs::GetData2() const
 {
 	return subDispNode->subDispDef->data2;
@@ -1513,6 +1625,11 @@ void DispatcherCallbackArgs::SetCondArgObjHndl(uint32_t argIdx, const objHndl& h
 		SetCondArg(argIdx, handle.GetHandleUpper());
 		SetCondArg(argIdx + 1, handle.GetHandleLower());
 	}
+}
+
+void DispatcherCallbackArgs::SetExpired()
+{
+	subDispNode->condNode->flags |= 1;
 }
 
 void DispatcherCallbackArgs::RemoveCondition(){
@@ -1546,6 +1663,19 @@ void DispIoTooltip::Append(string& cs)
 	{
 		strncpy(strings[numStrings++], &cs[0], 0x100);
 	}
+}
+
+void DispIoTooltip::AppendDistinct(string& cs)
+{
+	if (numStrings >= 10) return;
+
+	for (size_t i = 0; i < numStrings; i++) {
+		auto mx = std::min<size_t>(256, cs.size()); // clamp size
+		if (!strncmp(cs.c_str(), strings[i], mx)) // cs already in strings
+			return;
+	}
+
+	Append(cs);
 }
 
 DispIoObjBonus::DispIoObjBonus()

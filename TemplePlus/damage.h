@@ -126,10 +126,10 @@ public:
 	void HealSubdual(objHndl target, int amount);
 
 	// See D20SavingThrowFlags for flags
-	bool SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags);
+	bool SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, const BonusList *bonExtra = nullptr);
 
 	// Save against a spell
-	bool SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId);
+	bool SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId, const BonusList *bonExtra = nullptr);
 
 	/*
 		Deals damage that can be reduced by a successful reflex save.

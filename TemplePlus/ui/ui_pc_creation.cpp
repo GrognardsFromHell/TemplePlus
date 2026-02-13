@@ -1099,6 +1099,8 @@ BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg) {
 
 			feat = (feat_enums)mSelectableFeats[featIdx].featEnum;
 
+			// don't add the feat if already picked
+			if (FeatAlreadyPicked(feat)) break;
 
 			if (IsSelectingNormalFeat() && selPkt.feat0 == FEAT_NONE) {
 				selPkt.feat0 = feat;
@@ -2625,8 +2627,8 @@ void UiPcCreation::StateTitleRender(int widId){
 	UiRenderer::PopFont();
 }
 
-int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
-
+int UiPcCreation::GetStatIdx(const int x0, const int xMax, int x, int y, int * xyOut)
+{
 	auto &statsWnd = GetStatsWnd();
 
 	auto relX = x - statsWnd.x;
@@ -2634,7 +2636,6 @@ int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
 
 	auto idx = 0;
 	const int y0 = 71;
-	const int x0 = 203, xMax = 241;
 	const int yBtnSize = 31;
 
 	if (relX < x0 || relX > xMax)
@@ -2663,6 +2664,16 @@ int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
 	return idx;
 }
 
+int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut)
+{
+	return GetStatIdx(203, 241, x, y, xyOut);
+}
+
+int UiPcCreation::GetAssignedStatIdx(int x, int y, int * xyOut)
+{
+	return GetStatIdx(87, 125, x, y, xyOut);
+}
+
 BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 	// returning FALSE indicates it should pass the handling on to the original handler
 
@@ -2670,7 +2681,9 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 		return FALSE;
 
 	auto msgMouse = (TigMsgMouse*)msg;
-	if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED){
+	auto mouseFlags = msgMouse->buttonStateFlags;
+
+	if (mouseFlags & MouseStateFlags::MSF_RMB_RELEASED){
 		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
 		if (rolledStatIdx == -1)
 			return FALSE;
@@ -2688,7 +2701,6 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 			}
 		}
 	}
-		
 
 	return FALSE;
 }

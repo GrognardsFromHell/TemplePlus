@@ -10,7 +10,7 @@ def OnBeginSpellCast( spell ):
 def	OnSpellEffect ( spell ):
 	print "Neutralize Poison OnSpellEffect"
 
-	spell.duration = 600 * spell.caster_level
+	spell.duration = 100 * spell.caster_level
 	
 	target = spell.target_list[0]
 

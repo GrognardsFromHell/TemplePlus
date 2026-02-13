@@ -1,0 +1,5 @@
+ID_string: WEAKNESS
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Ray of Enfeeblement.tga
+help_topic: TAG_WEAKNESS
+tooltip_base_text: Weakness

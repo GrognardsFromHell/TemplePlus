@@ -24,3 +24,4 @@ max_Target: 999
 radius_Target: 0
 ai_type: ai_action_defensive
 choices: 131 132
+source: Spell Compendium

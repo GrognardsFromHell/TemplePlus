@@ -1392,6 +1392,45 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_ActionPossible(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python action_possible called with null object");
+		Py_RETURN_NONE;
+	}
+
+	objHndl target;
+	D20ActionType actionType = D20A_NONE;
+	if (!PyArg_ParseTuple(args, "O&|ii:objhndl.action_possible", &ConvertObjHndl, &target, &actionType)) {
+		return 0;
+	}
+
+	if (!target) {
+		logger->warn("Python action_possible called with null target");
+		Py_RETURN_NONE;
+	}
+
+	ActionErrorCode actionErrorCode = ActionErrorCode::AEC_INVALID_ACTION;
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	do {
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(actionType, 0);
+
+		actionErrorCode = d20Sys.GlobD20ActnSetTarget(target, 0);
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+
+		actionErrorCode = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+
+		actionErrorCode = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		if (actionErrorCode != ActionErrorCode::AEC_OK) break;
+	} while (false);
+
+	actSeqSys.ActionSequenceRevertPath(initialActNum);
+	auto result = PyInt_FromLong((int)actionErrorCode);
+	return result;
+}
+
 static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1691,23 +1730,40 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 
 	// Following arguments all have to be integers and gel with the condition argument count
 	vector<int> condArgs(cond->numArgs, 0);
-	for (unsigned int i = 0; i < cond->numArgs; ++i) {
-		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
-			auto item = PyTuple_GET_ITEM(args, i + 1);
-			if (PyLong_Check(item)){
-				condArgs[i] = PyLong_AsLong(item);
-				continue;
-			}
+	size_t j = 0;
+	for (unsigned int i = 0; j < cond->numArgs; ++i) {
+		// no more arguments
+		if (static_cast<uint32_t>(PyTuple_GET_SIZE(args)) <= i+1)
+			break;
 
-			if (!PyInt_Check(item)) {
-				auto itemRepr = PyObject_Repr(item);
-				PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int or long: %s",
-				             i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
-				Py_DECREF(itemRepr);
+		auto item = PyTuple_GET_ITEM(args, i + 1);
+		if (PyLong_Check(item)){
+			condArgs[j++] = PyLong_AsLong(item);
+			continue;
+		}
+
+		if (PyInt_Check(item)) {
+			condArgs[j++] = PyInt_AsLong(item);
+			continue;
+		}
+
+		objHndl obj;
+		if (ConvertObjHndl(item, &obj)) {
+			if (j+1 < cond->numArgs) {
+				condArgs[j++] = obj.GetHandleUpper();
+				condArgs[j++] = obj.GetHandleLower();
+				continue;
+			} else {
+				PyErr_Format(PyExc_ValueError, "Object argument %d for condition %s cannot fit into %d arguments. Objects take two arguments.", i + 1, condName, cond->numArgs);
 				return false;
 			}
-			condArgs[i] = PyInt_AsLong(item);
 		}
+
+		auto itemRepr = PyObject_Repr(item);
+		PyErr_Format(PyExc_ValueError, "Argument %d for condition %s (requires %d args) is not of type int, long or object: %s",
+								 i + 1, condName, cond->numArgs, PyString_AsString(itemRepr));
+		Py_DECREF(itemRepr);
+		return false;
 	}
 
 	condStructOut = cond;
@@ -2049,6 +2105,31 @@ static PyObject* PyObjHandle_IsFlankedBy(PyObject* obj, PyObject* args) {
 
 	auto result = combatSys.IsFlankedBy(self->handle, critter);
 	return PyInt_FromLong(result);
+}
+
+static PyObject* PyObjHandle_TargetIsSurrounded(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.target_is_surrounded", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
+
+	PathQuery pq;
+	Path pqr;
+	pq.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TARGET_OBJ | PQF_ADJUST_RADIUS);
+	pq.critter = self->handle;
+	pq.targetObj = critter;
+	pathfindingSys.PathInit(&pqr, &pq);
+	pq.tolRadius += critterSys.GetReach(self->handle, D20A_UNSPECIFIED_ATTACK);
+	if (pathfindingSys.TargetSurroundedCheck(&pqr, &pq))
+	{
+		return PyInt_FromLong(1);
+	}
+
+	return PyInt_FromLong(0);
 }
 
 
@@ -2416,6 +2497,22 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_Banish(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	auto killer = objHndl::null;
+	bool awardXp = true;
+	if (!PyArg_ParseTuple(args, "|O&i:objhndl.critter_banish", &ConvertObjHndl, &killer, awardXp)) {
+		return 0;
+	}
+
+	critterSys.Banish(self->handle, killer, awardXp);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_Destroy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -2688,9 +2785,33 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 
 
 static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto fname = "d20_query_with_object";
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		Py_RETURN_NONE;
+	}
+
+	if (PyTuple_GET_SIZE(args) < 2) {
+		auto err = "%s called with too few arguments!";
+		PyErr_Format(PyExc_RuntimeError, err, fname);
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		objHndl obj;
+		PyObject *arg = PyTuple_GET_ITEM(args, 1);
+		if (ConvertObjHndl(arg, &obj)) {
+			auto result = d20Sys.D20QueryPython(self->handle, argString, obj);
+			return PyInt_FromLong(result);
+		} else {
+			auto err = "%s could not decode object argument: %s";
+			auto argRepr = PyObject_Repr(arg);
+			PyErr_Format(PyExc_ValueError, err, fname, argRepr);
+			Py_DECREF(argRepr);
+			return PyInt_FromLong(0);
+		}
 	}
 
 	int queryKey;
@@ -3148,7 +3269,7 @@ static PyObject* PyObjHandle_GetCharacterBaseClassesSet(PyObject* obj, PyObject*
 	return GetCharacterClassesSet([](Stat classEnum) { return d20ClassSys.IsBaseClass(classEnum); }, obj, args);
 }
 
-static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
+static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
@@ -3156,7 +3277,7 @@ static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(self->handle.GetHandleLower());
 }
 
-static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, PyObject* args) {
+static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
@@ -3753,34 +3874,42 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 
-	feat_enums feat;
-
 	if (PyTuple_GET_SIZE(args) < 1) {
-		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		auto msg = "has_feat called with no arguments!";
+		PyErr_SetString(PyExc_RuntimeError, msg);
 		return PyInt_FromLong(0);
 	}
 
-	PyObject* arg = PyTuple_GET_ITEM(args, 0);
-	if (PyString_Check(arg)) {
-		auto argString = fmt::format("{}", PyString_AsString(arg));
-		feat = (feat_enums)ElfHash::Hash(argString);
-	}
+	feat_enums feat;
+	int chosen = 0;
 
-	else if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
-		return 0;
+	PyObject *arg = PyTuple_GET_ITEM(args, 0);
+
+	if (PyString_Check(arg)) {
+		char *name;
+		if (!PyArg_ParseTuple(args, "s|i:objHndl.has_feat", &name, &chosen)) {
+			return PyInt_FromLong(0);
+		}
+		auto argString = fmt::format("{}", name);
+		feat = static_cast<feat_enums>(ElfHash::Hash(argString));
+	} else {
+		if (!PyArg_ParseTuple(args, "i|i:objHndl.has_feat", &feat, &chosen)) {
+			return PyInt_FromLong(0);
+		}
 	}
 
 	if (!objects.IsCritter(self->handle)) {
-		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), self->handle);
+		auto msg = "Python has_feat ({}) called with non critter object: {}";
+		logger->warn(msg, feats.GetFeatName(feat), self->handle);
 		return PyInt_FromLong(0);
 	}
 
-	Stat levelRaised = (Stat)0;
-	uint32_t domain1 = 0;
-	uint32_t domain2 = 0;
-	uint32_t alignmentChoice = 0;
-
-	auto result = feats.HasFeatCountByClass(self->handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
+	uint32_t result = 0;
+	if (chosen) {
+		result = feats.HasFeatCount(self->handle, feat);
+	} else {
+		result = feats.HasFeatCountByClass(self->handle, feat);
+	}
 
 	return PyInt_FromLong(result);
 }
@@ -3947,6 +4076,24 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 		Py_RETURN_NONE;
 	}
 	aiSys.StopAttacking(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiStopFleeing(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	aiSys.StopFleeing(self->handle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AiProcess(PyObject *obj, PyObject *args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	aiSys.AiProcess(self->handle);
 	Py_RETURN_NONE;
 }
 
@@ -4583,8 +4730,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+	{ "ai_stop_fleeing", PyObjHandle_AiStopFleeing, METH_VARARGS, NULL },
 
 	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
+	{ "ai_process", PyObjHandle_AiProcess, METH_VARARGS, NULL },
 
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
@@ -4602,6 +4751,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "arcane_spontaneous_spell_level_can_cast", PyObjHandle_ArcaneSpontaniousSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "arcane_vancian_spell_level_can_cast", PyObjHandle_ArcaneVancianSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
+	{ "action_possible", PyObjHandle_ActionPossible, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
 
@@ -4636,6 +4786,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "critter_get_alignment", PyObjHandle_CritterGetAlignment, METH_VARARGS, NULL },
 	{ "critter_kill", PyObjHandle_Kill, METH_VARARGS, NULL },
 	{ "critter_kill_by_effect", PyObjHandle_KillByEffect, METH_VARARGS, NULL },
+	{ "critter_banish", PyObjHandle_Banish, METH_VARARGS, NULL },
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
@@ -4838,6 +4989,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
 	{"turn_towards_loc", PyObjHandle_TurnTowardsLoc, METH_VARARGS, NULL},
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
+	{"target_is_surrounded", PyObjHandle_TargetIsSurrounded, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
 	{ "use_item", PyObjHandle_UseItem, METH_VARARGS, NULL },
@@ -5313,6 +5465,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},
 	{"rotation", PyObjHandle_GetRotation, PyObjHandle_SetRotation, NULL},
 	{"map", PyObjHandle_GetMap, NULL, NULL, NULL},
+	{"handle_upper", PyObjHandle_GetHandleUpper, NULL, NULL},
+	{"handle_lower", PyObjHandle_GetHandleLower, NULL, NULL},
 	{"hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
 	{"hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
 	{"get_size", PyObjHandle_GetSize, NULL, NULL},

@@ -23,6 +23,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "ai.h"
+#include "action_sequence.h"
 #include "party.h"
 #include "ui\ui.h"
 #include "temple_functions.h"
@@ -181,6 +182,15 @@ private:
 		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int clvl) {
 			return critterSys.Resurrect(critter, type, clvl);
 		});
+
+		replaceFunction<int(__cdecl)(objHndl)>(0x100B70A0, [](objHndl critter) {
+			return critterSys.AutoReload(critter) ? 1 : 0;
+		});
+
+		replaceFunction<int(__cdecl)(objHndl)>(0x1004E9F0, [](objHndl critter) {
+			auto test = critterSys.ShouldParalyzeByAbilityScore(critter, false);
+			return test ? TRUE : FALSE;
+		});
 	}
 
 private:
@@ -325,6 +335,50 @@ void LegacyCritterSystem::Attack(objHndl provoked, objHndl agitator, int rangeTy
 	// 0x2 - 
 	// 0x4
 	aiSys.ProvokeHostility(provoked, agitator, rangeType, flags);
+}
+
+bool LegacyCritterSystem::AutoReload(objHndl critter, bool combat)
+{
+	if (!critter || IsDeadOrUnconscious(critter)) return false;
+	// TODO: more conditions blocking?
+
+	if (!combatSys.NeedsToReload(critter)) return false;
+
+	if (combatSys.isCombatActive()) {
+		if (!combat) return false;
+
+		auto curStatus = actSeqSys.curSeqGetTurnBasedStatus();
+		if (!curStatus) return false;
+
+		D20Actn d20a;
+		d20a.d20ActType = D20A_RELOAD;
+		d20a.d20APerformer = critter;
+		auto tbStatus = *curStatus;
+		ActionCostPacket acp;
+
+		actSeqSys.ActionCostReload(&d20a, &tbStatus, &acp);
+
+		auto timeLeft = tbStatus.hourglassState;
+		auto cost = acp.hourglassCost;
+		auto invalid = actSeqSys.ActionCheckReload(&d20a, &tbStatus);
+
+		if (timeLeft < cost || invalid) return false;
+	}
+
+	if (!combatSys.AmmoMatchesItemAtSlot(critter, WeaponPrimary)) {
+		// out of ammo
+		histSys.CreateRollHistoryLineFromMesfile(0, critter, objHndl::null);
+		objects.floats->FloatCombatLine(critter, 44);
+		return false;
+	}
+
+	auto weapon = inventory.ItemWornAt(critter, WeaponPrimary);
+	weapons.SetLoaded(weapon);
+
+	objects.floats->FloatCombatLine(critter, 42);
+	histSys.CreateRollHistoryLineFromMesfile(2, critter, objHndl::null);
+
+	return true;
 }
 
 void LegacyCritterSystem::Pickpocket(objHndl handle, objHndl tgt, int & gotCaught){
@@ -675,6 +729,47 @@ void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
+void LegacyCritterSystem::Banish(objHndl target, objHndl killer, bool xp)
+{
+	// if not dead yet, take care of some death stuff.
+	if (!IsDeadNullDestroyed(target) && killer && xp) {
+		AwardXpFor(killer, target);
+	}
+
+	gameSystems->GetParticleSys().CreateAtObj("Fizzle", target);
+	auto critter = objSystem->GetObject(target);
+	auto aiFlags = critter->GetInt64(obj_f_npc_ai_flags64);
+	aiFlags |= AiFlag::RunningOff;
+	critter->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	objects.FadeTo(target, 0, 2, 5, 1);
+}
+
+// port of 0x100B88E0
+void LegacyCritterSystem::AwardXpFor(objHndl killer, objHndl critter)
+{
+	auto LogbookDefeat = temple::GetRef<int(objHndl, objHndl)>(0x1009A910);
+	LogbookDefeat(killer, critter);
+
+	if (!party.IsInParty(killer)) return;
+
+	if (IsPC(critter)) return;
+
+	auto summoned = conds.GetByName("sp-Summoned");
+	if (d20Sys.d20QueryWithData(critter, DK_QUE_Critter_Has_Condition, summoned, 0))
+		return;
+
+	auto flags = objects.getInt32(critter, obj_f_critter_flags);
+	if (flags & OCF_EXPERIENCE_AWARDED) return;
+
+	auto cr = objects.getInt32(critter, obj_f_npc_challenge_rating);
+	cr += objects.StatLevelGet(critter, stat_level);
+
+	auto AwardXpForCR = temple::GetRef<void(int)>(0x100B8880);
+	AwardXpForCR(cr);
+	flags |= OCF_EXPERIENCE_AWARDED;
+	objects.setInt32(critter, obj_f_critter_flags, flags);
+}
+
 /* 0x100B8AA0 */
 void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
 {
@@ -695,14 +790,33 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
 	}
 }
 
- /* 0x1004E9F0 */
-bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
+// Originally 0x1004E9F0
+//
+// This checks if ability score paralysis should be applied. The `avoidDup`
+// flag controls whether a dispatch should be done to see if some other
+// condition already makes the character helpless, in which case it is
+// probably unnecessary. However, this is only appropriate when deciding
+// whether to _add_ the condition, because ability score paralysis itself
+// will render the creature helpless.
+//
+// The game uses this same check to determine whether the condition should be
+// _removed_. Since it is desirable for this condition to zero out certain
+// scores, we need a mechanism to check if non-paralysis conditions would
+// make a creature's score 0, which is the purpose of the flag used in the
+// dispatch.
+bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle, bool avoidDup)
 {
+	// If another condition is causing helplessness, it will likely set a
+	// score to 0, but adding paralysis would just be noise.
+	if (avoidDup && d20Sys.d20Query(handle, DK_QUE_Helpless)) return false;
+
 	for (auto stat = (int)stat_strength; stat <= stat_charisma; ++stat) {
 		if (stat == stat_constitution) {
 			continue; // negative CON kills, rather than paralyzes
 		}
-		if (objects.abilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
+		DispIoBonusList dispIo;
+		dispIo.flags = NoHelpless;
+		if (objects.abilityScoreLevelGet(handle, (Stat)stat, &dispIo) <= 0) {
 			return true;
 		}
 	}
@@ -1745,6 +1859,21 @@ uint32_t LegacyCritterSystem::IsUndead(objHndl objHnd){
 	return IsCategoryType(objHnd, mc_type_undead);
 }
 
+// Tests if the creature is a good outsider (celestial may not be strictly
+// accurate).
+uint32_t LegacyCritterSystem::IsCelestial(objHndl critter) {
+	auto align = objects.getInt32(critter, obj_f_critter_alignment);
+	return IsCategoryType(critter, mc_type_outsider)
+		&& (align & ALIGNMENT_GOOD);
+}
+
+// Tests if the creature is an evil outsider.
+uint32_t LegacyCritterSystem::IsFiend(objHndl critter) {
+	auto align = objects.getInt32(critter, obj_f_critter_alignment);
+	return IsCategoryType(critter, mc_type_outsider)
+		&& (align & ALIGNMENT_EVIL);
+}
+
 uint32_t LegacyCritterSystem::IsOoze(objHndl objHnd)
 {
 	return IsCategoryType(objHnd, mc_type_ooze);
@@ -2350,7 +2479,7 @@ objHndl LegacyCritterSystem::GetPrimaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapl;
 	else
 		return weapr;
@@ -2361,7 +2490,7 @@ objHndl LegacyCritterSystem::GetSecondaryWield(objHndl critter)
 	auto weapr = GetRightWield(critter);
 	auto weapl = GetLeftWield(critter);
 
-	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+	if (LeftHandIsPrimary(critter))
 		return weapr;
 	else
 		return weapl;
@@ -2442,6 +2571,19 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 	// Otherwise, we're wielding a double weapon, or the offhand is
 	// null, either of which count as light.
 	return true;
+}
+
+// Checks that the left hand is actually the primary weapon. This includes
+// checking that there is an actual weapon equipped (single, shield or
+// double), because fighting with an empty off hand is currently not actually
+// supported.
+bool LegacyCritterSystem::LeftHandIsPrimary(objHndl critter)
+{
+	if (!critter || !objSystem->IsValidHandle(critter))
+		return false;
+
+	auto weapl = GetLeftWield(critter);
+	return weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary);
 }
 
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){

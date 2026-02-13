@@ -17,6 +17,7 @@ exc_flags_Target: Self
 exc_flags_Target: Dead
 exc_flags_Target: Non-critter
 mode_Target: Multi
+mode_Target: Any 15 Feet
 min_Target: 1
 max_Target: -511
 radius_Target: 0

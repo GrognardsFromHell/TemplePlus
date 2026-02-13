@@ -17,3 +17,4 @@ mode_Target: Personal
 flags_Target: Radius
 radius_Target: 50
 ai_type: ai_action_defensive
+source: Spell Compendium

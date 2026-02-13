@@ -13,7 +13,7 @@ def GetCategory():
 	return "Complete Warrior"
 
 def GetClassDefinitionFlags():
-	return CDF_BaseClass | CDF_CoreClass
+	return CDF_BaseClass
 
 def GetClassHelpTopic():
 	return "TAG_SWASHBUCKLERS"

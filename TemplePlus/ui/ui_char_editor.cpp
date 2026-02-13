@@ -554,13 +554,8 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		auto handle = chargen.GetEditedChar();
 		auto &charPkt = chargen.GetCharEditorSelPacket();
 
-		auto featList = feats.GetFeats(handle);
-
-		bool hasMMFeat = false;
-		for (auto feat : featList) {
-			if (feats.IsMetamagicFeat(feat)) {
-				featCount++;
-			}
+		for (auto mmfeat : feats.metamagicFeats) {
+			featCount += feats.HasFeatCountByClass(handle, mmfeat);
 		}
 
 		if (feats.IsMetamagicFeat(charPkt.feat0)) {
@@ -3275,6 +3270,24 @@ class UiCharEditorHooks : public TempleFix {
 			return uiCharEditor.ClassCheckComplete();
 		});
 		
+		// Stat
+
+		// Hook for stat increase buttons to reset subsequent levelup state
+		static BOOL (__cdecl*orgStatBtnEvent)(int, TigMsg*) =
+			replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x101B0110,
+					[](int widId, TigMsg *msg) {
+						auto &charEdSelPkt = uiCharEditor.GetCharEditorSelPacket();
+						auto pre = charEdSelPkt.statBeingRaised;
+						auto result = orgStatBtnEvent(widId, msg);
+						auto post = charEdSelPkt.statBeingRaised;
+
+						// if we changed to/from intelligence, reset subsequent steps
+						if (pre != post &&
+								(pre == stat_intelligence || post == stat_intelligence)) {
+							temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(1);
+						}
+						return result;
+					});
 
 		// Skill
 

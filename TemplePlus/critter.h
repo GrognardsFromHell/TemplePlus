@@ -199,6 +199,10 @@ struct LegacyCritterSystem : temple::AddressTable
 
 	void Attack(objHndl provoked, objHndl attacker, int rangeType, int flags);
 
+	// returns true if the weapon was actually reloaded; second argument
+	// controls whether reload in combat is enabled
+	bool AutoReload(objHndl critter, bool combat = false);
+
 	/*
 		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)
 	*/
@@ -240,10 +244,17 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
+
+	// Eliminates a creature as if by banishment or unsummoning.
+	void Banish(objHndl critter, objHndl killer = objHndl::null, bool xp = true);
+
+	// Awards appropriate party XP if killer defeats critter.
+	void AwardXpFor(objHndl killer, objHndl critter);
+
 	int GetHpDamage(objHndl handle);
 	void SetHpDamage(objHndl handle, int damage);
 	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
-	bool ShouldParalyzeByAbilityScore(objHndl handle);
+	bool ShouldParalyzeByAbilityScore(objHndl handle, bool avoidDup = true);
 	
 		
 	/*
@@ -410,6 +421,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	MonsterSubcategoryFlag GetSubcategoryFlags(objHndl handle);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	uint32_t IsCategorySubtype(objHndl objHnd, MonsterSubcategoryFlag categoryType);
+	uint32_t IsCelestial(objHndl objHnd);
+	uint32_t IsFiend(objHndl objHnd);
 	uint32_t IsUndead(objHndl objHnd);
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);
@@ -443,6 +456,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	bool CanTwoWeaponFight(objHndl hndl);
 	FightingStyle GetFightingStyle(objHndl hndl);
 	bool OffhandIsLight(objHndl hndl);
+	bool LeftHandIsPrimary(objHndl critter);
 #pragma endregion
 
 #pragma region Spellcasting

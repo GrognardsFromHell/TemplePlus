@@ -396,7 +396,9 @@ Objects::Objects()
 /* 0x1004E7F0 */
 uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
 {
-	auto result = objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
+	auto dispIo = (DispIoBonusList*)dispIO;
+	auto result =
+		objects.dispatch.Dispatch10AbilityScoreLevelGet(objHnd, stat, dispIo);
 	if (config.npcStatBoost > 0 && objects.IsNPC(objHnd) && !party.IsInParty(objHnd) ) 
 	{
 		if (result >= 3 || stat != Stat::stat_intelligence) { // so it doesn't change behaviors such as animal intelligence

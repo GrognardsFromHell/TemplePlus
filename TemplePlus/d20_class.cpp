@@ -30,6 +30,8 @@ class D20ClassHooks : public TempleFix
 {
 
 	static int HookedLvl1SkillPts(int intMod);
+	static int NumSkillPointsPerLevel(int intScore, Race rc, Stat cls);
+
 	void apply() override {
 
 		// GetClassHD
@@ -70,25 +72,7 @@ class D20ClassHooks : public TempleFix
 			return !d20ClassSys.IsClassSkill(skillEnum, classEnum);
 		});
 
-		// GetNumSkillPointsPerLevel
-		replaceFunction<BOOL(int, Race, Stat)>(0x1007D3D0, [](int intScore, Race raceEnum, Stat classEnum)->BOOL
-		{
-			auto result = objects.GetModFromStatLevel(intScore);
-			if (raceEnum == race_human) { // todo: generalize with a dispatch
-				auto critter = chargen.GetEditedChar();
-				if (critter) {
-					//Allow the bonus only for humans without a subrace (keeps aasimar and other plane touched from getting the bonus)
-					auto subRace = objects.StatLevelGet(critter, stat_subrace);
-					if (subRace == 0) {
-						result++;
-					}
-				}
-			}
-			result += d20ClassSys.GetSkillPts(classEnum);
-			if (result < 1)
-				result = 1;
-			return result;
-		});
+		replaceFunction(0x1007D3D0, NumSkillPointsPerLevel);
 
 		writeNoops(0x10181441);
 		writeNoops(0x1018144E);
@@ -733,11 +717,27 @@ void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, i
 		
 }
 
-int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl){
-
-	auto result = (intStatLvl - 10) >> 1;
+int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl) {
 	auto &selPkt = chargen.GetCharEditorSelPacket();
-	auto classLevelled = selPkt.classCode;
-	result += d20ClassSys.GetSkillPts(classLevelled);
+	auto classCode = selPkt.classCode;
+	auto race = selPkt.raceId;
+	auto result = NumSkillPointsPerLevel(intStatLvl, race, classCode);
+
+	// Adjust, because this hook doesn't replace the portion that adds 4 for
+	// race_human.
+	if (race == race_human) result--;
+
 	return result;
 }
+
+int D20ClassHooks::NumSkillPointsPerLevel(int intScore, Race race, Stat cls)
+{
+	auto result = objects.GetModFromStatLevel(intScore);
+	auto critter = chargen.GetEditedChar();
+	result += d20Sys.D20QueryPython(critter, "Bonus Skillpoints");
+	result += d20ClassSys.GetSkillPts(cls);
+	if (result < 1)
+		result = 1;
+	return result;
+}
+

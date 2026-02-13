@@ -19,3 +19,4 @@ exc_flags_Target: Dead
 mode_Target: Area
 radius_Target: 5
 ai_type: ai_action_defensive
+source: Spell Compendium

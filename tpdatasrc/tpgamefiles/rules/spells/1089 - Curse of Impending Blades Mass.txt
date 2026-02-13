@@ -18,3 +18,4 @@ exc_flags_Target: Non-critter
 mode_Target: Area
 radius_Target: 20
 ai_type: ai_action_offensive
+source: Spell Compendium

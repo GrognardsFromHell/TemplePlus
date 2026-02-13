@@ -1,6 +1,9 @@
 ﻿
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
+
 enum class RngType {
 	MERSENNE_TWISTER,
 	ARCANUM
@@ -13,6 +16,29 @@ struct VanillaSetting {
 	ConfigChangedCallback callback;
 };
 
+// Recognized sources for spells etc.
+//
+// Not a flag type, but making the codes sparse makes it easier to
+// classify them when filtering.
+//
+// Convention:
+//   0-255 core
+//   256-511 offical non-core
+//   512+ unofficial
+enum class PnPSource : uint32_t
+{
+	PHB = 0,
+	ToEE = 1,
+	SpellCompendium = 0x100,
+	PHB2 = 0x101,
+	Homebrew = 0x200,
+	Co8 = 0x201
+};
+
+
+// Calculates a source for a spell based on its numbering, as a default.
+PnPSource DefaultSpellSource(int spellEnum);
+
 struct TemplePlusConfig
 {
 	bool showFps = false; // Previously -fps
@@ -22,6 +48,7 @@ struct TemplePlusConfig
 	bool noRandomEncounters = false; // Previously -norandom
 	bool noMsMouseZ = false; // Previously -nomsmousez
 	bool antialiasing = true; // Previously -noantialiasing
+	bool vsync = true;
 	uint32_t displayAdapter = 0; // Which adapter to use. 0 = default
 	uint8_t msaaSamples = 4; // If antialiasing is true
 	uint8_t msaaQuality = 0; // For vendor specific AA
@@ -93,6 +120,7 @@ struct TemplePlusConfig
 	bool slowerLevelling = false;
 	bool laxRules = false; // Relaxed restrictions for various things; this also acts as a master switch
 	bool stricterRulesEnforcement = false; //Stricter rules enforcement for things such as the size of the grease spell
+	bool preferPoisonSpecFile = false; // don't load vanilla poisons
 	bool disableMulticlassXpPenalty = false;
 	bool disableCraftingSpellReqs = false;
 	bool showTargetingCirclesInFogOfWar = false;
@@ -100,6 +128,7 @@ struct TemplePlusConfig
 	bool disableDoorRelocking = false;
 	bool dialogueUseBestSkillLevel = false; // uses best skill level from the (PC) group in dialogue checks
 	bool disableReachWeaponDonut = false; // set to true to restore vanilla ToEE reach weapon behavior
+	bool highlightContainers = false; // highlight containers when tab is pressed
 
 	bool newClasses = false; // Prestige classes and such
 	bool newRaces = false; // Drow etc.
@@ -107,6 +136,7 @@ struct TemplePlusConfig
 	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
 	bool forgottenRealmsRaces = false;  //Races from the forgotten realms campaign setting (Gold Dwarf, Genasi, ...)
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
+	std::unordered_set<PnPSource> nonCoreSources;
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog
@@ -137,7 +167,13 @@ struct TemplePlusConfig
 
 	std::string GetPath();
 	void SetPath(const std::string &path);
-	
+
+	TemplePlusConfig() {
+		nonCoreSources.insert(PnPSource::SpellCompendium);
+		nonCoreSources.insert(PnPSource::PHB2);
+		nonCoreSources.insert(PnPSource::Homebrew);
+		nonCoreSources.insert(PnPSource::Co8);
+	}
 };
 
 extern TemplePlusConfig config;

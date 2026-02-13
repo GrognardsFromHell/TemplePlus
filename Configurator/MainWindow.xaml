@@ -34,6 +34,7 @@
                 <CheckBox VerticalAlignment="Center" Content="Run in Windowed Mode" IsChecked="{Binding WindowedMode}" Margin="0,5,0,5" />
                 <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" Margin="0,5,0,5" />
                 <CheckBox VerticalAlignment="Center" Content="Anti Aliasing" IsChecked="{Binding AntiAliasing}" Margin="0,5,0,5" ToolTip="You may have to disable this if you have an integrated GPU." />
+                <CheckBox VerticalAlignment="Center" Content="VSync" IsChecked="{Binding VSync}" Margin="0,5,0,5" /> 
                 <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" Margin="0,5,0,5" />
                 <CheckBox VerticalAlignment="Center" Content="Lock Cursor to Window" IsChecked="{Binding WindowedLockCursor}" Margin="0,5,0,5" ToolTip="Locks the cursor to the window area when using windowed mode and the window is active."/>
                 <CheckBox VerticalAlignment="Center" Content="Dungeon Master" IsChecked="{Binding DungeonMaster}" Margin="0,5,0,5" ToolTip="Enables the Dungeon Master UI, which allows you to spawn creatures and edit existing ones."/>

@@ -169,7 +169,7 @@ feat_weapon_focus_halberd: 4412
 def pc_start( pc ):
 	for f,p in proto_table.items():
 		if pc.item_find_by_proto(p)==OBJ_HANDLE_NULL:
-			if pc.has_feat(f):		
+			if pc.has_feat(f, 1):		
 				proto = proto_table[f]
 				create_item_in_inventory( proto, pc )
 				if ((proto == 4201) or (proto == 4087)):

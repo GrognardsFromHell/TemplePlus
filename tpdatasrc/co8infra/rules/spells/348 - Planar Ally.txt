@@ -18,3 +18,4 @@ exc_flags_Target: Non-critter
 mode_Target: Area
 radius_Target: 1
 ai_type: ai_action_summon
+source: PHB

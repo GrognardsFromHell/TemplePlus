@@ -87,7 +87,7 @@ struct SpellPacketBody{
 	bool InsertToTargetList(uint32_t idx, objHndl tgt);
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
-	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
+	bool SavingThrow(objHndl target, D20SavingThrowFlag flags, BonusList *bonExtra = nullptr);
 	bool CheckSpellResistance(objHndl tgt, bool forceCheck = false);
 	const char* GetName(); // get the spell name
 
@@ -148,6 +148,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	std::map<int, SpellEntryExt> mSpellEntryExt;
+	std::map<int, PnPSource> mSpellSources;
 	std::vector<Stat> advancedLearningClasses;
 	
 	MesHandle *spellEnumMesHandle;
@@ -229,7 +230,8 @@ struct LegacySpellSystem : temple::AddressTable
 	static bool IsSpellLike(int spellEnum); 
 	static bool IsLabel(int spellEnum); // check if it is a hardcoded "label" enum (used in the GUI etc)
 	static bool IsNewSlotDesignator(int spellEnum); // check if it is a  hardcoded "new slot" designator (used for sorting)  enums 1605-1614
-	static bool IsNonCore(int spellEnum);
+	bool IsNonCore(int spellEnum);
+	bool IsSpellSourceEnabled(int spellEnum);
 
 	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null); // returns -1 if not available for spell class
 	bool SpellHasMultiSelection(int spellEnum);

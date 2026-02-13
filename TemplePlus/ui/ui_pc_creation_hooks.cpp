@@ -169,6 +169,16 @@ public:
 			return orgSkillIncBtnMsg(widId, msg);
 		});
 
+		// Stats
+		static void (__cdecl *orgStatsReset)(CharEditorSelectionPacket*) =
+			replaceFunction<void (__cdecl)(CharEditorSelectionPacket*)>(0x1018ABC0,
+					[](CharEditorSelectionPacket *pkt) {
+						// fix strength stat prereq off-by-one during chargen
+						pkt->statBeingRaised = static_cast<Stat>(-1);
+
+						orgStatsReset(pkt);
+					});
+
 		// Feats
 		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x101847F0, [](UiSystemConf& conf) {uiPcCreation.FeatsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x10182D30, []() {uiPcCreation.FeatsFree(); });

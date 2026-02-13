@@ -175,6 +175,10 @@ enum D20ADF : int {
 	D20ADF_Python = 0x1000000
 };
 
+inline D20ADF & operator |=(D20ADF & lhs, D20ADF rhs) {
+	lhs = static_cast<D20ADF>(lhs | rhs);
+	return lhs;
+}
 
 struct D20Actn{
 	D20ActionType d20ActType;
@@ -227,6 +231,7 @@ struct D20Actn{
 	int FilterSpellTargets(SpellPacketBody& spellPkt); // returns number of remaining targets
 	D20ADF GetActionDefinitionFlags();
 	bool IsMeleeHit();
+	bool IsHarmful();
 
 	// Python action section
 	D20DispatcherKey GetPythonActionEnum();

@@ -67,6 +67,7 @@
   #include <wchar.h>
 
   typedef std::wstringstream fini_sstream_t;
+  typedef std::wistringstream fini_isstream_t;
   typedef std::wstring fini_string_t;
   typedef wchar_t fini_char_t;
   typedef std::wifstream fini_ifstream_t;
@@ -82,6 +83,7 @@
   #include <cstring>
 
   typedef std::stringstream fini_sstream_t;
+  typedef std::istringstream fini_isstream_t;
   typedef std::string fini_string_t;
   typedef char fini_char_t;
   typedef std::ifstream fini_ifstream_t;
@@ -257,88 +259,64 @@ public:
 ///Functions
    void parse(std::istream& file)
    {
-      fini_char_t line[FINI_BUFFER_SIZE];
-      bool first = true;
+      fini_string_t line;
       fini_sstream_t out;
 
-      while(!file.eof())
+      while(std::getline(file, line))
       {
-         file.getline(line, FINI_BUFFER_SIZE);
-
-         if (first)
-         {
-            first = false;
-            if (line[0] == 0xEF) //Allows handling of UTF-16/32 documents
-            {
-               memmove(line, line + (CHAR_SIZE * 3), CHAR_SIZE * (FINI_BUFFER_SIZE - 3));
-               return;
-            }
-         }
-
          nake(line);
 
-         if (line[0])
+         size_t len = line.size();
+
+         if (len <= 0) continue; // empty line
+
+         // comments
+         if (line[0] == '#') continue;
+         if (line[0] == '/' && len > 1 && line[1] == '/') continue;
+
+         if (line[0] == '[')  //Section
          {
-            size_t len = fini_strlen(line);
-            if (len > 0 && !((len >= 2 && (line[0] == '/' && line[1] == '/')) || (len >= 1 && line[0] == '#')))  //Ignore comment and empty lines
-            {
-               if (line[0] == '[')  //Section
-               {
-                  section_t section;
-                  size_t length = fini_strlen(line) - 2;  //Without section brackets
-                  while(isspace(line[length + 1]))  //Leave out any additional new line characters, not "spaces" as the name suggests
-                     --length;
+            section_t section;
+            size_t sec_end = line.find(']');
 
-                  fini_char_t* ssection = (fini_char_t*)calloc(CHAR_SIZE, length + 1);
-                  fini_strncpy(ssection, line + 1, length);  //Count after first bracket
+            if (sec_end == line.npos) break; // problem
 
-                  current = new keys_t;
+            current = new keys_t;
 
-                  out << ssection;
-                  free(ssection);
-                  Converters::GetLine(out, section);
+            out << line.substr(1, sec_end-1);
+            Converters::GetLine(out, section);
 
-                  sections[section] = current;
-               }
-               else  //Key
-               {
-                  key_t key;
-                  value_t value;
-
-                  fini_char_t* skey;
-                  fini_char_t* svalue;
-
-                  skey = fini_strtok(line, _T("="));
-                  svalue = fini_strtok(NULL, _T("\n"));
-
-                  if (skey && svalue)
-                  {
-                     size_t index = 0;  //Without section brackets
-                     while(isspace(skey[index]))  //Leave out any additional new line characters, not "spaces" as the name suggests
-                        index++;
-
-                     if (index != 0)  //Has preceeding white space
-                        fini_strcpy(skey, skey + index);
-
-                     out << skey;
-
-                     Converters::GetLine(out, key);
-
-                     out.clear();
-                     out.str(fini_string_t());
-
-                     out << svalue;
-                     Converters::GetLine(out, value);
-
-                     if (value != value_t())
-                       (*current)[key] = value;
-                  }
-               }
-
-               out.clear();
-               out.str(fini_string_t()); //Clear existing stream;
-            }
+            sections[section] = current;
          }
+         else  //Key
+         {
+            key_t key;
+            value_t value;
+
+            fini_isstream_t linein(line);
+            fini_string_t skey;
+            fini_string_t svalue;
+
+            // drop leading spaces before key
+            if (!std::getline(linein >> std::ws, skey, '=')) continue;
+            if (!std::getline(linein, svalue, '\n')) continue;
+
+            out << skey;
+
+            Converters::GetLine(out, key);
+
+            out.clear();
+            out.str(fini_string_t());
+
+            out << svalue;
+            Converters::GetLine(out, value);
+
+            if (value != value_t())
+               (*current)[key] = value;
+         }
+
+         out.clear();
+         out.str(fini_string_t()); //Clear existing stream;
       }
    }
 
@@ -568,7 +546,7 @@ private:
    }
 
    //Make any alterations to the raw line
-   void nake(const fini_char_t*)  //Strip the line of any non-interpretable characters
+   void nake(const fini_string_t &)  //Strip the line of any non-interpretable characters
    {
 
    }

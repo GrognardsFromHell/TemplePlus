@@ -57,10 +57,12 @@ static struct PickerAddresses : temple::AddressTable {
 class UiPickerHooks : TempleFix
 {
 	static BOOL PickerMultiKeystateChange(TigMsg *msg);
+	static BOOL PickerMultiLmbReleased(TigMsg *msg);
 	void apply() override{
 
 		// Picker Multi Keystate change - support pressing Enter key
 		replaceFunction(0x10137DA0, PickerMultiKeystateChange);
+		replaceFunction(0x10137A70, PickerMultiLmbReleased);
 
 		replaceFunction<BOOL(__cdecl)(TigMsg*)>(0x10138170, [](TigMsg*msg){
 			return uiPicker.MultiPosChange(msg);
@@ -1015,7 +1017,73 @@ BOOL UiPickerHooks::PickerMultiKeystateChange(TigMsg * msg){
 	return temple::GetRef<BOOL(__cdecl)(TigMsg*)>(0x10136810)(msg);
 }
 
+// Port of 0x10138370, generalized Any/Primary30Feet
+BOOL UiPickerHooks::PickerMultiLmbReleased(TigMsg *msg)
+{
+	auto & activePickerIdx = uiPicker.GetActivePickerIdx();
+	if (activePickerIdx < 0 || activePickerIdx >= 32)
+		return FALSE;
 
+	auto & picker = uiPicker.GetActivePicker();
+	LocAndOffsets loc;
+
+	if (locSys.GetLocFromScreenLocPrecise(msg->arg1, msg->arg2, loc)) {
+		static auto GetFogStatus =
+			temple::GetRef<uint8_t(LocAndOffsets)>(0x1002ECB0);
+		if (!(GetFogStatus(loc) & 4)) {
+			uiPicker.GetPickerStatusFlags() |= PSF_Invalid;
+			return FALSE;
+		}
+	}
+
+	auto rayFlags = picker.GetFlagsFromExclusions();
+	objHndl tgt;
+
+	if (!PickObjectOnScreen(msg->arg1, msg->arg2, &tgt, rayFlags))
+		return TRUE;
+
+	if (!!(picker.args.modeTarget & UiPickerType::OnceMulti)) {
+		if (picker.args.ContainsHandle(tgt)) return 1;
+	}
+
+	float range = 30.0;
+	if (picker.args.degreesTarget > 0.0)
+		range = picker.args.degreesTarget;
+
+	auto allowed = [=](objHndl other) {
+		return locSys.DistanceToObj(other, tgt) > range;
+	};
+
+	if (!!(picker.args.modeTarget & UiPickerType::Any30Feet)) {
+		if (picker.args.result.AnyHandle(allowed)) return 1;
+	}
+
+	if (!!(picker.args.modeTarget & UiPickerType::Primary30Feet)) {
+		if (allowed(picker.args.result.FirstHandle())) return 1;
+	}
+
+	if (!picker.args.TargetValid(tgt)) return 1;
+
+	if (!(picker.args.flagsTarget & UiPickerFlagsTarget::LosNotRequired)) {
+		if (picker.args.LosBlocked(tgt)) return 1;
+	}
+
+	if (!picker.args.CheckTargetVsIncFlags(tgt)) return 1;
+
+	picker.args.result.MultiAppend(tgt);
+	++picker.tgtIdx;
+	static auto uiCastSpellButtonShow =
+		temple::GetRef<int(objHndl, objHndl)>(0x10135B30);
+	uiCastSpellButtonShow(tgt, picker.args.caster);
+	if (picker.args.result.MultiGetCount() < picker.args.maxTargets) {
+		return 1;
+	}
+
+	picker.tgt = objHndl::null;
+	picker.tgtIdx = 0;
+	uiManager->SetHidden(uiIntgameSelect.GetId(), true);
+	return picker.Finalize();
+}
 
 
 PickerSpec::PickerSpec() {
@@ -1045,6 +1113,67 @@ void PickerResult::FreeObjlist(){
 	if (this->flags & PickerResultFlags::PRF_HAS_MULTI_OBJ)
 		this->objList.Free();
 	this->flags &= ~PickerResultFlags::PRF_HAS_MULTI_OBJ;
+}
+
+// Port of 0x10136F50
+void PickerResult::MultiAppend(objHndl tgt)
+{
+	static auto internal =
+		temple::GetRef<void(__cdecl)(ObjListResult*, objHndl)>(0x1001E890);
+	if (flags & PRF_HAS_MULTI_OBJ) {
+		internal(&objList, tgt);
+	} else if (flags & PRF_HAS_SINGLE_OBJ) {
+		auto central = handle;
+		FreeObjlist();
+		flags &= ~PRF_HAS_SINGLE_OBJ;
+		flags |= PRF_HAS_MULTI_OBJ;
+		objList.Init();
+		internal(&objList, central);
+		internal(&objList, tgt);
+		handle = objHndl::null;
+	} else {
+		FreeObjlist();
+		flags = PRF_HAS_SINGLE_OBJ;
+		handle = tgt;
+	}
+}
+
+uint32_t PickerResult::MultiGetCount()
+{
+	if (flags & PRF_HAS_MULTI_OBJ) {
+		return objList.CountResults();
+	} else {
+		flags &= PRF_HAS_SINGLE_OBJ;
+		if (flags) return 1;
+		else return 0;
+	}
+}
+
+// Yields the first handle in the picker, if it has one.
+objHndl PickerResult::FirstHandle()
+{
+	if (flags & PRF_HAS_SINGLE_OBJ) {
+		return handle;
+	}
+
+	if (flags & PRF_HAS_MULTI_OBJ) {
+		if (objList.objects)
+			return objList.objects->handle;
+	}
+
+	return objHndl::null;
+}
+
+// Tests whether any handle in the picker satisfies the predicate.
+bool PickerResult::AnyHandle(std::function<bool(objHndl)> pred)
+{
+	if (flags & PRF_HAS_SINGLE_OBJ)
+		return pred(handle);
+
+	if (flags & PRF_HAS_MULTI_OBJ)
+		return objList.AnyHandle(pred);
+
+	return false;
 }
 
 void PickerArgs::DoExclusions(){
@@ -1172,6 +1301,22 @@ bool PickerArgs::SetSingleTgt(objHndl tgt)
 	DoExclusions();
 	
 	return true;
+}
+
+bool PickerArgs::ContainsHandle(objHndl tgt)
+{
+	if (!tgt) return false;
+	if (!result.flags) return false;
+
+	if (result.flags & PRF_HAS_SINGLE_OBJ) {
+		if (tgt == result.handle) return true;
+	}
+
+	if (result.flags & PRF_HAS_MULTI_OBJ) {
+		return result.objList.ContainsHandle(tgt);
+	}
+
+	return false;
 }
 
 void PickerArgs::FreeObjlist()

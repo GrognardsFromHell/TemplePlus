@@ -53,6 +53,17 @@ enum PickerStatusFlags : int32_t
 	PSF_Invalid = 0x2
 };
 
+constexpr PickerStatusFlags operator|(PickerStatusFlags l, PickerStatusFlags r)
+{
+	return static_cast<PickerStatusFlags>(static_cast<int32_t>(l) | static_cast<int32_t>(r));
+}
+
+inline PickerStatusFlags & operator |=(PickerStatusFlags & l, PickerStatusFlags r)
+{
+	l = l | r;
+	return l;
+}
+
 enum WallPickerState : int32_t {
 	// wall targeting consists of two stages: start point stage and end point stage
 	WallPicker_StartPoint = 0,
@@ -101,7 +112,8 @@ struct PickerArgs {
 	bool CheckTargetVsIncFlags(objHndl tgt);
 	bool TargetValid( objHndl objHndl); // check exclusions from flags, and range
 	bool LosBlocked(objHndl objHndl);
-	bool SetSingleTgt( objHndl tgt);
+	bool SetSingleTgt(objHndl tgt);
+	bool ContainsHandle(objHndl tgt);
 	void FreeObjlist();
 
 protected:

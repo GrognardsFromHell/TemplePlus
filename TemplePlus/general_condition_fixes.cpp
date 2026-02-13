@@ -27,6 +27,9 @@ public:
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
 	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
 	
+	static int ArmorCheckSkillPenalty(DispatcherCallbackArgs args);
+	static int EncumbranceSkillPenalty(DispatcherCallbackArgs args);
+	static int RacialAbilityAdjustment(DispatcherCallbackArgs args);
 
 	void apply() override {
 
@@ -71,6 +74,12 @@ public:
 		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
+		replaceFunction(0x101005B0, ArmorCheckSkillPenalty);
+		replaceFunction(0x100EBA70, EncumbranceSkillPenalty);
+		
+
+
+		replaceFunction(0x100FD850, RacialAbilityAdjustment);
 		
 		// Allow filtering out certain types of negative levels from the GetLevel query.
 		static int (*origNegLvl)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100EF8B0, [](DispatcherCallbackArgs args)->int {
@@ -295,3 +304,71 @@ int GeneralConditionFixes::ImprovedCriticalGetCritThreatRange(DispatcherCallback
 	return 0;
 }
 
+// Replacement armor check skill penalty function to use an overlapping bonus
+// type with the below encumbrance penalty. Must test for shields because those
+// are supposed to stack.
+int GeneralConditionFixes::ArmorCheckSkillPenalty(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	auto inv_idx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, inv_idx);
+	auto penalty = GetArmorCheckPenalty(armor);
+	auto name = description.getDisplayName(armor, args.objHndCaller);
+	auto type = inventory.GetArmorType(armor) == ARMOR_TYPE_SHIELD ? 0 : 28;
+
+	if (penalty < 0) {
+		dispIo->bonOut->AddBonusWithDesc(penalty, type, 112, name);
+	}
+
+	return 0;
+}
+
+int GeneralConditionFixes::EncumbranceSkillPenalty(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	dispIo->bonOut->AddBonus(- args.GetData1(), 28, args.GetData2());
+
+	return 0;
+}
+
+int GeneralConditionFixes::RacialAbilityAdjustment(DispatcherCallbackArgs args)
+{
+	auto key = args.dispKey;
+	bool polymorphed = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+	bool physical = DK_STAT_STRENGTH <= key && key <= DK_STAT_CONSTITUTION;
+	bool invalid = key < DK_STAT_STRENGTH || DK_STAT_CHARISMA < key;
+
+	// polymorph overrides this adjustment
+	if (polymorphed && physical || invalid) return 0;
+
+	GET_DISPIO(dispIOTypeBonusList, DispIoBonusList);
+
+	auto critter = objSystem->GetObject(args.objHndCaller);
+	int amount = args.GetData1();
+
+	// get the base value
+	//
+	// note: testing the base int32 makes this insensitive to order of applied
+	// conditions, so it no longer matters if the racial condition is earlier than
+	// any other penalties.
+	int base = critter->GetInt32(obj_f_critter_abilities_idx, key-1);
+
+	// racial penalties cannot take someone below 3 int, since that is the minimum
+	// necessary for speech and such.
+	if (base + amount < 3 && amount < 0 && key == DK_STAT_INTELLIGENCE) {
+		// if the base is below 3 for some reason, don't give a bonus
+		amount = std::min(0, 3 - base);
+	}
+
+	if (amount > 0) {
+		dispIo->bonlist.AddBonus(amount, 0, 139);
+	} else if (amount < 0) {
+		// a negative isn't really a bonus, is it?
+		std::string desc = "Racial Penalty";
+		dispIo->bonlist.AddBonus(amount, 0, desc);
+	}
+
+	return 0;
+}

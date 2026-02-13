@@ -1881,7 +1881,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeStatBaseGet, // this is actually stat_base + permanent modifiers (basically race)
 	dispTypeWeaponGlowType, // Returns the ID of the weapon glow to use (0 = no glow, 1-10 are specific glow types, check mapobjrenderer)
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
-	dispTypeArmorToHitPenalty = 69, // none exist apparently
+	dispTypeArmorCheckPenalty = 69, // resurrected
 
 	dispTypeMaxDexAcBonus,
 	dispTypeGetSizeCategory,
@@ -2770,3 +2770,4 @@ enum SpellFlags : uint32_t
 	SF_4000000 = 0x4000000,
 	SF_SPELL_FLEE = 0x8000000,
 };
+

@@ -20,3 +20,4 @@ exc_flags_Target: Non-critter
 mode_Target: Wall
 radius_Target: 5
 ai_type: ai_action_offensive
+source: PHB

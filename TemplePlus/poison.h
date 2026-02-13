@@ -1,5 +1,6 @@
 #pragma once
 #include "dice.h"
+#include "dispatcher.h"
 #include <EASTL/vector.h>
 #include <EASTL/string.h>
 #include <EASTL/hash_map.h>
@@ -62,5 +63,7 @@ public:
 private:
 	eastl::hash_map<int, PoisonSpec> mPoisonSpecs;
 };
+
+int ApplyPoisonSecondary(DispatcherCallbackArgs args);
 
 extern PoisonSystem* poisonSystem;

@@ -262,7 +262,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	if (mShowHighlights
 		&& (objects.IsEquipmentType(type) && !(flags & (OF_INVENTORY | OF_CLICK_THROUGH))
 			|| critterSys.IsLootableCorpse(handle)
-			|| type == obj_t_portal))
+			|| type == obj_t_portal
+			|| (config.highlightContainers && type == obj_t_container)))
 	{
 		RenderObjectHighlight(handle, mHighlightMaterial);
 

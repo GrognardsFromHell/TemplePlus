@@ -2,6 +2,7 @@ School: Evocation
 Descriptor: Sonic
 Level: Brd 5
 Level: Sor 5
+Level: Wiz 5
 Component: V
 Component: S
 Casting Time: 1 action
@@ -17,3 +18,4 @@ exc_flags_Target: Non-critter
 mode_Target: Area
 radius_Target: 20
 ai_type: ai_action_offensive
+source: Spell Compendium

@@ -16,6 +16,7 @@
 #include <gamesystems\gamesystems.h>
 #include <combat.h>
 #include <gamesystems\d20\d20stats.h>
+#include "config\config.h"
 
 static class PoisonFixes : public TempleFix
 {
@@ -37,18 +38,38 @@ void PoisonFixes::apply() {
 int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
 
-	auto poisonId = args.GetCondArg(0);
-	auto pspec = GetPoisonSpec(poisonId);
-	if (pspec == nullptr) {
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-
 	// decrement duration
 	auto dur = args.GetCondArg(1);
 	auto durRem = dur - (int)dispIo->data1;
 	if (durRem >= 0) {
 		args.SetCondArg(1, durRem);
+		return 0;
+	}
+
+	// check delay poison
+	auto delay = conds.GetByName("sp-Delay Poison");
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, delay, 0)) {
+		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White);
+
+		// add re-apply condition
+		if (config.stricterRulesEnforcement) {
+			auto pid = args.GetCondArg(0);
+			auto dc = args.GetCondArg(2);
+			conds.AddTo(args.objHndCaller, "Delayed Poison", { pid, 1, dc });
+		}
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		return 0;
+	}
+
+
+	return ApplyPoisonSecondary(args);
+}
+
+int ApplyPoisonSecondary(DispatcherCallbackArgs args) {
+	auto poisonId = args.GetCondArg(0);
+	auto pspec = poisonFixes.GetPoisonSpec(poisonId);
+	if (pspec == nullptr) {
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		return 0;
 	}
 
@@ -72,13 +93,6 @@ int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 	}
 
 	// failure
-
-	// check delay poison
-	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)) {
-		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White);
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
 
 	if (pspec->delayedEffect == (int)PoisonEffect::Paralyze) // paralyze
 	{
@@ -135,6 +149,19 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 	args.SetCondArg(1, 10); // set initial 10 rounds countdown for secondary damage
 	int immEffect = pspec->immediateEffect;
 
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)) {
+		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White); // Effects delayed due to Delay Poison!
+
+		// If strict rules, remove this condition and add one that will re-apply the
+		// poison when Delay Poison runs out.
+		if (config.stricterRulesEnforcement) {
+			auto dc = args.GetCondArg(2);
+			conds.AddTo(args.objHndCaller, "Delayed Poison", { poisonId, 0, dc });
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		}
+		return 0;
+	}
+
 	if (immEffect == (int)PoisonEffect::None)
 	{
 		return 0; // do nothing
@@ -149,11 +176,6 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 	floatSys.FloatCombatLine(args.objHndCaller, 55); // Poisoned!
 	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, D20STF_POISON))
 	{
-		return 0;
-	}
-
-	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)) {
-		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White); // Effects delayed due to Delay Poison!
 		return 0;
 	}
 
@@ -203,9 +225,12 @@ const PoisonSpec * PoisonFixes::GetPoisonSpec(int poisonId)
 
 PoisonSystem::PoisonSystem()
 {
-	AssignVanillaSpecs();
+	// json will not override already loaded specs
+	if (!config.preferPoisonSpecFile) {
+		AssignVanillaSpecs();
+	}
 	//SaveSpecsFile("d:\\temp\\vpoisons.json");
-	LoadSpecsFile("data/rules/poisons.json");
+	LoadSpecsFile("rules/poisons.json");
 }
 
 const std::string & PoisonSystem::GetName() const
