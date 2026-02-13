@@ -104,6 +104,20 @@ public:
 		// False life fails to use maximize and empower
 		replaceFunction(0x100CD6D0, Condition_sp_False_Life_Init);
 
+		//Ability Score fixes.  Currently just fixing death knell.
+		static int (*origAbilityScoreBonus)(DispatcherCallbackArgs) =
+			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100C5C30,
+				[](DispatcherCallbackArgs args) {
+					auto dispIo = static_cast<DispIoBonusList*>(args.dispIO);
+					if (args.GetData2() != 0xbc) {  //Check for death knell mes line
+						return origAbilityScoreBonus(args);
+					}
+					else {
+						dispIo->bonlist.AddBonus(2, 100, 0xbc);  //Death knell ability bonus will be 100
+					}
+					return 0;
+			});
+
 		// Invisibility Sphere lacking a Dismiss handler
 		{
 			SubDispDefNew sdd;
