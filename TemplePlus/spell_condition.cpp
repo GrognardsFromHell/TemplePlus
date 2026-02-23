@@ -112,6 +112,19 @@ public:
 		// False life fails to use maximize and empower
 		replaceFunction(0x100CD6D0, Condition_sp_False_Life_Init);
 
+		//Ability Score fixes.  Currently just fixing death knell.
+		static int (*origAbilityScoreBonus)(DispatcherCallbackArgs) =
+			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100C5C30,
+				[](DispatcherCallbackArgs args) {
+					auto dispIo = static_cast<DispIoBonusList*>(args.dispIO);
+					if (args.GetData2() == 0xbc && args.GetData1() == (args.dispKey - 1)) {  //Check for death knell mes line and matching bonus type
+						dispIo->bonlist.AddBonus(2, 100, 0xbc);  //Death knell ability bonus will be 100 (it is an unnamed bonus and should stack)
+					}
+					else {
+						return origAbilityScoreBonus(args);
+					}
+					return 0;
+			});
 		// Rage wasn't breaking concentration
 		replaceFunction(0x100CF070, RageBeginSpell);
 
