@@ -117,11 +117,11 @@ public:
 			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100C5C30,
 				[](DispatcherCallbackArgs args) {
 					auto dispIo = static_cast<DispIoBonusList*>(args.dispIO);
-					if (args.GetData2() != 0xbc) {  //Check for death knell mes line
-						return origAbilityScoreBonus(args);
+					if (args.GetData2() == 0xbc && args.GetData1() == (args.dispKey - 1)) {  //Check for death knell mes line and matching bonus type
+						dispIo->bonlist.AddBonus(2, 100, 0xbc);  //Death knell ability bonus will be 100 (it is an unnamed bonus and should stack)
 					}
 					else {
-						dispIo->bonlist.AddBonus(2, 100, 0xbc);  //Death knell ability bonus will be 100
+						return origAbilityScoreBonus(args);
 					}
 					return 0;
 			});
