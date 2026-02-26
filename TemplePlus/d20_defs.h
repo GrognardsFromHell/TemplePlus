@@ -300,6 +300,31 @@ enum D20CAF : uint32_t
 	D20CAF_UNNECESSARY =       0x80000000  // affects pathfinding time allotment
 };
 
+inline D20CAF & operator &=(D20CAF & l, D20CAF r) {
+	l = static_cast<D20CAF>(l & r);
+	return l;
+}
+
+inline D20CAF & operator |=(D20CAF & l, D20CAF r) {
+	l = static_cast<D20CAF>(l | r);
+	return l;
+}
+
+inline D20CAF operator |(D20CAF l0, D20CAF r0) {
+	uint32_t l = static_cast<uint32_t>(l0);
+	uint32_t r = static_cast<uint32_t>(r0);
+	return static_cast<D20CAF>(l | r);
+}
+inline D20CAF operator &(D20CAF l0, D20CAF r0) {
+	uint32_t l = static_cast<uint32_t>(l0);
+	uint32_t r = static_cast<uint32_t>(r0);
+	return static_cast<D20CAF>(l & r);
+}
+inline D20CAF operator ~(D20CAF f0) {
+	uint32_t f = static_cast<uint32_t>(f0);
+	return static_cast<D20CAF>(~f);
+}
+
 static const char *d20ActionNames[] = {
 	"D20A_UNSPECIFIED_MOVE",
 	"D20A_UNSPECIFIED_ATTACK",

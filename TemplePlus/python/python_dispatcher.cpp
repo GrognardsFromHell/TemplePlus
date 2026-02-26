@@ -685,7 +685,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("target", &D20Actn::d20ATarget)
 		.def_readwrite("spell_id", &D20Actn::spellId)
 		.def_readwrite("data1", &D20Actn::data1 , "Generic piece of data used for various things depending on context.")
-		.def_readwrite("flags", &D20Actn::d20Caf, "D20CAF_ flags")
+		.def_property("flags",
+				[](D20Actn *d20a)->int { return static_cast<int>(d20a->d20Caf); },
+				[](D20Actn *d20a, int flags)->void {
+						d20a->d20Caf = static_cast<D20CAF>(flags);
+					},
+				"D20CAF_ flags")
 		.def_readwrite("path", &D20Actn::path)
 		.def_readwrite("action_type", &D20Actn::d20ActType, "See D20A_ constants")
 		.def_readwrite("loc", &D20Actn::destLoc, "Location")

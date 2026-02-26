@@ -982,7 +982,7 @@ void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
 	d20a->distTraversed = 0;
 	d20a->radialMenuActualArg = 0;
 	d20a->spellId = 0;
-	d20a->d20Caf = 0;
+	d20a->d20Caf = D20CAF_NONE;
 
 	if (pq && pq >= pathfinding->pathQArray && pq < (pathfinding->pathQArray + PQR_CACHE_SIZE))
 	{
@@ -1166,7 +1166,7 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 		return FALSE;
 
 	if (d20a->d20ActType == D20A_TRIP){
-		auto weaponUsed = d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf);
+		auto weaponUsed = d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, d20a->d20Caf);
 		if (inventory.IsTripWeapon(weaponUsed))
 			return FALSE;
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE))
@@ -1193,7 +1193,7 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 	if (!isStdAtk) return 1;
 
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
-		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
+		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, d20a->d20Caf) 
 		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
 		return 0;
 
@@ -1440,7 +1440,7 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 
 	auto performer = d20a->d20APerformer;
 
-	objHndl weaponUsed = d20Sys.GetAttackWeapon(performer, d20a->data1, (D20CAF)d20a->d20Caf);
+	objHndl weaponUsed = d20Sys.GetAttackWeapon(performer, d20a->data1, d20a->d20Caf);
 
 	
 	d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
@@ -2169,7 +2169,7 @@ BOOL D20ActionCallbacks::ActionFrameRangedAttack(D20Actn* d20a)
 	}
 	else
 	{
-		wpn =  d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf);
+		wpn =  d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, d20a->d20Caf);
 		if (d20a->d20Caf & D20CAF_SECONDARY_WEAPON)
 			itemSlot = INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary;
 	}
@@ -2194,7 +2194,7 @@ BOOL D20ActionCallbacks::ActionFrameRangedAttack(D20Actn* d20a)
 	if (d20a->ProjectileAppend(projectileHndl, thrownItem))
 	{
 		static auto Dispatch55ProjectileCreated = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, D20CAF)>(0x1004F330);
-		Dispatch55ProjectileCreated(d20a->d20APerformer, projectileHndl, (D20CAF) d20a->d20Caf);
+		Dispatch55ProjectileCreated(d20a->d20APerformer, projectileHndl, d20a->d20Caf);
 		d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
 	}
 
@@ -2392,7 +2392,7 @@ BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHistId2);
 	histSys.CreateRollHistoryString(d20a->rollHistId0);
 	
-	damage.DealAttackDamage(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
+	damage.DealAttackDamage(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, d20a->d20Caf, d20a->d20ActType);
 	return TRUE;
 }
 
@@ -2761,7 +2761,7 @@ BOOL D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
 BOOL D20ActionCallbacks::ActionFrameCoupDeGrace(D20Actn* d20a) {
 	auto performer = d20a->d20APerformer;
 	auto target = d20a->d20ATarget;
-	auto caf = static_cast<D20CAF>(d20a->d20Caf);
+	auto caf = d20a->d20Caf;
 	auto dmg = damage.DealAttackDamage(performer, target, d20a->data1, caf, d20a->d20ActType);
 
 	if (dmg <= 0 || critterSys.IsDeadNullDestroyed(target))

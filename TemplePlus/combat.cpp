@@ -1678,7 +1678,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		Dice dice(1, 1 + numMirrorImages);
 		if (dice.Roll() != 1 ){ // mirror image nominally struck
 			DispIoAttackBonus mirrorImAc;
-			mirrorImAc.attackPacket.flags = (D20CAF)(d20a.d20Caf | D20CAF_TOUCH_ATTACK);
+			mirrorImAc.attackPacket.flags = d20a.d20Caf | D20CAF_TOUCH_ATTACK;
 			mirrorImAc.attackPacket.d20ActnType = d20a.d20ActType;
 			mirrorImAc.attackPacket.attacker = performer;
 			mirrorImAc.attackPacket.victim = tgt;
@@ -1711,7 +1711,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 			return 0;
 
 		DispIoAttackBonus dispIo;
-		dispIo.attackPacket.flags = (D20CAF)d20a.d20Caf;
+		dispIo.attackPacket.flags = d20a.d20Caf;
 		dispIo.attackPacket.victim = victim;
 		dispIo.attackPacket.attacker = attacker;
 		dispIo.attackPacket.dispKey = 0;
@@ -1756,7 +1756,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 	// get the To Hit bonus
 	DispIoAttackBonus dispIoToHitBon, dispIoAtkBon, dispIoTgtAc;
-	dispIoToHitBon.attackPacket.flags = (D20CAF)d20a.d20Caf;
+	dispIoToHitBon.attackPacket.flags = d20a.d20Caf;
 	dispIoToHitBon.attackPacket.victim = tgt;
 	dispIoToHitBon.attackPacket.d20ActnType = d20a.d20ActType;
 	dispIoToHitBon.attackPacket.attacker = performer;

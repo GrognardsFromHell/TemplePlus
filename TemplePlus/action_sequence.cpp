@@ -1320,7 +1320,7 @@ void ActionSequenceSystem::addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts* in
 	if (intrptNum <= 0) return;
 	
 	d20aNew.d20ATarget = actSeq->performer;
-	d20aNew.d20Caf = (D20CAF)0;
+	d20aNew.d20Caf = D20CAF_NONE;
 	d20aNew.d20ActType = D20A_READIED_INTERRUPT;
 	d20aNew.data1 = 1;
 	d20aNew.path = nullptr;
@@ -1462,7 +1462,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 		ActnSeq * curSeq = *actSeqCur;
 		tbStatus = &curSeq->tbStatus;
 		tbStatus->hourglassState = 4;
-		tbStatus->tbsFlags = (D20CAF)0;
+		tbStatus->tbsFlags = D20CAF_NONE;
 		tbStatus-> idxSthg= -1;
 		tbStatus-> baseAttackNumCode= 0;
 		tbStatus->attackModeCode = 0;
@@ -1873,7 +1873,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 		d20aAoOMovement.d20APerformer = aooPacket.interrupters[i];
 		d20aAoOMovement.d20ATarget = d20a->d20APerformer;
 		d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
-		d20aAoOMovement.d20Caf = 0;
+		d20aAoOMovement.d20Caf = D20CAF_NONE;
 		d20aAoOMovement.distTraversed = 0;
 		d20aAoOMovement.path = nullptr;
 		d20aAoOMovement.d20ActType = D20A_AOO_MOVEMENT;
