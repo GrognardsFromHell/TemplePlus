@@ -938,7 +938,7 @@ namespace aas {
 	void AnimatedModel::Method19()
 	{
 
-		if (drivenTime <= 0.0f && drivenDistance <= 0.0f && drivenRotation <= 0.0f && currentWorldMatrix == worldMatrix) {
+		if (drivenTime <= 0.0f && drivenDistance <= 0.0f && drivenRotation <= 0.0f && currentWorldMatrix == worldMatrix && currentScale == scale) {
 			return;
 		}
 
@@ -991,6 +991,7 @@ namespace aas {
 		drivenDistance = 0;
 		drivenRotation = 0;
 		currentWorldMatrix = worldMatrix;
+		currentScale = scale;
 
 		for (auto &submesh : submeshes) {
 			submesh.fullyInitialized = true;
