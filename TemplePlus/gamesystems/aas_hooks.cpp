@@ -10,6 +10,10 @@
 #include <temple/meshes.h>
 #include <obj.h>
 
+#include <algorithm>
+#include <cfloat>
+#include <cmath>
+
 using namespace temple;
 
 #pragma pack(push, 1)
@@ -256,7 +260,127 @@ void AasHooks::apply()
 	breakRegion(0x10264680, 0x1026BC67);
 }
 
+// Guards for the vanilla (temple.dll) cloth simulation, used when newAnimSystem is off.
+// See AasClothStuff::Simulate / SanitizeVertices in Infrastructure/src/aas/aas_cloth_sim.cpp for the same logic
+// in the new animation system. Memory layout of the vanilla cloth state (matches aas::AasClothStuff):
+namespace {
+	struct LegacyClothState {
+		uint32_t count;
+		DirectX::XMFLOAT4* pos1;
+		DirectX::XMFLOAT4* pos2; // current
+		DirectX::XMFLOAT4* pos3; // previous
+		uint8_t* bytePerVertex;  // != 0: vertex is driven by the skeleton
+		int edgeCount, edgeCountDelta; void* edges;
+		int edges2Count, edges2CountDelta; void* edges2;
+		void* spheres; void* cylinders;
+		float prevStepTime;
+	};
+	static_assert(sizeof(LegacyClothState) == 0x38, "vanilla cloth state layout");
+
+	void(__fastcall* sOrgClothSimulate)(LegacyClothState*, void*, float) = nullptr;
+	int(__cdecl* sOrgGetSubmesh)(AasHandle, void**, AasAnimParams*, int) = nullptr;
+	int(__cdecl* sOrgGetSubmeshForParticles)(AasHandle, void**, AasAnimParams*, int) = nullptr;
+	AasHandle sClothSkinHandle = 0; // model currently being skinned by GetSubmesh (the cloth sim runs inside it)
+
+	inline bool IsFinite(const DirectX::XMFLOAT4& p) {
+		return std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z);
+	}
+
+	void __fastcall ClothSimulateGuarded(LegacyClothState* cs, void* edx, float time) {
+		if (!(time > 0.0f) || !std::isfinite(time)) {
+			return;
+		}
+		// Limit the Verlet time-correction ratio (vanilla extrapolates with 1 + 2^-dt * dt / prevDt, unbounded)
+		int steps = (int)ceil(time * 200.0);
+		float stepTime = steps <= 5 ? time / steps : 0.005f;
+		if (!std::isfinite(cs->prevStepTime) || cs->prevStepTime < 0.0f) {
+			cs->prevStepTime = 0.0f;
+		}
+		if (cs->prevStepTime > 0.0f && stepTime > 2.0f * cs->prevStepTime) {
+			static int sLogged = 0;
+			if (sLogged++ < 20) {
+				logger->debug("Cloth sim: limited Verlet step ratio {:.1f} (step {} s, previous step {} s)",
+					stepTime / cs->prevStepTime, stepTime, cs->prevStepTime);
+			}
+			cs->prevStepTime = 0.5f * stepTime;
+		}
+
+		sOrgClothSimulate(cs, edx, time);
+
+		if (!cs->count) {
+			return;
+		}
+		// Detect non-finite (0/0 in the vanilla spring/collision code) or runaway free vertices
+		float mn[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, mx[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+		for (uint32_t i = 0; i < cs->count; i++) {
+			auto& p = cs->pos2[i];
+			if (!cs->bytePerVertex[i] || !IsFinite(p)) continue;
+			mn[0] = std::min(mn[0], p.x); mx[0] = std::max(mx[0], p.x);
+			mn[1] = std::min(mn[1], p.y); mx[1] = std::max(mx[1], p.y);
+			mn[2] = std::min(mn[2], p.z); mx[2] = std::max(mx[2], p.z);
+		}
+		float cx = 0, cy = 0, cz = 0, limit = 1000.0f;
+		if (mn[0] <= mx[0]) {
+			cx = 0.5f * (mn[0] + mx[0]); cy = 0.5f * (mn[1] + mx[1]); cz = 0.5f * (mn[2] + mx[2]);
+			float dx = mx[0] - mn[0], dy = mx[1] - mn[1], dz = mx[2] - mn[2];
+			limit = 4.0f * sqrtf(dx * dx + dy * dy + dz * dz) + 100.0f;
+		}
+		auto inBounds = [&](const DirectX::XMFLOAT4& p) {
+			if (!IsFinite(p)) return false;
+			float dx = p.x - cx, dy = p.y - cy, dz = p.z - cz;
+			return dx * dx + dy * dy + dz * dz <= limit * limit;
+		};
+		int bad = 0;
+		for (uint32_t i = 0; i < cs->count; i++) {
+			if (cs->bytePerVertex[i]) continue;
+			auto& p = cs->pos2[i];
+			if (!inBounds(p)) {
+				bad++;
+				auto& q = cs->pos3[i];
+				if (inBounds(q)) p = q; else { p.x = cx; p.y = cy; p.z = cz; }
+				cs->pos3[i] = p;
+			}
+		}
+		if (bad) {
+			static int sLogged = 0;
+			if (sLogged++ < 20) {
+				logger->warn("Cloth simulation of AAS model {} produced {} invalid vertices, resetting cloth.", sClothSkinHandle, bad);
+			}
+			// Re-poses the free cloth vertices from the skinned mesh later in this same GetSubmesh call
+			if (sClothSkinHandle) {
+				temple::GetRef<int(__cdecl)(AasHandle)>(0x102633C0)(sClothSkinHandle);
+			}
+		}
+	}
+
+	int __cdecl GetSubmeshTrackHandle(AasHandle handle, void** submeshOut, AasAnimParams* params, int submeshIdx) {
+		auto prev = sClothSkinHandle;
+		sClothSkinHandle = handle;
+		auto result = sOrgGetSubmesh(handle, submeshOut, params, submeshIdx);
+		sClothSkinHandle = prev;
+		return result;
+	}
+
+	int __cdecl GetSubmeshForParticlesTrackHandle(AasHandle handle, void** submeshOut, AasAnimParams* params, int submeshIdx) {
+		auto prev = sClothSkinHandle;
+		sClothSkinHandle = handle;
+		auto result = sOrgGetSubmeshForParticles(handle, submeshOut, params, submeshIdx);
+		sClothSkinHandle = prev;
+		return result;
+	}
+}
+
 void AasDebugHooks::apply() {
+	// Cloth simulation guards (vanilla AasClothStuff::Simulate @ 0x10269d50, called from GetSubmesh's skinning)
+	if (config.clothSimGuards) {
+		logger->info("Cloth simulation guards enabled (clothSimGuards).");
+		MH_CreateHook(temple::GetPointer<void*>(0x10269d50), (void*)&ClothSimulateGuarded, (void**)&sOrgClothSimulate);
+		MH_CreateHook(temple::GetPointer<void*>(0x10263400), (void*)&GetSubmeshTrackHandle, (void**)&sOrgGetSubmesh);
+		MH_CreateHook(temple::GetPointer<void*>(0x102636D0), (void*)&GetSubmeshForParticlesTrackHandle, (void**)&sOrgGetSubmeshForParticles);
+	} else {
+		logger->info("Cloth simulation guards disabled (clothSimGuards = false).");
+	}
+
 	static int(__cdecl * orgCreateFromId)(int, int, int, AasAnimParams*, AasHandle*) =
 		replaceFunction<int(__cdecl)(int, int, int, AasAnimParams*, AasHandle*)>(0x102641B0, [](int skmId, int skaId, int idleAnimId, AasAnimParams* animState, AasHandle* handleOut)->int {
 		auto result = orgCreateFromId(skmId, skaId, idleAnimId, animState, handleOut);

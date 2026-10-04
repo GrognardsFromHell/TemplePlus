@@ -1,11 +1,18 @@
 
 #include <infrastructure/exception.h>
+#include <infrastructure/logging.h>
 
 #include "aas_cloth_sim.h"
 #include "aas_cloth_collision.h"
 
+#include <algorithm>
+#include <cfloat>
+#include <cmath>
+
 namespace aas {
 	
+	bool AasClothStuff::guardsEnabled = true;
+
 	AasClothStuff::~AasClothStuff()
 	{
 		delete[] clothVertexPos1;
@@ -41,8 +48,12 @@ namespace aas {
 		}
 	}
 
-	void AasClothStuff::Simulate(float time)
+	bool AasClothStuff::Simulate(float time)
 	{
+		if (!(time > 0.0f) || !std::isfinite(time)) {
+			return true;
+		}
+
 		int step_count = (int)ceil(time * 200.0);
 		float timePerStep;
 		if (step_count <= 5) {
@@ -53,12 +64,81 @@ namespace aas {
 			timePerStep = 0.005f;
 		}
 
+		// The time-corrected Verlet step extrapolates the last displacement by step_time / field_34_time.
+		// After a very short previous step (high frame rate, an extra skin in the same frame) that ratio is
+		// unbounded and turns spring/collision corrections into a huge velocity. Limit it to 2.
+		if (guardsEnabled) {
+			if (!std::isfinite(field_34_time) || field_34_time < 0.0f) {
+				field_34_time = 0.0f;
+			}
+			if (field_34_time > 0.0f && timePerStep > 2.0f * field_34_time) {
+				static int sLogged = 0;
+				if (sLogged++ < 20) {
+					logger->debug("Cloth sim: limited Verlet step ratio {:.1f} (step {} s, previous step {} s)",
+						timePerStep / field_34_time, timePerStep, field_34_time);
+				}
+				field_34_time = 0.5f * timePerStep;
+			}
+		}
+
 		for (int i = 0; i < step_count; i++) {
 			SimulateStep(timePerStep);
 			ApplySprings();
 			ApplySprings();
 			HandleCollisions();
 		}
+
+		return guardsEnabled ? SanitizeVertices() : true;
+	}
+
+	bool AasClothStuff::SanitizeVertices()
+	{
+		if (!clothVertexCount) {
+			return true;
+		}
+
+		// Bounding box of the vertices that are driven by the skeleton
+		float mn[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, mx[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+		for (auto i = 0u; i < clothVertexCount; i++) {
+			auto &p = clothVertexPos2[i];
+			if (!bytePerVertex[i] || !std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) {
+				continue;
+			}
+			mn[0] = std::min(mn[0], p.x); mx[0] = std::max(mx[0], p.x);
+			mn[1] = std::min(mn[1], p.y); mx[1] = std::max(mx[1], p.y);
+			mn[2] = std::min(mn[2], p.z); mx[2] = std::max(mx[2], p.z);
+		}
+		float cx = 0, cy = 0, cz = 0, limit = 1000.0f;
+		if (mn[0] <= mx[0]) {
+			cx = 0.5f * (mn[0] + mx[0]); cy = 0.5f * (mn[1] + mx[1]); cz = 0.5f * (mn[2] + mx[2]);
+			auto dx = mx[0] - mn[0], dy = mx[1] - mn[1], dz = mx[2] - mn[2];
+			limit = 4.0f * sqrtf(dx * dx + dy * dy + dz * dz) + 100.0f;
+		}
+		auto limitSq = limit * limit;
+		auto inBounds = [&](const DX::XMFLOAT4 &p) {
+			if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) return false;
+			auto dx = p.x - cx, dy = p.y - cy, dz = p.z - cz;
+			return dx * dx + dy * dy + dz * dz <= limitSq;
+		};
+
+		bool ok = true;
+		for (auto i = 0u; i < clothVertexCount; i++) {
+			if (bytePerVertex[i]) {
+				continue;
+			}
+			auto &p = clothVertexPos2[i];
+			if (!inBounds(p)) {
+				ok = false;
+				auto &q = clothVertexPos3[i];
+				if (inBounds(q)) {
+					p = q;
+				} else {
+					p = { cx, cy, cz, p.w };
+				}
+				clothVertexPos3[i] = p;
+			}
+		}
+		return ok;
 	}
 
 	void AasClothStuff::SimulateStep(float step_time)
@@ -105,7 +185,11 @@ namespace aas {
 			auto deltaY = pos1.y - pos2.y;
 			auto deltaZ = pos1.z - pos2.z;
 
-			auto factor = 2 * (distance.distSquared / (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ + distance.distSquared) - 0.5f);
+			auto denom = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ + distance.distSquared;
+			if (guardsEnabled && !(denom > 0.0f)) {
+				continue; // zero-length spring with coincident vertices: 0/0
+			}
+			auto factor = 2 * (distance.distSquared / denom - 0.5f);
 
 			pos2.x -= deltaX * factor;
 			pos2.y -= deltaY * factor;
@@ -123,7 +207,11 @@ namespace aas {
 			auto deltaY = pos1.y - pos2.y;
 			auto deltaZ = pos1.z - pos2.z;
 
-			auto factor = (distance.distSquared / (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ + distance.distSquared) - 0.5f);
+			auto denom = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ + distance.distSquared;
+			if (guardsEnabled && !(denom > 0.0f)) {
+				continue; // zero-length spring with coincident vertices: 0/0
+			}
+			auto factor = (distance.distSquared / denom - 0.5f);
 
 			pos1.x += deltaX * factor;
 			pos1.y += deltaY * factor;
@@ -149,7 +237,7 @@ namespace aas {
 				for (auto sphere = spheres; sphere; sphere = sphere->next.get()) {
 					auto posInSphere = transformPosition(sphere->worldMatrixInverse, pos);
 					auto distanceFromOriginSq = DX::XMVectorGetX(DX::XMVector3LengthSq(DX::XMLoadFloat4(&posInSphere)));
-					if (distanceFromOriginSq < sphere->radius * sphere->radius) {
+					if (distanceFromOriginSq < sphere->radius * sphere->radius && (!guardsEnabled || distanceFromOriginSq > 1e-12f)) {
 						auto ratio = sphere->radius / sqrt(distanceFromOriginSq);
 						posInSphere.x *= ratio;
 						posInSphere.y *= ratio;
@@ -163,7 +251,7 @@ namespace aas {
 
 					if (posInCylinder.z >= 0.0 && posInCylinder.z <= cylinder->height) {
 						auto distanceFromOriginSq = posInCylinder.x * posInCylinder.x + posInCylinder.y * posInCylinder.y;
-						if (distanceFromOriginSq < cylinder->radius * cylinder->radius) {
+						if (distanceFromOriginSq < cylinder->radius * cylinder->radius && (!guardsEnabled || distanceFromOriginSq > 1e-12f)) {
 							auto ratio = cylinder->radius / sqrt(distanceFromOriginSq);
 							posInCylinder.x *= ratio;
 							posInCylinder.y *= ratio;

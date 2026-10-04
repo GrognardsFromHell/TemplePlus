@@ -82,6 +82,7 @@ struct TemplePlusConfig
 	bool debugClipping = false;
 	bool drawObjCylinders = false;
 	bool newAnimSystem = false;
+	bool clothSimGuards = true; // Guard the cloth simulation against non-finite/runaway vertices (resets the cloth)
 	float dmGuiScale = 1.0f;
 
 	bool autoUpdate = true;

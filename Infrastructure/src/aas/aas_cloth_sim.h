@@ -36,7 +36,12 @@ namespace aas {
 		~AasClothStuff();
 
 		void UpdateBoneDistances();
-		void Simulate(float time);
+		// Returns false if the simulation produced non-finite or runaway vertices (they are put back and the caller
+		// should request a cloth reset, see AnimatedModel::SetClothFlagSth).
+		bool Simulate(float time);
+
+		// Cloth simulation guards (ini option clothSimGuards). When off, Simulate behaves like the vanilla code.
+		static bool guardsEnabled;
 
 		void SetStuff(
 			int clothVertexCount,
@@ -55,6 +60,7 @@ namespace aas {
 		void SimulateStep(float step_time);
 		void ApplySprings();
 		void HandleCollisions();
+		bool SanitizeVertices();
 
 	private:
 		void SplitEdges(

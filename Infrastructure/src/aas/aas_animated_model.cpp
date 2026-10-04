@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <fmt/format.h>
 #include <infrastructure/exception.h>
+#include <infrastructure/logging.h>
 
 #include "aas_animated_model.h"
 #include "aas_mesh.h"
@@ -1269,12 +1270,22 @@ namespace aas {
 				}
 
 				if (timeForClothSim > 0.0) {
+					bool clothOk = true;
 					for (int i = 0; i < cloth_stuff1_count; i++) {
-						cloth_stuff1[i].clothStuff->Simulate(timeForClothSim);
+						clothOk &= cloth_stuff1[i].clothStuff->Simulate(timeForClothSim);
 						//static auto aas_cloth_stuff_sim_maybe = temple::GetPointer<void __fastcall(AasClothStuff*, void*, float)>(0x10269d50);
 						//aas_cloth_stuff_sim_maybe(cloth_stuff1[i].clothStuff, 0, timeForClothSim);
 					}
 					timeForClothSim = 0.0f;
+					if (!clothOk) {
+						// Runaway/non-finite cloth: re-pose the free cloth vertices from the skinned mesh
+						// (done below in this same call) and re-derive the spring rest lengths.
+						static int sLogged = 0;
+						if (sLogged++ < 20) {
+							logger->warn("Cloth simulation produced invalid vertices, resetting cloth.");
+						}
+						SetClothFlagSth();
+					}
 				}
 
 				//auto someMatrixVec = DX::XMMatrixTranspose(DX::XMLoadFloat4x3((DX::XMFLOAT4X3*)&someMatrix));

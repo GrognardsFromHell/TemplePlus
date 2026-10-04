@@ -287,6 +287,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(extendedSpellDescriptions),
 	CONF_INT(walkDistanceFt),
 	CONF_BOOL(newAnimSystem),
+	CONF_BOOL(clothSimGuards),
 	CONF_BOOL(upscaleLinearFiltering),
 	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus),
 	CONF_BOOL(wildShapeUsableItems),

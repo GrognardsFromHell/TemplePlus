@@ -40,6 +40,9 @@ namespace aas {
 
 		void FreeHandle(uint32_t handle) override;
 
+		// Enables/disables the cloth simulation guards (see AasClothStuff::Simulate). On by default.
+		static void SetClothSimGuards(bool enabled);
+
 	private:
 		// This is the mapping loaded from meshes.mes
 		std::unordered_map<int, std::string> fileIdMapping_;
