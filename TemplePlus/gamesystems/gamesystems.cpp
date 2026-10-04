@@ -416,6 +416,7 @@ void GameSystems::InitAnimationSystem() {
 		hooks.apply();
 		MH_EnableHook(nullptr);
 
+		aas::AnimatedModelFactory::SetClothSimGuards(::config.clothSimGuards);
 		mAAS = std::make_unique<aas::AnimatedModelFactory>(
 			config.resolveSkaFile,
 			config.resolveSkmFile,

@@ -5,6 +5,7 @@
 #include "aas/aas_model_factory.h"
 #include "aas/aas.h"
 #include "aas_animated_model.h"
+#include "aas_cloth_sim.h"
 
 namespace aas {
 
@@ -65,6 +66,10 @@ namespace aas {
 		default:
 			throw TempleException("Unknown material placeholder: {:x}", id);
 		}
+	}
+
+	void AnimatedModelFactory::SetClothSimGuards(bool enabled) {
+		AasClothStuff::guardsEnabled = enabled;
 	}
 
 	AnimatedModelFactory::AnimatedModelFactory(std::function<std::string(int)> getSkeletonFilename,
