@@ -8,7 +8,9 @@ on:
 jobs:
   build:
     name: Build TemplePlus
-    runs-on: windows-latest
+    # windows-latest is now windows-2025 with VS 2026, which lacks the .NET 4.5.2 targeting pack and the
+    # v143 ATL used by this solution. windows-2022 has VS 2022 (v143) with both.
+    runs-on: windows-2022
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       release: ${{ steps.get_version.outputs.release }}
@@ -34,6 +36,15 @@ jobs:
         # Make it available to the Github Workflow
         Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "release=$release"
+        Add-Content -Path $env:GITHUB_ENV -Value "COMMIT_ID=$($env:GITHUB_SHA.Substring(0, 8))"
+      shell: pwsh
+    - name: Locate Visual Studio
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $vsPath -or -not (Test-Path "$vsPath\VC\Auxiliary\Build\vcvars32.bat")) { throw "Visual Studio with C++ tools not found" }
+        "Visual Studio: $vsPath"
+        Add-Content -Path $env:GITHUB_ENV -Value "VS_INSTALL_PATH=$vsPath"
       shell: pwsh
     - uses: actions/checkout@v4
     - uses: nuget/setup-nuget@v1
@@ -51,13 +62,12 @@ jobs:
         nuget restore
     - name: Build
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvars32.bat" || exit /b 1
         msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%TEMPLEPLUS_VERSION%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
       # Need to use cmd because of the vcvars32 batch file
       shell: cmd
       env:
         TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
-        COMMIT_ID: ${GITHUB_SHA::8}
     - name: Pack Release
       run: .\PackRelease.ps1
       shell: pwsh
@@ -67,7 +77,7 @@ jobs:
       shell: cmd
       # Package the symbol files, dump_syms needs the dev tools to be on the PATH
       run: |
-        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK\bin
+        set PATH=%PATH%;%VS_INSTALL_PATH%\DIA SDK\bin
         dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
         7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
     - name: Pack Tools
