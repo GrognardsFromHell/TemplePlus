@@ -473,21 +473,11 @@ float Objects::GetRadius(objHndl handle, bool base)
 		}
 		if (radius < 2000.0 && radius > 0)
 		{
-			if (radius > 600)
-			{
-				logger->debug("Caught very large radius! Was {}", radius);
-				protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
-				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
-				protoRadius = protoObj->GetFloat(obj_f_radius);
-				
-				auto model = GetAnimHandle(handle);
-				if (model) {
-					UpdateRadius(handle, *model);
-				}
-				radius = obj->GetFloat(obj_f_radius);
-			}
 			return radius;
-		}		
+		}
+		// OF_RADIUS_SET but no usable value (e.g. map objects saved with the flag but without obj_f_radius)
+		logger->debug("GetRadius: {} has OF_RADIUS_SET but radius {}; recalculating.", handle, radius);
+		radiusSet = 0;
 	}
 
 	logger->debug("GetRadius: {} Radius not yet set, now calculating.", handle);
@@ -508,8 +498,7 @@ float Objects::GetRadius(objHndl handle, bool base)
 	}
 
 	auto radius = obj->GetFloat(obj_f_radius);
-	radiusSet = obj->GetFlags() & OF_RADIUS_SET; // might be changed I guess
-	if (!radiusSet || abs(radius) > 2000){
+	if (!radiusSet || !(radius > 0.0f) || radius > 2000.0f){
 		logger->debug("GetRadius: Calculating from AAS model. Initially was {}", radius);
 
 		UpdateRadius(handle, *model);
@@ -520,11 +509,17 @@ float Objects::GetRadius(objHndl handle, bool base)
 		{
 			logger->warn("GetRadius: Huge radius calculated from AAS {}", radius);
 			radius = 2000.0;
-		} else if (radius <=0)
+			SetRadius(handle, radius); // cache the clamped value so we don't recalculate every frame
+		} else if (!(radius > 0.0f))
 		{
-			logger->warn("GetRadius: Negative radius calculated from AAS: {}. Changing to default (10.0)", radius);
+			logger->warn("GetRadius: Invalid radius calculated from AAS: {}. Changing to default (10.0)", radius);
 			radius = 10.0;
+			SetRadius(handle, radius);
+			SetFlag(handle, OF_RADIUS_SET);
 		}
+	}
+	if (!base) {
+		radius = AdjustRadiusSize(radius, GetSize(handle, true), GetSize(handle, false));
 	}
 	return radius;
 	//return _GetRadius(handle);

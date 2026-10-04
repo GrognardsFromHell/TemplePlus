@@ -450,15 +450,30 @@ namespace temple {
 		return std::make_unique<AasSubmeshAdapter>(mHandle, aasParams, submeshIdx, true);
 	}
 
+	// The AAS only rebuilds the skinned vertex positions when the world matrix or the driven
+	// time/distance/rotation changed (see 0x102682a0 / aas::AnimatedModel::Method19). The scale is
+	// NOT part of that check, so Advance(0,0,0) + GetSubmesh would return positions from whatever
+	// skinning happened last (another scale, another location or animation frame).
+	// Skin once at a different world matrix so the next GetSubmesh call is forced to re-skin with
+	// the params we actually want to measure.
+	static void ForceReskin(gfx::AnimatedModel &model, const gfx::AnimatedModelParams &params) {
+		if (model.GetSubmeshes().empty()) {
+			return;
+		}
+		auto dirtyParams = params;
+		dirtyParams.offsetZ += 1.0f;
+		model.GetSubmesh(dirtyParams, 0);
+	}
+
 	float AasAnimatedModel::GetHeight(int scale)
 	{
 		SetClothFlag();
 
 		gfx::AnimatedModelParams animParams;
-		memset(&animParams, 0, sizeof(animParams));
 		animParams.scale = scale / 100.0f;
 
 		Advance(0.0f, 0.0f, 0.0f, animParams);
+		ForceReskin(*this, animParams);
 
 		auto materialIds = GetSubmeshes();
 
@@ -501,10 +516,10 @@ namespace temple {
 		SetClothFlag();
 
 		gfx::AnimatedModelParams animParams;
-		memset(&animParams, 0, sizeof(animParams));
 		animParams.scale = scale / 100.0f;
 
 		Advance(0.0f, 0.0f, 0.0f, animParams);
+		ForceReskin(*this, animParams);
 
 		auto materialIds = GetSubmeshes();
 

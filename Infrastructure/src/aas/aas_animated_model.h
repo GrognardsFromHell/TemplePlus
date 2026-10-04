@@ -43,6 +43,7 @@ namespace aas {
 		float drivenDistance = 0.0f;
 		float drivenRotation = 0.0f;
 		Matrix3x4 currentWorldMatrix; // Current world matrix
+		float currentScale = -1.0f; // Scale the current bone matrices / skinned positions were built with
 		Matrix3x4 worldMatrix = Matrix3x4::identity();
 		std::unique_ptr<Matrix3x4[]> boneMatrices;
 		uint32_t field_F8;
