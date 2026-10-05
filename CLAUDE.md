@@ -17,6 +17,8 @@ Detailed notes live in `.claude/` and are imported below:
 
 When creating a new module or setting up a module repo, read `.claude/new-module.md` first. It isn't imported because it's only needed for that task.
 
+When working on map files or map generation (sectors, mobs, clipping, ground art, walls), read `.claude/map-files.md` first. For doors and secret doors, read `.claude/secret-doors.md`. Neither is imported, for the same reason.
+
 ## Repository layout
 
 | Path | Contents |

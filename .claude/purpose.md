@@ -4,7 +4,7 @@
 
 1. **2003: Troika Games releases *The Temple of Elemental Evil* (ToEE).** It is a turn-based D&D 3.5 CRPG built on Troika's own engine. Much of the game logic and content is scripted in embedded Python, which made it unusually moddable.
 2. **2000s–2010s: Circle of Eight (Co8, https://co8.org/community/).** Fans used that Python integration to fix bugs and add rules, content and whole modules (the Co8 Modpack, KotB, and others). They were limited to what the engine exposed to Python.
-3. **The debug symbols leak.** The Polish retail release of ToEE shipped with unstripped debug symbols. That made serious reverse engineering of `temple.dll` practical: function names, structs and globals.
+3. **The debug symbols leak.** The Polish retail release of ToEE shipped with unstripped debug symbols. That made serious reverse engineering of `temple.dll` practical: function names, structs and globals. The same release also included Troika's own level editor, WorldEd.
 4. **2010s: TemplePlus.** C++ enthusiasts started rewriting the engine side on top of that work: rendering, UI, D20 rules, combat, AI, the character system and mod infrastructure. **The goal was to rewrite the technical side and the rules, not the content.** The original ToEE campaign and Co8 content still have to work.
 
 ## This fork's goal: ToEE as an engine
