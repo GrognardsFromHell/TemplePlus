@@ -13,6 +13,7 @@ Detailed notes live in `.claude/` and are imported below:
 @.claude/reverse-engineering.md
 @.claude/data-and-python.md
 @.claude/build-and-run.md
+@.claude/coordinates.md
 
 When creating a new module or setting up a module repo, read `.claude/new-module.md` first. It isn't imported because it's only needed for that task.
 
