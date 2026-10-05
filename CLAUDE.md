@@ -14,6 +14,8 @@ Detailed notes live in `.claude/` and are imported below:
 @.claude/data-and-python.md
 @.claude/build-and-run.md
 
+When creating a new module or setting up a module repo, read `.claude/new-module.md` first. It isn't imported because it's only needed for that task.
+
 ## Repository layout
 
 | Path | Contents |
