@@ -19,6 +19,8 @@ When creating a new module or setting up a module repo, read `.claude/new-module
 
 When working on map files or map generation (sectors, mobs, clipping, ground art, walls), read `.claude/map-files.md` first. For doors and secret doors, read `.claude/secret-doors.md`. Neither is imported, for the same reason.
 
+When working on pathfinding, combat movement or creature positioning, read `.claude/pathfinding.md` (audit of the current pathfinder and its known bugs) and `.claude/battle-grid.md` (planned 5-ft combat grid). These aren't imported either.
+
 ## Repository layout
 
 | Path | Contents |
