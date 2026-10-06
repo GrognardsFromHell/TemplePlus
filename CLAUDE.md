@@ -21,6 +21,8 @@ When working on map files or map generation (sectors, mobs, clipping, ground art
 
 When working on pathfinding, combat movement or creature positioning, read `.claude/pathfinding.md` (audit of the current pathfinder and its known bugs) and `.claude/battle-grid.md` (planned 5-ft combat grid). These aren't imported either.
 
+When working on the fork's direction (TemplePlusAM), the shared Python module framework, module persistence, map-level scripting or trigger zones, read `.claude/module-strategy.md`. It holds the planning assessment and effort estimates, and isn't imported either.
+
 ## Repository layout
 
 | Path | Contents |
