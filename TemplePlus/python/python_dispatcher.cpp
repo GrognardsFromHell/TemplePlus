@@ -1,5 +1,6 @@
 
 #include "stdafx.h"
+#include "anomaly_notices.h"
 #include "python_bonus.h"
 #include <structmember.h>
 #include "../damage.h"
@@ -105,6 +106,14 @@ void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyOb
 PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	m.doc() = "Temple+ Dispatcher module, used for creating modifier extensions.";
+
+	m.def("report_anomaly", [](std::string kind, std::string key, std::string message, std::string details) {
+		return anomalyNotices.Report(kind, key, message, details);
+	}, py::arg("kind"), py::arg("key"), py::arg("message"), py::arg("details") = "",
+		"Report something abnormal: logged once per kind+key and shown to the player as a compact notice.");
+	m.def("show_anomaly_archive", []() { anomalyNotices.ShowArchive(); });
+	m.def("dismiss_anomaly_notices", []() { anomalyNotices.Dismiss(); });
+	m.def("anomaly_archive", []() { return anomalyNotices.GetArchiveText(); });
 
 	m.def("hash", [](std::string& text) {
 		return ElfHash::Hash(text);
