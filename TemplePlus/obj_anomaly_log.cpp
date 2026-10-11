@@ -158,6 +158,14 @@ void ObjAnomalyLog::Report(objHndl handle, const char *kind, const char *site, f
 	sEntries[key] = std::move(e);
 }
 
+void ObjAnomalyLog::SetFixedTo(objHndl handle, const char *kind, float fixedTo) {
+	if (!handle) return;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return;
+	auto it = sEntries.find(obj->id.ToString() + "|" + kind);
+	if (it != sEntries.end()) it->second.fields["fixed_to"] = FloatStr(fixedTo);
+}
+
 void ObjAnomalyLog::Clear() {
 	sEntries.clear();
 	sDropped = 0;

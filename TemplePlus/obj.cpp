@@ -449,6 +449,7 @@ float Objects::GetRadius(objHndl handle, bool base)
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
 	objHndl protoHandle;
 	float protoRadius;
+	bool storedAnomaly = false;
 
 	int baseSize = GetSize(handle, true);
 	int curSize = GetSize(handle, false);
@@ -479,6 +480,7 @@ float Objects::GetRadius(objHndl handle, bool base)
 		// OF_RADIUS_SET but no usable value (e.g. map objects saved with the flag but without obj_f_radius)
 		if (radius != 0.0f) { // 0 is the known benign case (shipped map objects); record the rest
 			objAnomalyLog.Report(handle, "radius", "GetRadius(stored)", radius, NAN);
+			storedAnomaly = true;
 		}
 		logger->debug("GetRadius: {} has OF_RADIUS_SET but radius {}; recalculating.", handle, radius);
 		radiusSet = 0;
@@ -508,6 +510,8 @@ float Objects::GetRadius(objHndl handle, bool base)
 		UpdateRadius(handle, *model);
 
 		radius = obj->GetFloat(obj_f_radius);
+		if (storedAnomaly)
+			objAnomalyLog.SetFixedTo(handle, "radius", radius);
 		
 		if (radius > 2000.0)
 		{
