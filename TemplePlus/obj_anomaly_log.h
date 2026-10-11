@@ -26,6 +26,8 @@ public:
 	void Report(objHndl handle, const char *kind, const char *site, float badValue, float fixedTo,
 		gfx::AnimatedModel *model = nullptr);
 
+	// Records the value an anomaly was recalculated to, when only known after the report
+	void SetFixedTo(objHndl handle, const char *kind, float fixedTo);
 	void Clear();
 	void SaveToCurrent();   // writes Save\Current\tp_obj_anomalies.txt (or removes it when empty)
 	void LoadFromCurrent(); // reads it back (absent = empty, e.g. old / vanilla saves)
