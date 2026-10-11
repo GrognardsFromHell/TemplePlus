@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "obj_anomaly_log.h"
+#include "anomaly_notices.h"
 #include "obj.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
@@ -106,6 +107,9 @@ void ObjAnomalyLog::Report(objHndl handle, const char *kind, const char *site, f
 			e.worst = badValue;
 			e.fields["worst"] = FloatStr(badValue);
 		}
+		anomalyNotices.Report(kind, guid, // dedupes: only bumps the count if already shown
+			fmt::format("{} {} on {} (proto {})", kind, e.fields["worst"], e.fields["name"], e.fields["proto"]),
+			fmt::format("site={} (seen {} times)", site, e.count));
 		return; // already recorded: no log spam
 	}
 
@@ -155,6 +159,9 @@ void ObjAnomalyLog::Report(objHndl handle, const char *kind, const char *site, f
 	logger->warn("ObjAnomaly: new {} anomaly {} (fixed to {}) on {} [{}] proto {} mesh {} scale {} map {} at {} via {}",
 		kind, f["worst"], f["fixed_to"], f["name"], guid, f["proto"], f["mesh"], f["scale"], f["map"], f["loc"], site);
 
+	anomalyNotices.Report(kind, guid,
+		fmt::format("{} {} on {} (proto {})", kind, f["worst"], f["name"], f["proto"]),
+		fmt::format("site={} fixed_to={} mesh={} scale={} map={} loc={}", site, f["fixed_to"], f["mesh"], f["scale"], f["map"], f["loc"]));
 	sEntries[key] = std::move(e);
 }
 

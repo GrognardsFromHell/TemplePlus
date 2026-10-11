@@ -204,6 +204,7 @@ static std::map<PnPSource, string> sourceToName = {
 
 static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipIntro),
+	CONF_BOOL(anomalyNotices),
 	CONF_BOOL(skipLegal),
 	//CONF_BOOL(engineEnhancements),
 	//CONF_BOOL(editor),

@@ -60,6 +60,7 @@ struct TemplePlusConfig
 	uint32_t scrollDistance = 10; // Not really sure what this is used for. Previously: -scrolldist
 	std::string defaultModule = "ToEE"; // Previousl: -mod: 
 	bool skipIntro = true;
+	bool anomalyNotices = true; // in-game heads-up when an anomaly is detected (playtesting aid)
 	bool skipLegal = true;
 	bool engineEnhancements = true;
 	bool pathfindingDebugMode = false;
