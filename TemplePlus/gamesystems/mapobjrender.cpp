@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include "obj_anomaly_log.h"
 #include "mapobjrender.h"
 #include <util/fixes.h>
 #include <obj.h>
@@ -216,6 +217,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	if (renderHeight < 0 
 		|| objects.IsCritterType(type) && renderHeight > 10000.0f) // added in Temple+ as failsafe for bugged heights. For reference, Zuggtmoy is 381
 	{
+		if (renderHeight >= 0) // < 0 just means "not computed yet"
+			objAnomalyLog.Report(handle, "height", "RenderObject(stored>10000)", renderHeight, NAN, animatedModel.get());
 		objects.UpdateRenderHeight(handle, *animatedModel);
 		renderHeight = objects.GetRenderHeight(handle);
 	}
