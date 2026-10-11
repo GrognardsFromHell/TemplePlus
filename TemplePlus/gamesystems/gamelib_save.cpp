@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "obj_anomaly_log.h"
 #include "util/fixes.h"
 #include "tio/tio_utils.h"
 #include "gamesystems/gamesystems.h"
@@ -210,6 +211,9 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	}
 
 	tio_fclose(file);
+
+	// Radius/height anomaly log travels inside the save (separate file; ignored by vanilla/Co8)
+	objAnomalyLog.SaveToCurrent();
 
 	{
 		// user savehook

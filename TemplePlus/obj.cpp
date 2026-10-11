@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "obj_anomaly_log.h"
 #include "obj.h"
 #include "ai.h"
 #include <temple/dll.h>
@@ -476,6 +477,9 @@ float Objects::GetRadius(objHndl handle, bool base)
 			return radius;
 		}
 		// OF_RADIUS_SET but no usable value (e.g. map objects saved with the flag but without obj_f_radius)
+		if (radius != 0.0f) { // 0 is the known benign case (shipped map objects); record the rest
+			objAnomalyLog.Report(handle, "radius", "GetRadius(stored)", radius, NAN);
+		}
 		logger->debug("GetRadius: {} has OF_RADIUS_SET but radius {}; recalculating.", handle, radius);
 		radiusSet = 0;
 	}
@@ -508,11 +512,13 @@ float Objects::GetRadius(objHndl handle, bool base)
 		if (radius > 2000.0)
 		{
 			logger->warn("GetRadius: Huge radius calculated from AAS {}", radius);
+			objAnomalyLog.Report(handle, "radius", "GetRadius(clamp)", radius, 2000.0f, model.get());
 			radius = 2000.0;
 			SetRadius(handle, radius); // cache the clamped value so we don't recalculate every frame
 		} else if (!(radius > 0.0f))
 		{
 			logger->warn("GetRadius: Invalid radius calculated from AAS: {}. Changing to default (10.0)", radius);
+			if (radius != 0.0f) objAnomalyLog.Report(handle, "radius", "GetRadius(default)", radius, 10.0f, model.get());
 			radius = 10.0;
 			SetRadius(handle, radius);
 			SetFlag(handle, OF_RADIUS_SET);
@@ -1102,6 +1108,9 @@ int Objects::IsCritterProne(objHndl handle){
 void Objects::UpdateRenderHeight(objHndl handle, gfx::AnimatedModel &model) {
 	auto scale = GetScalePercent(handle);
 	auto height = model.GetHeight(scale);
+	if (ObjAnomalyLog::IsBadHeight(height)) {
+		objAnomalyLog.Report(handle, "height", "UpdateRenderHeight", height, height, &model);
+	}
 
 	SetRenderHeight(handle, height);
 	SetFlag(handle, OF_HEIGHT_SET);
@@ -1110,6 +1119,9 @@ void Objects::UpdateRenderHeight(objHndl handle, gfx::AnimatedModel &model) {
 void Objects::UpdateRadius(objHndl handle, gfx::AnimatedModel &model) {
 	auto scale = GetScalePercent(handle);
 	auto radius = model.GetRadius(scale);
+	if (radius != 0.0f && ObjAnomalyLog::IsBadRadius(radius)) {
+		objAnomalyLog.Report(handle, "radius", "UpdateRadius", radius, radius > 0 ? radius : NAN, &model);
+	}
 
 	if (radius > 0) {
 		SetRadius(handle, radius);

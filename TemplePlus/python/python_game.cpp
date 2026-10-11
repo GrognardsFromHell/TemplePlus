@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "obj_anomaly_log.h"
 #include "python_game.h"
 #include <temple/dll.h>
 #include <tio/tio.h>
@@ -1455,6 +1456,26 @@ PyObject* PyGame_AlertShow(PyObject*, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+// Radius/height anomaly log (stored in the save): returns the log as text and writes it to TemplePlus.log
+PyObject* PyGame_ObjAnomalyLog(PyObject*, PyObject* args) {
+	auto text = objAnomalyLog.Dump();
+	logger->info("ObjAnomaly log dump:\n{}", text);
+	return PyString_FromString(text.c_str());
+}
+
+// Debug: give an object an aberrant stored radius so the anomaly logger can be tested
+PyObject* PyGame_DebugInjectRadiusAnomaly(PyObject*, PyObject* args) {
+	objHndl handle;
+	float value = 99999.0f;
+	if (!PyArg_ParseTuple(args, "O&|f:game.debug_inject_radius_anomaly", &ConvertObjHndl, &handle, &value)) {
+		return 0;
+	}
+	if (!handle) Py_RETURN_NONE;
+	objects.SetRadius(handle, value);
+	objects.SetFlag(handle, OF_RADIUS_SET);
+	return PyFloat_FromDouble(objects.GetRadius(handle));
+}
+
 PyObject* PyGame_GetMaxSpellLevel(PyObject*, PyObject* args) {
 	int classEnum;
 	int classLevel;
@@ -1559,6 +1580,8 @@ static PyMethodDef PyGameMethods[]{
 	{"get_obj_by_id", PyGame_GetObjById, METH_VARARGS, NULL},
 	{"alert_show", PyGame_AlertShow, METH_VARARGS, NULL},
 	{"get_max_spell_level", PyGame_GetMaxSpellLevel, METH_VARARGS, NULL},
+	{"obj_anomaly_log", PyGame_ObjAnomalyLog, METH_VARARGS, NULL},
+	{"debug_inject_radius_anomaly", PyGame_DebugInjectRadiusAnomaly, METH_VARARGS, NULL},
 	{"get_valid_spell_enums", PyGame_GetValidSpellEnums, METH_VARARGS, NULL},
 
 	// This is some unfinished UI for which the graphics are missing

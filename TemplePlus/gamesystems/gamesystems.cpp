@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "obj_anomaly_log.h"
 
 #include <type_traits>
 #include <temple/dll.h>
@@ -565,6 +566,7 @@ void GameSystems::RemoveModulePaths() {
 
 void GameSystems::ResetGame() {
 	logger->info("Resetting game systems...");
+	objAnomalyLog.Clear();
 
 	mResetting = true;
 

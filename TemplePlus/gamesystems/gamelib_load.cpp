@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "obj_anomaly_log.h"
 #include "util/fixes.h"
 #include "tio/tio_utils.h"
 #include "ui/ui.h"
@@ -76,6 +77,7 @@ bool GameSystems::LoadGame(const string& filename) {
 		logger->error("Error restoring savegame archive {} to Save\\Current: {}", path, e.what());
 		return false;
 	}
+	objAnomalyLog.LoadFromCurrent();
 
 	// this is for later
 	// ::SaveGame saveGame;
