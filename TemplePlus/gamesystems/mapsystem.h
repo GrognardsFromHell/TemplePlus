@@ -121,6 +121,10 @@ public:
 	int GetHighestMapId() const;
 
 	locXY GetStartPos(int mapId) const;
+	// Start position for a new game on this map: NewGameX/NewGameY keys if set, else the MapList start pos
+	locXY GetNewGameStartPos(int mapId) const;
+	// Map flagged with "Flag: NEW_GAME_START" in MapList.mes, or 0
+	int GetNewGameStartMap() const;
 
 	const std::string& GetMapName(int mapId);
 	const std::string& GetMapDescription(int mapId);

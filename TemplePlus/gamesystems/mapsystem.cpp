@@ -46,6 +46,9 @@ struct MapListEntry {
 	int movie = 0;
 	int startPosX = 0;
 	int startPosY = 0;
+	int newGameX = 0; // optional new-game start position (NewGameX/NewGameY keys)
+	int newGameY = 0;
+	bool newGameStart = false; // Flag: NEW_GAME_START
 	MapType type = MapType::None;
 	
 	bool IsOutdoors() const {
@@ -142,6 +145,10 @@ void MapSystem::LoadModule() {
 				} else if (!strncmp(value.data(), "TUTORIAL_MAP", value.size())) {
 					entry.type = MapType::TutorialMap;
 				}
+			} else if (key.size() == 8 && !strncmp(key.data(), "NewGameX", 8)) {
+				entry.newGameX = atoi(value.data());
+			} else if (key.size() == 8 && !strncmp(key.data(), "NewGameY", 8)) {
+				entry.newGameY = atoi(value.data());
 			} else if (!strncmp(key.data(), "WorldMap", key.size())) {
 				entry.worldmap = atoi(value.data());
 			} else if (!strncmp(key.data(), "Area", key.size())) {
@@ -158,6 +165,8 @@ void MapSystem::LoadModule() {
 						entry.flags |= 4;
 				} else if (!strncmp(value.data(), "BEDREST", value.size())) {
 					entry.flags |= 8;
+				} else if (value.size() == 14 && !strncmp(value.data(), "NEW_GAME_START", 14)) {
+					entry.newGameStart = true;
 				}
 			}
 			
@@ -1067,6 +1076,30 @@ bool MapSystem::IsUnfogged(int mapId)
 		return it->second.IsUnfogged();
 	}
 	return false;
+}
+
+int MapSystem::GetNewGameStartMap() const
+{
+	int result = 0;
+	for (auto &entry : mMaps) {
+		if (entry.second.newGameStart) {
+			if (result) {
+				logger->warn("MapList.mes: several maps have Flag: NEW_GAME_START; using {}", result);
+				break;
+			}
+			result = entry.first;
+		}
+	}
+	return result;
+}
+
+locXY MapSystem::GetNewGameStartPos(int mapId) const
+{
+	auto it = mMaps.find(mapId);
+	if (it != mMaps.end() && it->second.newGameX > 0 && it->second.newGameY > 0) {
+		return locXY{ (uint32_t)it->second.newGameX, (uint32_t)it->second.newGameY };
+	}
+	return GetStartPos(mapId);
 }
 
 int MapSystem::GetArea(int mapId) const
