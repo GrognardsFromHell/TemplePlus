@@ -13,14 +13,57 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
 #include "mod_support.h"
+#include <infrastructure/mesparser.h>
+#include <infrastructure/vfs.h>
+#include <infrastructure/stringutil.h>
 
 //*****************************************************************************
 //* Worldmap-UI
 //*****************************************************************************
 
+// Built-in defaults (used when rules\worldmap_areas.mes is absent or lacks an entry).
+// These reproduce the behaviour prior to the data-driven worldmap tables exactly.
 constexpr int HOMMLET_MAIN = 5001;
 constexpr int HOMMLET_NORTH = 15001;
 constexpr int HOMMLET_CASTLE = 25001;
+constexpr int WORLDMAP_AREA_MAX = 64;
+
+static const int kDefaultAreaToLocId[] = {
+	-1,
+	9,
+	1, // Area 2 - Moathouse
+	3,
+	6,
+	0,
+	4,
+	7,
+	2,
+	5,
+	8,
+	12,
+	13,
+	0,
+	14,
+	15,
+	16,
+};
+
+// An "entry point" is a teleport id that a worldmap location (button) sends the party to.
+// It may be a real map id, or a virtual id (like Hommlet's 15001/25001) that resolves to
+// a real map + tile. This generalizes Hommlet's three worldmap entrances.
+struct WorldmapEntryPoint {
+	int mapId;
+	locXY loc;
+};
+
+static const std::map<int, WorldmapEntryPoint> &DefaultEntryPoints() {
+	static const std::map<int, WorldmapEntryPoint> defaults = {
+		{ HOMMLET_MAIN,   { HOMMLET_MAIN, { 623, 421 } } },
+		{ HOMMLET_NORTH,  { HOMMLET_MAIN, { 512, 221 } } },
+		{ HOMMLET_CASTLE, { HOMMLET_MAIN, { 433, 626 } } },
+	};
+	return defaults;
+}
 
 class UiWorldmapImpl {
 	friend class UiWorldmap;
@@ -30,7 +73,15 @@ public:
 
 	bool OnDestinationReached();
 
+	void ResetToDefaults();
+	void LoadDataFile(const std::string &path);
+	void LoadData();
+	// Returns -1 if no data entry exists (=> use the engine's built-in check)
+	int GetWorldmapAccessOverride(int mapId) const;
+
 	std::vector<int> areaToLocId;
+	std::map<int, WorldmapEntryPoint> entryPoints;
+	std::map<int, bool> worldmapAccess;
 
 	int &mNeedToClearEncounterMap = temple::GetRef<int>(0x10BEF800);
 	int &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
@@ -119,6 +170,10 @@ bool UiWorldmap::LoadGame(const UiSaveFile &save) {
 	auto load = temple::GetPointer<int(const UiSaveFile*)>(0x1015e0f0);
 	return load(&save) == 1;
 }
+void UiWorldmap::LoadModule() {
+	mImpl->LoadData();
+}
+
 const std::string &UiWorldmap::GetName() const {
 	static std::string name("Worldmap-UI");
 	return name;
@@ -168,10 +223,11 @@ UiWorldmap &ui_worldmap() {
 void UiWorldmapMakeTripWrapper();
 
 // Worldmap extension by Spellslinger
+static int (__cdecl *orgCanAccessWorldmap)() = nullptr;
+
 class WorldmapFix : TempleFix
 {
 public:
-	static int GetAreaFromMap(int mapId);
 	static int CanAccessWorldmap();
 	static BOOL UiWorldmapMakeTripCdecl(int fromId, int toId);
 
@@ -180,12 +236,26 @@ public:
 			auto &uiWorldmapDestLocId = temple::GetRef<int>(0x102FB3E8);
 			//auto &uiWorldmapAreaToLocId_Table = temple::GetRef<int[]>(0x11EA3610); // this is the Co8 location
 			
+			if (destArea < 0 || destArea >= (int)wmImpl->areaToLocId.size()) {
+				logger->warn("Worldmap: travel requested to invalid area {}", destArea);
+				return;
+			}
 			uiWorldmapDestLocId = wmImpl->areaToLocId[destArea];
 
 			ui_worldmap().Show(2);
 		});
 
 		
+		// Can the worldmap be opened from the current map? (0x1012B960)
+		// Data entries override; otherwise defer to the engine's own (vanilla or Co8-patched) check.
+		orgCanAccessWorldmap = replaceFunction<int(__cdecl)()>(0x1012B960, CanAccessWorldmap);
+
+		// Arrival at a worldmap destination; applies to all DLLs so entry points work everywhere
+		// (the vanilla function is identical to UiWorldmapImpl::OnDestinationReached)
+		replaceFunction<BOOL(__cdecl)()>(0x1015E840, []()->BOOL {
+			return wmImpl->OnDestinationReached() ? TRUE : FALSE;
+		});
+
 		if (modSupport.IsCo8())
 		{
 			
@@ -268,193 +338,10 @@ public:
 
 } worldmapFix;
 
-int WorldmapFix::GetAreaFromMap(int mapId)
-{ // this might be co8 specific so not sure if to hook this
-	int result;
-	switch (mapId)
-	{
-	case 5000:
-	case 5001:
-	case 5006:
-	case 5007:
-	case 5008:
-	case 5009:
-	case 5010:
-	case 5011:
-	case 5012:
-	case 5013:
-	case 5014:
-	case 5015:
-	case 5016:
-	case 5017:
-	case 5018:
-	case 5019:
-	case 5020:
-	case 5021:
-	case 5022:
-	case 5023:
-	case 5024:
-	case 5025:
-	case 5026:
-	case 5027:
-	case 5028:
-	case 5029:
-	case 5030:
-	case 5031:
-	case 5032:
-	case 5033:
-	case 5034:
-	case 5035:
-	case 5036:
-	case 5037:
-	case 5038:
-	case 5039:
-	case 5040:
-	case 5041:
-	case 5042:
-	case 5043:
-	case 5044:
-	case 5045:
-	case 5046:
-	case 5047:
-	case 5048:
-	case 5049:
-	case 5063:
-	case 5096:
-	case 5097:
-	case 5098:
-	case 5099:
-	case 5100:
-	case 5101:
-	case 5102:
-	case 5103:
-	case 5104:
-	case 5115:
-		result = 1;
-		break;
-	case 5002:
-	case 5003:
-	case 5004:
-	case 5005:
-		result = 2;
-		break;
-	case 5051:
-	case 5052:
-	case 5053:
-	case 5054:
-	case 5055:
-	case 5056:
-	case 5057:
-	case 5058:
-	case 5059:
-	case 5060:
-	case 5061:
-	case 5085:
-	case 5086:
-	case 5087:
-	case 5088:
-		result = 3;
-		break;
-	case 5062:
-	case 5064:
-	case 5065:
-	case 5066:
-	case 5067:
-	case 5078:
-	case 5079:
-	case 5080:
-	case 5081:
-	case 5082:
-	case 5083:
-	case 5084:
-	case 5106:
-		result = 4;
-		break;
-	case 5094:
-		result = 5;
-		break;
-	case 5068:
-		result = 6;
-		break;
-	case 5092:
-	case 5093:
-		result = 7;
-		break;
-	case 5091:
-		result = 8;
-		break;
-	case 5095:
-	case 5114:
-		result = 9;
-		break;
-	case 5069:
-		result = 10;
-		break;
-	case 5112:
-		result = 11;
-		break;
-	case 5113:
-		result = 12;
-		break;
-	case 5121:
-		result = 14;
-		break;
-	case 5132:
-		result = 15;
-		break;
-	case 5108:
-		result = 16;
-		break;
-	default:
-		result = 0;
-		break;
-	}
-
-	return result;
-}
-
-int WorldmapFix::CanAccessWorldmap()
-{
-	signed int result;
-	int v1;
-
-	v1 = maps.GetCurrentMapId() - 5001;
-	switch (v1)
-	{
-	case 120:
-		result = 1;
-		break;
-	case 131:
-		result = 1;
-		break;
-	case 107:
-		result = 1;
-		break;
-	default:
-		switch (v1)
-		{
-		case 0:
-		case 1:
-		case 50:
-		case 61:
-		case 67:
-		case 68:
-		case 90:
-		case 92:
-		case 93:
-		case 94:
-		case 111:
-		case 112:
-			result = 1;
-			break;
-		default:
-			result = 0;
-			break;
-		}
-		break;
-	}
-	return result;
-}
+// Note: the map -> area mapping lives in Rules\MapList.mes ("Area: <n>" key, see MapSystem),
+// falling back to the engine table at 0x1006EC30 (as patched by Co8, where applicable).
+// The former hardcoded copies (GetAreaFromMap / CanAccessWorldmap) were unused and have been
+// replaced by the data-driven tables in rules\worldmap_areas.mes.
 
 int convertSpecialId(int id) {
 	if (id == 10 || id == 11)
@@ -769,32 +656,144 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 	return FALSE;
 }
 
-UiWorldmapImpl::UiWorldmapImpl(){
+int WorldmapFix::CanAccessWorldmap()
+{
+	auto mapId = gameSystems->GetMap().GetCurrentMapId();
+	if (wmImpl) {
+		auto res = wmImpl->GetWorldmapAccessOverride(mapId);
+		if (res != -1)
+			return res;
+	}
+	return orgCanAccessWorldmap();
+}
 
-	// Todo read this from file to support new modules
-	areaToLocId.resize(64, 0);
+UiWorldmapImpl::UiWorldmapImpl(){
+	ResetToDefaults();
+}
+
+void UiWorldmapImpl::ResetToDefaults()
+{
+	areaToLocId.assign(WORLDMAP_AREA_MAX, 0);
 	int i = 0;
-	for (auto it : {
-	-1,
-	9,
-	1, // Area 2 - Moathouse
-	3,
-	6,
-	0,
-	4,
-	7,
-	2,
-	5,
-	8,
-	12,
-	13,
-	0,
-	14,
-	15,
-	16,
-		}){
+	for (auto it : kDefaultAreaToLocId) {
 		areaToLocId[i++] = it;
 	}
+	entryPoints = DefaultEntryPoints();
+	worldmapAccess.clear();
+}
+
+int UiWorldmapImpl::GetWorldmapAccessOverride(int mapId) const
+{
+	auto it = worldmapAccess.find(mapId);
+	if (it == worldmapAccess.end())
+		return -1;
+	return it->second ? 1 : 0;
+}
+
+/*
+  Parses a worldmap_areas.mes file. Each line is a set of "Key: value" pairs (like MapList.mes):
+    {id}{Area: <areaId>, Location: <worldmap location id>}
+    {id}{EntryPoint: <teleport id>, Map: <mapId>, X: <tile x>, Y: <tile y>}
+    {id}{Map: <mapId>, WorldmapAccess: 0|1}
+  Entries override the built-in defaults individually.
+*/
+void UiWorldmapImpl::LoadDataFile(const std::string &path)
+{
+	if (!vfs->FileExists(path))
+		return;
+
+	MesFile::Content content;
+	try {
+		content = MesFile::ParseFile(path);
+	}
+	catch (const std::exception &e) {
+		logger->warn("Worldmap: unable to parse {}: {}. Using defaults for its entries.", path, e.what());
+		return;
+	}
+	int nArea = 0, nEntry = 0, nAccess = 0;
+	for (auto &line : content) {
+		std::map<std::string, std::string> kv;
+		bool malformed = false;
+		for (auto &part : split(line.second, ',', true)) {
+			auto sub = split(part, ':', true);
+			if (sub.size() != 2 || sub[0].empty() || sub[1].empty()) {
+				malformed = true;
+				break;
+			}
+			kv[tolower(sub[0])] = sub[1];
+		}
+		auto getInt = [&](const char *key, int &out) -> bool {
+			auto it = kv.find(key);
+			if (it == kv.end()) return false;
+			char *end = nullptr;
+			auto v = strtol(it->second.c_str(), &end, 10);
+			if (!end || *end != 0) return false;
+			out = (int)v;
+			return true;
+		};
+
+		int area, loc, ep, mapId, x, y, access;
+		if (!malformed && kv.count("area") && kv.count("location")) {
+			if (kv.size() == 2 && getInt("area", area) && getInt("location", loc)
+				&& area >= 0 && area < WORLDMAP_AREA_MAX) {
+				areaToLocId[area] = loc;
+				nArea++;
+				continue;
+			}
+		}
+		else if (!malformed && kv.count("entrypoint")) {
+			if (kv.size() == 4 && getInt("entrypoint", ep) && getInt("map", mapId) && getInt("x", x) && getInt("y", y)
+				&& x >= 0 && y >= 0) {
+				entryPoints[ep] = { mapId, { (uint32_t)x, (uint32_t)y } };
+				nEntry++;
+				continue;
+			}
+		}
+		else if (!malformed && kv.count("worldmapaccess")) {
+			if (kv.size() == 2 && getInt("map", mapId) && getInt("worldmapaccess", access) && (access == 0 || access == 1)) {
+				worldmapAccess[mapId] = access == 1;
+				nAccess++;
+				continue;
+			}
+		}
+		logger->warn("{}: ignoring malformed line {{{}}}{{{}}}", path, line.first, line.second);
+	}
+	logger->info("Worldmap: loaded {} ({} area locations, {} entry points, {} worldmap access rules)",
+		path, nArea, nEntry, nAccess);
+}
+
+void UiWorldmapImpl::LoadData()
+{
+	ResetToDefaults();
+	// Temple+ reference data (reproduces the built-in defaults), then module-specific overrides
+	LoadDataFile("tprules\\worldmap_areas.mes");
+	LoadDataFile("rules\\worldmap_areas.mes");
+
+	// Report differences vs. the built-in tables (useful to verify module data / reference file)
+	int diffs = 0;
+	for (int i = 0; i < WORLDMAP_AREA_MAX; i++) {
+		auto def = i < (int)(sizeof(kDefaultAreaToLocId) / sizeof(int)) ? kDefaultAreaToLocId[i] : 0;
+		if (areaToLocId[i] != def) {
+			logger->info("Worldmap: area {} -> location {} (built-in: {})", i, areaToLocId[i], def);
+			diffs++;
+		}
+	}
+	auto &defEps = DefaultEntryPoints();
+	for (auto &it : entryPoints) {
+		auto d = defEps.find(it.first);
+		if (d == defEps.end() || d->second.mapId != it.second.mapId
+			|| d->second.loc.locx != it.second.loc.locx || d->second.loc.locy != it.second.loc.locy) {
+			logger->info("Worldmap: entry point {} -> map {} at ({}, {}){}", it.first, it.second.mapId,
+				it.second.loc.locx, it.second.loc.locy, d == defEps.end() ? " (new)" : " (overrides built-in)");
+			diffs++;
+		}
+	}
+	for (auto &it : worldmapAccess) {
+		logger->info("Worldmap: map {} worldmap access = {}", it.first, it.second);
+		diffs++;
+	}
+	if (!diffs)
+		logger->info("Worldmap: area/entry point tables match the built-in defaults");
 }
 
 // 0x1015E840
@@ -808,17 +807,11 @@ bool UiWorldmapImpl::OnDestinationReached()
 	mNeedToClearEncounterMap = FALSE;
 	FadeAndTeleportArgs fadeArgs;
 	auto &mapSystem = gameSystems->GetMap();
-	// Todo: modularize
-	if (mTeleportMapId == HOMMLET_MAIN){
-		fadeArgs.destLoc = { 623, 421 };
-	}
-	else if (mTeleportMapId == HOMMLET_NORTH){
-		fadeArgs.destLoc = { 512, 221 };
-		mTeleportMapId = HOMMLET_MAIN;
-	}
-	else if (mTeleportMapId == HOMMLET_CASTLE){
-		fadeArgs.destLoc = { 433, 626 };
-		mTeleportMapId = HOMMLET_MAIN;
+	// Entry points (e.g. Hommlet's 3 entrances) come from rules\worldmap_areas.mes / built-in defaults
+	auto epIt = entryPoints.find(mTeleportMapId);
+	if (epIt != entryPoints.end()){
+		fadeArgs.destLoc = epIt->second.loc;
+		mTeleportMapId = epIt->second.mapId;
 	}
 	else{
 		fadeArgs.destLoc = mapSystem.GetStartPos(mTeleportMapId);

@@ -10,6 +10,7 @@ public:
 	UiWorldmap(int width, int height);
 	~UiWorldmap();
 	void Reset() override;
+	void LoadModule() override;
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(const UiSaveFile &saveGame) override;
 	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
