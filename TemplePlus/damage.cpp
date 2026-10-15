@@ -475,6 +475,8 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	if (weaponUsed && objects.GetType(weaponUsed) != obj_t_weapon){
 		weaponUsed = objHndl::null;
 	}
+	if (IsExtraNaturalAttackCode(d20Data)) // natural weapon blend: claws/bite don't use the wielded weapon
+		weaponUsed = objHndl::null;
 
 	evtObjDam.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
 
@@ -530,6 +532,8 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		} else
 			evtObjCritDice.attackPacket.weaponUsed = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
 		if (evtObjCritDice.attackPacket.weaponUsed && objects.GetType(evtObjCritDice.attackPacket.weaponUsed) != obj_t_weapon)
+			evtObjCritDice.attackPacket.weaponUsed = objHndl::null;
+		if (IsExtraNaturalAttackCode(d20Data))
 			evtObjCritDice.attackPacket.weaponUsed = objHndl::null;
 		evtObjCritDice.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
 		auto extraHitDice = dispatch.DispatchAttackBonus(attacker, objHndl::null, &evtObjCritDice, dispTypeGetCriticalHitExtraDice, DK_NONE);

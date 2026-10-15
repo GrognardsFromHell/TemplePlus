@@ -681,6 +681,29 @@ struct EvtObjAddMesh : DispIO // type 41 (new)
 	void Append(int addmeshId); // index into addmesh.mes
 };
 
+// Natural weapon blend
+enum NaturalAttackFlags : int {
+	NAF_PRIMARY = 1,          // primary natural attack (no penalty when the critter fights with natural weapons only)
+	NAF_SECONDARY = 2,        // secondary natural attack (-5, -2 with Multiattack; half Str)
+	NAF_NEEDS_FREE_HAND = 4,  // claw/slam/slap: unusable when no hand is free
+	NAF_MOUTH = 8,            // bite: unusable when "Mouth Occupied" query is true
+};
+struct NaturalAttackEntry {
+	int attackType = 1;       // proto attack type: 0 bite, 1 claw, 2 rake, 3 gore, 4 slap, 5 slam, 6 sting (damage.mes 114+type)
+	int dicePacked = 0;
+	DamageType damType = DamageType::Bludgeoning;
+	int flags = NAF_PRIMARY;
+};
+struct EvtObjExtraNaturalAttacks : DispIO
+{
+	objHndl handle;
+	std::vector<NaturalAttackEntry> attacks;
+	EvtObjExtraNaturalAttacks(objHndl handle);
+	void Dispatch();
+	void Add(int attackType, int dicePacked, int damType, int flags);
+	void AddProtoAttacks(); // feeds the critter's proto natural attacks (obj_f_critter_attacks_idx etc.) into the list
+};
+
 struct EvtObjActionCost: DispIO
 {
 	ActionCostPacket acpOrig; // original

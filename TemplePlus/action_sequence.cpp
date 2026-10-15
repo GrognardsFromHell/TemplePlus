@@ -30,6 +30,9 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "radialmenu.h"
+#include "inventory.h"
+#include <infrastructure/elfhash.h>
+#include <unordered_map>
 
 static struct ActnSeqAddresses : temple::AddressTable {
 
@@ -797,6 +800,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	tbStat->numBonusAttacks = 0;
 	tbStat->numAttacks = 0;
 	tbStat->errCode = AEC_OK;
+	naturalBlend::Reset(obj);
 
 	DispIOTurnBasedStatus dispIo;
 	dispIo.tbStatus = tbStat;
@@ -1466,6 +1470,7 @@ uint32_t ActionSequenceSystem::TurnBasedStatusInit(objHndl objHnd)
 		tbStatus-> idxSthg= -1;
 		tbStatus-> baseAttackNumCode= 0;
 		tbStatus->attackModeCode = 0;
+		naturalBlend::Reset(objHnd);
 		tbStatus-> numBonusAttacks= 0;
 		tbStatus-> numAttacks= 0;
 		tbStatus-> errCode= 0;
@@ -1761,6 +1766,7 @@ ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedSt
 	tbStat->attackModeCode = 0;
 	tbStat->numBonusAttacks = 0;
 	tbStat->surplusMoveDistance = 0;
+	naturalBlend::Reset(d20->d20APerformer);
 
 	// TODO: rapid reload is actually a per-weapon feat per the SRD
 	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
@@ -2157,6 +2163,7 @@ void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 	tbStat->numAttacks = 0;
 	tbStat->errCode = 0;
 	tbStat->hourglassState = 2;
+	naturalBlend::Reset(obj);
 	tbStat->idxSthg = -1;
 	curSeq->seqOccupied |= SEQF_2;
 
@@ -2169,7 +2176,7 @@ void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 	{
 		if (dispatch.DispatchD20ActionCheck(d20Sys.globD20Action, tbStat, dispTypeGetCritterNaturalAttacksNum) <= 0 )
 		{
-			d20Sys.globD20Action->data1 = ATTACK_CODE_PRIMARY + 1;
+			d20Sys.globD20Action->data1 = naturalBlend::TranslateAttackCode(obj, ATTACK_CODE_PRIMARY + 1, 0); // unarmed with extra natural attacks -> natural attack
 		} else
 		{
 			d20Sys.globD20Action->data1 = ATTACK_CODE_NATURAL_ATTACK + 1;
@@ -2511,6 +2518,7 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 	(*actSeqCur)->tbStatus.surplusMoveDistance = 0;
 	(*actSeqCur)->tbStatus.attackModeCode = 0;
 	(*actSeqCur)->tbStatus.baseAttackNumCode = 0;
+	naturalBlend::Reset((*actSeqCur)->performer);
 	(*actSeqCur)->tbStatus.numBonusAttacks = 0;
 	(*actSeqCur)->tbStatus.numAttacks = 0;
 	(*actSeqCur)->tbStatus.errCode = 0;
@@ -2761,6 +2769,7 @@ int ActionSequenceSystem::SequencePop()
 	tbStatNew.surplusMoveDistance = 0.0;
 	tbStatNew.attackModeCode = 0;
 	tbStatNew.baseAttackNumCode = 0;
+	naturalBlend::Reset(curSeqPerformer);
 	tbStatNew.numBonusAttacks = 0;
 	tbStatNew.errCode = 0;
 	DispIOTurnBasedStatus dispIo;
@@ -3556,10 +3565,30 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 		numAttacksBase = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetNumAttacksBase);
 	}
 
+	// Natural weapon blend (opt-in; no-op unless a condition supplies extra natural attacks)
+	int numExtraNatural = 0;
+	auto blendPlan = naturalBlend::Resolve(performer);
+	if (!blendPlan.attacks.empty() && !(d20a->d20Caf & D20CAF_RANGED)) {
+		numExtraNatural = (int)blendPlan.attacks.size();
+		if (blendPlan.replaceUnarmed) {
+			// natural attacks replace unarmed strikes
+			numAttacksBase = 0;
+			_attackTypeCodeHigh = ATTACK_CODE_PRIMARY + 1;
+			_attackTypeCodeLow = ATTACK_CODE_PRIMARY;
+			usingOffhand = 0;
+		}
+	}
+
 	*bonusAttacks = dispatch.DispatchD20ActionCheck(d20a, tbStatus, dispTypeGetBonusAttacks);
-	*numAttacks = usingOffhand + numAttacksBase + *bonusAttacks;
+	*numAttacks = usingOffhand + numAttacksBase + *bonusAttacks + numExtraNatural;
 	*attackModeCode = _attackTypeCodeLow;
 	*baseAttackNumCode = numAttacksBase + _attackTypeCodeHigh - 1 + usingOffhand;
+	if (numExtraNatural > 0) {
+		naturalBlend::SetRange(performer, *baseAttackNumCode + 1, numExtraNatural);
+		*baseAttackNumCode += numExtraNatural;
+	} else {
+		naturalBlend::Reset(performer);
+	}
 }
 
 /* 0x10096760 */
@@ -3871,6 +3900,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBasedStatus* tbStat, int attackCode)
 {
 	actSeq->d20ActArray[actSeq->d20ActArrayNum] = *d20a;
+	attackCode = naturalBlend::TranslateAttackCode(d20a->d20APerformer, attackCode, d20a->d20Caf);
 	actSeq->d20ActArray[actSeq->d20ActArrayNum].data1 = attackCode;
 	if (attackCode == ATTACK_CODE_OFFHAND + 2 || attackCode == ATTACK_CODE_OFFHAND + 4 || attackCode == ATTACK_CODE_OFFHAND + 6)
 	{
@@ -4449,3 +4479,111 @@ ostream & operator<<(ostream & str, ActionErrorCode aec)
 	}
 	return str;
 }
+
+
+#pragma region Natural weapon blend
+namespace naturalBlend {
+
+	struct BlendRange { int first; int count; };
+	static std::unordered_map<uint64_t, BlendRange> sRanges; // Temple+-owned side table (per performer)
+
+	void SetRange(objHndl performer, int firstExtraCode, int count) {
+		if (!performer) return;
+		sRanges[performer.handle] = { firstExtraCode, count };
+	}
+
+	void Reset(objHndl performer) {
+		if (sRanges.empty() || !performer) return;
+		sRanges.erase(performer.handle);
+	}
+
+	int FreeHands(objHndl c) {
+		auto weapr = inventory.ItemWornAt(c, EquipSlot::WeaponPrimary);
+		auto weapl = inventory.ItemWornAt(c, EquipSlot::WeaponSecondary);
+		auto shield = inventory.ItemWornAt(c, EquipSlot::Shield);
+		int used = 0;
+		if (weapr) used++;
+		if (weapl && weapl != weapr) used++;
+		if (weapr && (critterSys.GetFightingStyle(c) & FightingStyle::Mask) == FightingStyle::TwoHanded)
+			used = 2;
+		if (shield) {
+			static const auto bucklerId = ElfHash::Hash("Buckler");
+			auto isBuckler = inventory.ItemHasCondition(shield, bucklerId);
+			if (!(isBuckler && kBucklerLeavesHandFree))
+				used++;
+		}
+		return std::max(0, 2 - used);
+	}
+
+	bool HasMultiattack(objHndl c) {
+		return d20Sys.D20QueryPython(c, "Has Multiattack") != 0;
+	}
+
+	bool IsSecondary(const NaturalBlendPlan& plan, size_t idx) {
+		if (idx >= plan.attacks.size()) return true;
+		return plan.armed || (plan.attacks[idx].flags & NAF_SECONDARY) != 0;
+	}
+
+	NaturalBlendPlan Resolve(objHndl c) {
+		NaturalBlendPlan plan;
+		if (!c || !objSystem->IsValidHandle(c) || !objSystem->GetObject(c)->IsCritter())
+			return plan;
+
+		EvtObjExtraNaturalAttacks evt(c);
+		evt.Dispatch();
+		if (evt.attacks.empty())
+			return plan; // fast path: nobody opted in -> vanilla behaviour
+
+		if (d20Sys.d20Query(c, DK_QUE_Polymorphed))
+			return plan; // polymorph/wild shape forms supply their own (proto) natural attacks
+
+		auto weapr = inventory.ItemWornAt(c, EquipSlot::WeaponPrimary);
+		auto weapl = inventory.ItemWornAt(c, EquipSlot::WeaponSecondary);
+		if (weapr && inventory.IsRangedWeapon(weapr))
+			return plan; // natural attacks are melee only
+		auto armed = weapr || weapl;
+		if (!armed && critterSys.GetNumNaturalAttacks(c) > 0)
+			return plan; // unarmed monster: the existing proto natural-attack path stays in charge
+
+		auto freeHands = FreeHands(c);
+		auto mouthOccupied = d20Sys.D20QueryPython(c, "Mouth Occupied") != 0;
+		for (auto &e : evt.attacks) {
+			if (e.flags & NAF_NEEDS_FREE_HAND) {
+				if (freeHands <= 0) continue;
+				freeHands--;
+			}
+			if ((e.flags & NAF_MOUTH) && mouthOccupied) continue;
+			plan.attacks.push_back(e);
+		}
+		plan.armed = armed;
+		plan.replaceUnarmed = !armed;
+		return plan;
+	}
+
+	int TranslateAttackCode(objHndl performer, int rawCode, int d20caf) {
+		if (rawCode <= 0 || rawCode > ATTACK_CODE_NATURAL_ATTACK)
+			return rawCode;
+		if (d20caf & (D20CAF_TOUCH_ATTACK | D20CAF_RANGED))
+			return rawCode;
+		if (!performer) return rawCode;
+
+		auto it = sRanges.find(performer.handle);
+		if (it != sRanges.end()) {
+			auto &r = it->second;
+			if (rawCode >= r.first && rawCode < r.first + r.count)
+				return ATTACK_CODE_EXTRA_NATURAL + 1 + (rawCode - r.first);
+			return rawCode;
+		}
+		// single attack / AoO / charge without a full-attack plan: an unarmed critter with
+		// extra natural attacks uses its first natural attack instead of an unarmed strike
+		if (rawCode == ATTACK_CODE_PRIMARY + 1
+			&& !inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary)
+			&& !inventory.ItemWornAt(performer, EquipSlot::WeaponSecondary)) {
+			auto plan = Resolve(performer);
+			if (plan.replaceUnarmed && !plan.attacks.empty())
+				return ATTACK_CODE_EXTRA_NATURAL + 1;
+		}
+		return rawCode;
+	}
+}
+#pragma endregion

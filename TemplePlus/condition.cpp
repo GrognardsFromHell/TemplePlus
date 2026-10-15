@@ -2237,7 +2237,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	dispatch.DispatchToHitBonusBase(args.objHndCaller, dispIo);
 
 	// natural attack - get attack bonus from internal defs
-	if (dispIo->attackPacket.dispKey >= (ATTACK_CODE_NATURAL_ATTACK+1) 
+	if (IsCritterNaturalAttackCode(dispIo->attackPacket.dispKey)
 		 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed) )
 	{
 		int attackIdx = dispIo->attackPacket.dispKey - (ATTACK_CODE_NATURAL_ATTACK + 1);
@@ -2265,6 +2265,16 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	}
 
 	int attackCode = dispIo->attackPacket.dispKey;
+	// natural weapon blend: secondary natural attack penalty (-5, or -2 with Multiattack)
+	if (IsExtraNaturalAttackCode(attackCode)) {
+		auto plan = naturalBlend::Resolve(args.objHndCaller);
+		size_t idx = attackCode - (ATTACK_CODE_EXTRA_NATURAL + 1);
+		if (naturalBlend::IsSecondary(plan, idx)) {
+			auto multi = naturalBlend::HasMultiattack(args.objHndCaller);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, multi ? -2 : -5, 0, 119,
+				multi ? (char*)"Secondary Natural Attack (Multiattack)" : (char*)"Secondary Natural Attack");
+		}
+	}
 	if (attackCode < ATTACK_CODE_NATURAL_ATTACK) // apply penalties for Nth attack
 	{
 		int attackNumber = 1;
@@ -2755,7 +2765,25 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	else // unarmed
 	{
 		int attackCode = dispIo->attackPacket.dispKey;
-		if (attackCode > ATTACK_CODE_NATURAL_ATTACK ) // natural attack
+		if (IsExtraNaturalAttackCode(attackCode)) // natural weapon blend: extra natural attack
+		{
+			auto plan = naturalBlend::Resolve(args.objHndCaller);
+			size_t idx = attackCode - (ATTACK_CODE_EXTRA_NATURAL + 1);
+			if (idx < plan.attacks.size()) {
+				auto &e = plan.attacks[idx];
+				damageMesLine = e.attackType + 114;
+				attackDamageType = e.damType;
+				dispIoAttackDice.flags = dispIo->attackPacket.flags;
+				dispIoAttackDice.weapon = objHndl::null;
+				dispIoAttackDice.wielder = args.objHndCaller;
+				dispIoAttackDice.dicePacked = e.dicePacked;
+				dispIoAttackDice.attackDamageType = attackDamageType;
+				attackDice = dispatch.Dispatch60GetAttackDice(args.objHndCaller, &dispIoAttackDice);
+			} else {
+				attackDice = Dice(1, 3, 0).ToPacked(); // plan changed since the attack was queued; fall back to unarmed-sized dice
+			}
+		}
+		else if (IsCritterNaturalAttackCode(attackCode)) // natural attack
 		{
 			int attackIdx = attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1);
 			int attackDiceUnarmed = critterSys.GetCritterDamageDice(naturalAttackObj, attackIdx);
@@ -2908,6 +2936,19 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	    || (flags & D20CAF_THROWN && !(flags & D20CAF_THROWN_GRENADE)))
 	{
 		int attackCode = dispIo->attackPacket.dispKey;
+		if (IsExtraNaturalAttackCode(attackCode)) // natural weapon blend
+		{
+			auto plan = naturalBlend::Resolve(args.objHndCaller);
+			size_t idx = attackCode - (ATTACK_CODE_EXTRA_NATURAL + 1);
+			if (naturalBlend::IsSecondary(plan, idx)) {
+				if (strMod > 0) strMod /= 2;
+			}
+			else if (plan.replaceUnarmed && plan.attacks.size() == 1) {
+				strMod += std::max(0, strMod) / 2; // sole natural attack: 1.5x Str
+			}
+			damage.AddDamageBonusWithDescr(&dispIo->damage, strMod, 2, 103, 0);
+			return 0;
+		}
 		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
 		{
 			if (strMod > 0)
@@ -2919,7 +2960,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		{
 			strMod += std::max(0, strMod) / 2;
 		}
-		if (attackCode > ATTACK_CODE_NATURAL_ATTACK && strMod > 0 && critterSys.GetDamageIdx(args.objHndCaller, attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1)) > 0)
+		if (IsCritterNaturalAttackCode(attackCode) && strMod > 0 && critterSys.GetDamageIdx(args.objHndCaller, attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1)) > 0)
 		{
 			strMod /= 2;
 		}
@@ -9095,7 +9136,7 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 int RaceAbilityCallbacks::GlobalMonsterToHit(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
-	if (dispIo->attackPacket.dispKey >= ATTACK_CODE_NATURAL_ATTACK + 1) {
+	if (IsCritterNaturalAttackCode(dispIo->attackPacket.dispKey)) { // proto natural attacks have their bonus baked in; extra (blend) natural attacks use BAB
 		return 0;
 	}
 	

@@ -1773,6 +1773,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	dispIoToHitBon.Dispatch(performer, objHndl::null, dispTypeBucklerAcPenalty, DK_NONE); // adds buckler penalty to the bonus list
 	
 	
+	if (IsExtraNaturalAttackCode(d20Data)) // natural weapon blend: claws/bite don't use the wielded weapon
+		dispIoToHitBon.attackPacket.weaponUsed = objHndl::null;
 	if (dispIoToHitBon.attackPacket.weaponUsed
 		&& gameSystems->GetObj().GetObject(dispIoToHitBon.attackPacket.weaponUsed)->type != obj_t_weapon){
 		dispIoToHitBon.attackPacket.weaponUsed = 0i64;
