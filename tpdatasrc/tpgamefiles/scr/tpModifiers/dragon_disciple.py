@@ -72,7 +72,7 @@ def abilityBoost(attachee, args, evt_obj):
         evt_obj.bonus_list.add(bonus, 0, "~Dragon Disciple Ability Boost~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_ABILITY_BOOST]")
     return 0
 
-abilityBoostCond = PythonModifier("Dragon Disciple Ability Boost", 0)
+abilityBoostCond = PythonModifier("Dragon Disciple Ability Boost", 2) # feat conditions get (featEnum, arg)
 abilityBoostCond.MapToFeat("Dragon Disciple Ability Boost")
 abilityBoostCond.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, abilityBoost, (stat_strength,))
 abilityBoostCond.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CONSTITUTION, abilityBoost, (stat_constitution,))
@@ -89,7 +89,7 @@ def naturalArmorACBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonus, 0, "~Dragon Disciple Natural Armor~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_NATURAL_ARMOR_INCREASE]") # 0: stacks with the base natural armor (SRD: "increase")
     return 0
 
-naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
+naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 2) # feat conditions get (featEnum, arg)
 naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
 naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, naturalArmorACBonus, ())
 
@@ -113,7 +113,7 @@ def bonusSpellsPerDay(attachee, args, evt_obj):
         evt_obj.bonus_list.add(count, 0, "~Dragon Disciple Bonus Spells~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BONUS_SPELLS]")
     return 0
 
-bonusSpells = PythonModifier("Dragon Disciple Bonus Spells", 0)
+bonusSpells = PythonModifier("Dragon Disciple Bonus Spells", 2) # feat conditions get (featEnum, arg)
 bonusSpells.MapToFeat("Dragon Disciple Bonus Spells")
 bonusSpells.AddHook(ET_OnGetSpellsPerDayMod, EK_NONE, bonusSpellsPerDay, ())
 
@@ -156,7 +156,7 @@ def heritagePerform(attachee, args, evt_obj):
         game.create_history_freeform("{} chooses the ~{} dragon~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_DRACONIC_HERITAGE] heritage\n\n".format(attachee.description, name))
     return 0
 
-heritageFeat = PythonModifier("Dragon Disciple Heritage", 0)
+heritageFeat = PythonModifier("Dragon Disciple Heritage", 2) # feat conditions get (featEnum, arg)
 heritageFeat.MapToFeat("Dragon Disciple Heritage")
 heritageFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, heritageRadial, ())
 heritageFeat.AddHook(ET_OnD20PythonActionPerform, heritageActionEnum, heritagePerform, ())
@@ -185,7 +185,7 @@ def clawsAndBite(attachee, args, evt_obj):
     evt_obj.add_attack(NATURAL_ATTACK_BITE, bite, D20DT_PIERCING, NAF_PRIMARY | NAF_MOUTH)
     return 0
 
-clawsBite = PythonModifier("Dragon Disciple Claws and Bite", 0)
+clawsBite = PythonModifier("Dragon Disciple Claws and Bite", 2) # feat conditions get (featEnum, arg)
 clawsBite.MapToFeat("Dragon Disciple Claws and Bite")
 clawsBite.AddHook(ET_OnGetExtraNaturalAttacks, EK_NONE, clawsAndBite, ())
 
@@ -196,7 +196,7 @@ def breathRadial(attachee, args, evt_obj):
     info = getHeritageInfo(attachee)
     if not info:
         return 0 # choose a heritage first
-    if args.get_arg(0):
+    if args.get_arg(2):
         label = "Breath Weapon ({}, used today)".format(info[0])
     else:
         label = "Breath Weapon ({})".format(info[0])
@@ -209,14 +209,14 @@ def breathRadial(attachee, args, evt_obj):
     return 0
 
 def breathCheck(attachee, args, evt_obj):
-    if args.get_arg(0):
+    if args.get_arg(2):
         evt_obj.return_val = AEC_OUT_OF_CHARGES
     elif not getHeritageInfo(attachee):
         evt_obj.return_val = AEC_INVALID_ACTION
     return 0
 
 def breathPerform(attachee, args, evt_obj):
-    args.set_arg(0, 1) # used today
+    args.set_arg(2, 1) # used today
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     spellPacket.caster_level = ddLevel(attachee)
@@ -229,10 +229,10 @@ def breathPerform(attachee, args, evt_obj):
     return 0
 
 def breathReset(attachee, args, evt_obj):
-    args.set_arg(0, 0)
+    args.set_arg(2, 0)
     return 0
 
-breathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 2) # arg0: used today
+breathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) # arg0: featEnum, arg1: spare, arg2: used today
 breathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
 breathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, breathReset, ())
 breathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, breathReset, ())
@@ -247,7 +247,7 @@ def blindsenseRange(attachee, args, evt_obj):
     evt_obj.return_val = 60 if ddLevel(attachee) >= 10 else 30
     return 0
 
-blindsense = PythonModifier("Dragon Disciple Blindsense", 0)
+blindsense = PythonModifier("Dragon Disciple Blindsense", 2) # feat conditions get (featEnum, arg)
 blindsense.MapToFeat("Dragon Disciple Blindsense")
 blindsense.AddHook(ET_OnD20PythonQuery, "Blindsense Range", blindsenseRange, ())
 
@@ -259,7 +259,7 @@ def addWings(attachee, args, evt_obj):
     evt_obj.append(ddWingsAddmeshId)
     return 0
 
-wings = PythonModifier("Dragon Disciple Wings", 0)
+wings = PythonModifier("Dragon Disciple Wings", 2) # feat conditions get (featEnum, arg)
 wings.MapToFeat("Dragon Disciple Wings")
 wings.AddHook(ET_OnAddMesh, EK_NONE, addWings, ())
 
@@ -285,7 +285,7 @@ def apotheosisParalysisQuery(attachee, args, evt_obj):
     evt_obj.return_val = 1
     return 0
 
-apotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 0)
+apotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 2) # feat conditions get (featEnum, arg)
 apotheosis.MapToFeat("Dragon Disciple Dragon Apotheosis")
 apotheosis.AddHook(ET_OnConditionAddPre, EK_NONE, apotheosisImmunities, ())
 apotheosis.AddHook(ET_OnTakingDamage2, EK_NONE, apotheosisEnergyImmunity, ())

@@ -1279,7 +1279,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoSpellsPerDay>(m, "EventObjSpellsPerDay", "Used for retrieving spells per day mods. Resurrected in Temple+!")
 		.def_readwrite("bonus_list", &DispIoSpellsPerDay::bonList)
-		.def_readwrite("caster_class", &DispIoSpellsPerDay::classCode)
+		.def_property("caster_class", [](DispIoSpellsPerDay& evt)->int { return (int)evt.classCode; }, [](DispIoSpellsPerDay& evt, int val) { evt.classCode = (Stat)val; })
 		.def_readwrite("spell_level", &DispIoSpellsPerDay::spellLvl)
 		.def_readwrite("base_caster_level", &DispIoSpellsPerDay::casterEffLvl)
 		;
