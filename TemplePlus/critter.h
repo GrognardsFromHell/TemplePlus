@@ -189,6 +189,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Returns true if the critter can see the targe with blindsight.
 	*/
 	bool CanSeeWithBlindsight(objHndl critter, objHndl target);
+	bool CanSenseWithBlindsense(objHndl critter, objHndl target); // "Blindsense Range" python query; locate only, no concealment negation
 
 	/*
 		Gets an item worn at the given equipment slot.

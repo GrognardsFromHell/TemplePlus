@@ -225,6 +225,9 @@ bool CritterReplacements::CanSense(objHndl critter, objHndl tgt)
 {
 	//First check if the critter can see the target with blindsense
 	if (critterSys.CanSeeWithBlindsight(critter, tgt)) return true;
+	// Blindsense: notices / pinpoints the target (so it can be targeted and isn't "unseen"),
+	// but unlike blindsight it does NOT remove concealment miss chances (see combat.cpp)
+	if (critterSys.CanSenseWithBlindsense(critter, tgt)) return true;
 
 	// Default to let TOEE handle it
 	return oldCanSense(critter, tgt);
@@ -319,6 +322,18 @@ bool LegacyCritterSystem::CanSeeWithBlindsight(objHndl critter, objHndl target) 
 	}
 
 	return false;
+}
+
+bool LegacyCritterSystem::CanSenseWithBlindsense(objHndl critter, objHndl target) {
+	if (!critter || !target) {
+		return false;
+	}
+	auto blindsenseDistance = d20Sys.D20QueryPython(critter, "Blindsense Range");
+	if (blindsenseDistance <= 0)
+		return false;
+	if (locSys.DistanceToObj(critter, target) >= blindsenseDistance)
+		return false;
+	return !d20Sys.d20Query(target, DK_QUE_Is_Ethereal);
 }
 
 int LegacyCritterSystem::HasLineOfSight(objHndl critter, objHndl target) {

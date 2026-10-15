@@ -1,0 +1,5 @@
+name: Dragon Disciple Breath Weapon
+flags: 8
+prereqs:
+description:  At 3rd level, once per day, a dragon disciple can breathe a 30-foot cone of energy (type by his heritage) as a standard action: 2d8 damage, 4d8 at 7th level, 6d8 at 10th. Reflex save (DC 10 + dragon disciple level + Con modifier) for half. In Temple+, line-breathing varieties also use a cone.
+prereq descr: Dragon Disciple level 3.
