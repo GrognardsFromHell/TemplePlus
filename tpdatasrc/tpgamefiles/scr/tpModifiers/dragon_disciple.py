@@ -251,9 +251,10 @@ blindsense = PythonModifier("Dragon Disciple Blindsense", 2) # feat conditions g
 blindsense.MapToFeat("Dragon Disciple Blindsense")
 blindsense.AddHook(ET_OnD20PythonQuery, "Blindsense Range", blindsenseRange, ())
 
-#### Wings (9th): cosmetic only (ToEE has no flight). Darley's addmesh (vanilla art\meshes\armor\darley_addmesh),
-#### mapped in rules/addmeshes/dragon_disciple_wings.mes.
-ddWingsAddmeshId = 19500
+#### Wings (9th): cosmetic only (ToEE has no flight). Darley's wings addmesh from the vanilla game
+#### (ToEE1.dat art\meshes\Armor\darley_addmesh\Darley_addmesh.skm), vanilla rules\addmesh.mes ids 14200-14217
+#### (14200 + model race offset), so no new art or mes entries are needed.
+ddWingsAddmeshId = 14200
 
 def addWings(attachee, args, evt_obj):
     evt_obj.append(ddWingsAddmeshId)

@@ -223,6 +223,7 @@ def to_hit_processing(d20a):
 
     #Check if attacks hits
     attackDidHit, toHitRoll = toHitResult(to_hit_bon_final, tgt_ac_final)
+    print "NWBTEST TOHIT %s -> %s code=%d weapon=%s bonus=%d ac=%d roll=%d hit=%s" % (performer, target, d20Data, to_hit_eo.attack_packet.get_weapon_used(), to_hit_bon_final, tgt_ac_final, toHitRoll, attackDidHit) # NWBTEST local
 
     critAlwaysCheat = cheats.critical #Note: changed behavior from vanilla (this used to toggle the property)
 
