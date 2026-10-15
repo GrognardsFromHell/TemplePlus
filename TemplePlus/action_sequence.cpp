@@ -4502,10 +4502,11 @@ namespace naturalBlend {
 		auto weapl = inventory.ItemWornAt(c, EquipSlot::WeaponSecondary);
 		auto shield = inventory.ItemWornAt(c, EquipSlot::Shield);
 		int used = 0;
-		if (weapr) used++;
+		// A main-hand weapon that is wielded two-handed (see InventorySystem::IsWieldedTwoHanded:
+		// a two-hander, or a one-hander with an empty off hand / buckler unless "Prefer One
+		// Handed Wield" is on) occupies both hands, so the 1.5x Str bonus and a claw never stack.
+		if (weapr) used += inventory.IsWieldedTwoHanded(weapr, c) ? 2 : 1;
 		if (weapl && weapl != weapr) used++;
-		if (weapr && (critterSys.GetFightingStyle(c) & FightingStyle::Mask) == FightingStyle::TwoHanded)
-			used = 2;
 		if (shield) {
 			static const auto bucklerId = ElfHash::Hash("Buckler");
 			auto isBuckler = inventory.ItemHasCondition(shield, bucklerId);
