@@ -1877,6 +1877,7 @@ void EvtObjExtraNaturalAttacks::AddProtoAttacks()
 		e.attackType = critterSys.GetCritterAttackType(handle, i);
 		e.dicePacked = critterSys.GetCritterDamageDice(handle, i);
 		e.damType = critterSys.GetCritterAttackDamageType(handle, i);
+		e.protoIdx = i;
 		// same convention the proto path uses for half Str: slot 0 primary, the rest secondary
 		e.flags = critterSys.GetDamageIdx(handle, i) > 0 ? NAF_SECONDARY : NAF_PRIMARY;
 		if (e.attackType == 1 || e.attackType == 4 || e.attackType == 5) e.flags |= NAF_NEEDS_FREE_HAND;

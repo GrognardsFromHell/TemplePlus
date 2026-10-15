@@ -693,6 +693,7 @@ struct NaturalAttackEntry {
 	int dicePacked = 0;
 	DamageType damType = DamageType::Bludgeoning;
 	int flags = NAF_PRIMARY;
+	int protoIdx = -1;        // proto natural attack slot this entry came from (AddProtoAttacks), else -1
 };
 struct EvtObjExtraNaturalAttacks : DispIO
 {

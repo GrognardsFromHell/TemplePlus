@@ -1738,6 +1738,13 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool s
 		break;
 	}
 
+	// "Prefer One Handed Wield" with nothing in the off hand: a weapon that doesn't require
+	// two hands is held in one hand (no 1.5x Str; frees a hand e.g. for a natural claw attack)
+	if (isTwohandedWieldable && !offhandWeapon && !shield && wieldType < 2
+		&& d20Sys.d20Query(wielder, DK_QUE_Is_Preferring_One_Handed_Wield)) {
+		isTwohandedWieldable = false;
+	}
+
 	return isTwohandedWieldable;
 }
 

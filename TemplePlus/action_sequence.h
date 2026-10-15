@@ -388,6 +388,7 @@ namespace naturalBlend {
 
 	NaturalBlendPlan Resolve(objHndl critter);
 	int FreeHands(objHndl critter);
+	bool HasHandNaturalAttack(objHndl critter); // has an extra natural attack that needs a free hand
 	bool HasMultiattack(objHndl critter);
 	bool IsSecondary(const NaturalBlendPlan& plan, size_t idx);
 	// Maps a raw attack-counter code to ATTACK_CODE_EXTRA_NATURAL+1+k when it falls in the

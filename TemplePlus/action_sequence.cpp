@@ -3568,6 +3568,11 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	// Natural weapon blend (opt-in; no-op unless a condition supplies extra natural attacks)
 	int numExtraNatural = 0;
 	auto blendPlan = naturalBlend::Resolve(performer);
+	// Monk flurry of blows: flurry already defines the full attack (and unarmed strikes
+	// must not be replaced), so a critter with the flurry feat gets no extra natural attacks.
+	// (Vanilla flurry toggle state isn't queryable from here; this is the conservative choice.)
+	if (!blendPlan.attacks.empty() && feats.HasFeatCountByClass(performer, FEAT_FLURRY_OF_BLOWS))
+		blendPlan.attacks.clear();
 	if (!blendPlan.attacks.empty() && !(d20a->d20Caf & D20CAF_RANGED)) {
 		numExtraNatural = (int)blendPlan.attacks.size();
 		if (blendPlan.replaceUnarmed) {
@@ -4514,6 +4519,16 @@ namespace naturalBlend {
 				used++;
 		}
 		return std::max(0, 2 - used);
+	}
+
+	bool HasHandNaturalAttack(objHndl c) {
+		if (!c || !objSystem->IsValidHandle(c) || !objSystem->GetObject(c)->IsCritter())
+			return false;
+		EvtObjExtraNaturalAttacks evt(c);
+		evt.Dispatch();
+		for (auto &e : evt.attacks)
+			if (e.flags & NAF_NEEDS_FREE_HAND) return true;
+		return false;
 	}
 
 	bool HasMultiattack(objHndl c) {

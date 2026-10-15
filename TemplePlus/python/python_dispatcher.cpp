@@ -271,6 +271,16 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			result.push_back(std::make_tuple(e.attackType, e.dicePacked, (int)e.damType, e.flags));
 		return result;
 	}, "Usable extra natural attacks right now: list of (attack_type, packed_dice, damage_type, flags)");
+	m.def("get_natural_attack_proto_index", [](objHndl critter, int code)->int {
+		if (IsCritterNaturalAttackCode(code))
+			return code - (ATTACK_CODE_NATURAL_ATTACK + 1);
+		if (IsExtraNaturalAttackCode(code)) {
+			auto plan = naturalBlend::Resolve(critter);
+			size_t idx = code - (ATTACK_CODE_EXTRA_NATURAL + 1);
+			if (idx < plan.attacks.size()) return plan.attacks[idx].protoIdx;
+		}
+		return -1;
+	}, "Proto natural attack slot used by this attack code (proto 1000+i, or a blended extra natural attack fed from the proto), else -1");
 	m.def("cur_seq_get_turn_based_status_flags", []() {
 		int res = 0;
 		auto tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
