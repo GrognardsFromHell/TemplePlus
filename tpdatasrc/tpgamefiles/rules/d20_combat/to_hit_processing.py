@@ -204,7 +204,7 @@ def to_hit_processing(d20a):
     to_hit_eo.attack_packet.action_type = d20a.action_type #dispIoToHitBon.attackPacket.d20ActnType = d20a.action_type
     to_hit_eo.attack_packet.attacker = performer
     to_hit_eo.attack_packet.event_key = d20Data #dispIoToHitBon.attackPacket.dispKey = d20Data
-    to_hit_eo.attack_packet.set_weapon_used(getUsedWeapon(flags, performer))
+    to_hit_eo.attack_packet.set_weapon_used(getUsedWeapon(flags, performer, d20Data))
 
     to_hit_eo.attack_packet.ammo_item = performer.get_ammo_used()
     flags |= D20CAF_FINAL_ATTACK_ROLL
