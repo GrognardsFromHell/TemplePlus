@@ -482,6 +482,33 @@ namespace gfx {
 
 	}
 
+	std::string TextEngine::FindFontFamily(const std::string &prefix)
+	{
+		if (!mImpl->fontCollection) {
+			mImpl->LoadFontCollection();
+		}
+		auto wanted = utf8_to_ucs2(prefix);
+		auto count = mImpl->fontCollection->GetFontFamilyCount();
+		for (auto i = 0u; i < count; i++) {
+			CComPtr<IDWriteFontFamily> family;
+			CComPtr<IDWriteLocalizedStrings> names;
+			if (FAILED(mImpl->fontCollection->GetFontFamily(i, &family)) || FAILED(family->GetFamilyNames(&names)))
+				continue;
+			for (auto j = 0u; j < names->GetCount(); j++) {
+				uint32_t len;
+				if (FAILED(names->GetStringLength(j, &len)))
+					continue;
+				std::wstring name(len + 1, L'\0');
+				if (FAILED(names->GetString(j, &name[0], len + 1)))
+					continue;
+				name.resize(len);
+				if (name.compare(0, wanted.size(), wanted) == 0)
+					return ucs2_to_utf8(name);
+			}
+		}
+		return std::string();
+	}
+
 	void TextEngine::SetScissorRect(const TigRect & rect)
 	{
 		mImpl->enableClipRect = true;

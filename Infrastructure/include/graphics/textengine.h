@@ -103,6 +103,12 @@ namespace gfx {
 		 */
 		bool HasFontFamily(const std::string &name);
 
+		/*
+			Returns the first loaded family whose name starts with the given name ('' if none). DirectWrite
+			implementations derive family names differently for legacy fonts (e.g. Wine appends the style name).
+		*/
+		std::string FindFontFamily(const std::string &prefix);
+
 		void SetScissorRect(const TigRect &rect);
 		void ResetScissorRect();
 

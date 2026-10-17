@@ -19,6 +19,7 @@
 #include "gamesystems/legacysystems.h"
 #include "mod_support.h"
 #include "gamesystems\objects\objsystem.h"
+#include "ui_dialog_ieskin.h"
 
 UiDlg* uiDialog = nullptr;
 UiDialogImpl * dlgImpl = nullptr;
@@ -137,6 +138,19 @@ protected:
 
 	void ShowDialogWidgets();
 	void UpdateWidgets();
+	void UpdateWidgetsStock();
+
+	// Infinity Engine style skin (ui_dialog_ieskin.h): selected per module / per conversation from
+	// art\interface\dialog_ie\skins.json. While a skin applies, the stock widgets are moved to the skin's
+	// layout and drawn by the skin; IeSkinUpdate() restores the stock geometry otherwise.
+	bool IeSkinUpdate();
+	void IeSkinRestore();
+	int mScreenW = 1024, mScreenH = 768;
+	IeDlgView mIeView;
+	IeDlgLayout mIeLayout;
+	bool mIeApplied = false;
+	bool mIeStockSaved = false;
+	TigRect mStockWnd, mStockResp, mStockReplies[5], mStockHead, mStockHeadTgt;
 
 
 
@@ -286,7 +300,87 @@ void UiDialogImpl::ShowDialogWidgets()
 }
 
 /* 0x1014C030 */
-void UiDialogImpl::UpdateWidgets(){
+void UiDialogImpl::UpdateWidgets() {
+	UpdateWidgetsStock();
+	IeSkinUpdate();
+}
+
+static void SetWidgetRect(LgcyWidget *w, const TigRect &r) {
+	if (!w) return;
+	w->xrelated += r.x - w->x; w->yrelated += r.y - w->y;
+	w->x = r.x; w->y = r.y; w->width = r.width; w->height = r.height;
+}
+
+static TigRect WidgetRect(LgcyWidget *w) {
+	return w ? TigRect(w->x, w->y, w->width, w->height) : TigRect(0, 0, 0, 0);
+}
+
+void UiDialogImpl::IeSkinRestore() {
+	if (!mIeApplied) return;
+	mIeApplied = false;
+	SetWidgetRect(uiManager->GetWindow(mWndId), mStockWnd);
+	SetWidgetRect(uiManager->GetWindow(mResponseWndId), mStockResp);
+	for (int i = 0; i < 5; i++) SetWidgetRect(uiManager->GetButton(mReplyBtnIds[i]), mStockReplies[i]);
+	SetWidgetRect(uiManager->GetButton(mHeadBtnId), mStockHead);
+	mHeadBtnTgtRect = mStockHeadTgt;
+	UpdateWidgetsStock();
+}
+
+bool UiDialogImpl::IeSkinUpdate() {
+	auto &st = mSlot.state;
+	// the ToEE dialog file id is the NPC's dialog script id (upper 16 bits of the speech id, see DialogState)
+	int dialogId = mSlot.scriptId;
+	if (dialogId <= 0) dialogId = st.dialogScriptId;
+	if (dialogId <= 0) dialogId = (st.speechId >> 16) & 0xFFFF;
+	if (!ieDialogSkins.Select(dialogId)) {
+		IeSkinRestore();
+		return false;
+	}
+	if (!mIeApplied && !mIeStockSaved) {
+		mStockWnd = WidgetRect(uiManager->GetWindow(mWndId));
+		mStockResp = WidgetRect(uiManager->GetWindow(mResponseWndId));
+		for (int i = 0; i < 5; i++) mStockReplies[i] = WidgetRect(uiManager->GetButton(mReplyBtnIds[i]));
+		mStockHead = WidgetRect(uiManager->GetButton(mHeadBtnId));
+		mStockHeadTgt = mHeadBtnTgtRect;
+		mIeStockSaved = true;
+	}
+	auto &v = mIeView;
+	v.npc = st.npc; v.pc = st.pc; v.dialogId = dialogId;
+	v.npcText = st.npcLineText;
+	v.replyCount = std::max(0, std::min(st.pcLines, 5));
+	const char *pcTexts[5] = { st.pcLineText1, st.pcLineText2, st.pcLineText3, st.pcLineText4, st.pcLineText5 };
+	for (int i = 0; i < 5; i++)
+		v.replies[i] = mResponseTexts[i] ? mResponseTexts[i] : (i < v.replyCount ? pcTexts[i] : "");
+	v.history.clear();
+	int n = 0;
+	for (auto it = mDlgLineList; it && n < 200; it = it->prev, n++)
+		v.history.emplace_back((it->flags & 1) != 0, it->lineText ? it->lineText : "");
+	v.historyMode = (mFlags & UiDialogFlags::DialogHistoryShow) != 0;
+	v.active = mIsActive != 0;
+	v.screenW = mScreenW; v.screenH = mScreenH;
+	mIeLayout = ieDialogSkins.Layout(v);
+	static std::string sLastLogged;
+	if (v.active && v.npcText != sLastLogged) { // one line per NPC line: where the skin put things (for tests)
+		sLastLogged = v.npcText;
+		auto &L = mIeLayout;
+		std::string rr;
+		for (int i = 0; i < v.replyCount; i++)
+			rr += fmt::format(" {}:{},{},{},{}", i + 1, L.replies[i].x, L.replies[i].y, L.replies[i].width, L.replies[i].height);
+		logger->info("IE dialog skin '{}': dialog {} panel {},{},{},{} replies{}{}", ieDialogSkins.CurrentName(), dialogId,
+			L.panelX, L.panelY, L.panelW, L.panelH, rr, L.continueMode ? (L.continueIsEnd ? " [end button]" : " [continue button]") : "");
+	}
+	SetWidgetRect(uiManager->GetWindow(mWndId), mIeLayout.wnd);
+	SetWidgetRect(uiManager->GetWindow(mResponseWndId), mIeLayout.responseWnd);
+	for (int i = 0; i < 5; i++)
+		SetWidgetRect(uiManager->GetButton(mReplyBtnIds[i]), i < v.replyCount ? mIeLayout.replies[i] : TigRect(0, 0, 0, 0));
+	SetWidgetRect(uiManager->GetButton(mHeadBtnId), mIeLayout.headBtn);
+	mHeadBtnTgtRect = mIeLayout.headBtn;
+	uiManager->SetHidden(mScrollbarId, true);
+	mIeApplied = true;
+	return true;
+}
+
+void UiDialogImpl::UpdateWidgetsStock(){
 
 	if (!mIsActive){
 		if (mFlags & UiDialogFlags::DialogHistoryShow) {
@@ -458,10 +552,17 @@ void UiDlg::ShowHistory()
 /* 0x1014D9B0 */
 BOOL UiDialogImpl::WidgetsInit(int w, int h)
 {
+	mScreenW = w; mScreenH = h;
+	mIeApplied = false; mIeStockSaved = false; // widgets are rebuilt with stock geometry
+	ieDialogSkins.Deactivate();
 	
 	LgcyWindow dlgWnd(9, h - 374, 611, 292);
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId){
+		if (dlgImpl->IeSkinUpdate()) {
+			ieDialogSkins.RenderMain(dlgImpl->mIeView, dlgImpl->mIeLayout);
+			return;
+		}
 		if (config.enlargeDialogFonts)
 			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 		else
@@ -532,6 +633,10 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 			TigMsgMouse* mouseMsg = (TigMsgMouse*)msg;
 			if (!(mouseMsg->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE))
 				return TRUE;
+			if (dlgImpl->mIeApplied) { // IE skin: wheel scrolls the conversation log
+				ieDialogSkins.Scroll(((int)mouseMsg->arg3) > 0 ? 1 : -1);
+				return TRUE;
+			}
 			auto scrollbar = uiManager->GetScrollBar(dlgImpl->mScrollbarId);
 			if (!scrollbar->handleMessage)
 				return TRUE;
@@ -557,6 +662,10 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 	mHeadBtnId = dlgWnd.AddChildButton("Head btn", 581, 1, 23, 18,
 		[](int id) {
 		auto state = uiManager->GetButtonState(id);
+		if (dlgImpl->mIeApplied) {
+			ieDialogSkins.RenderHistoryButton(dlgImpl->mIeLayout, (int)state);
+			return;
+		}
 		auto texId = dlgImpl->mHeadBtnTexNormal;
 		switch (state){
 		case LgcyButtonState::Disabled:
@@ -613,6 +722,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 	static LgcyWindow responseWnd(16, h - 221, 611, 139);
 	responseWnd.flags = 1;
 	responseWnd.render = [](int id){
+		if (dlgImpl->mIeApplied) return;
 		auto flags = dlgImpl->mFlags;
 		if (flags & UiDialogFlags::DialogHistoryShow){
 			auto wnd = uiManager->GetWindow(id);
@@ -621,6 +731,12 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 		}
 	};
 	responseWnd.handleMessage = [](int id, TigMsg*msg) {
+		if (msg->type == TigMsgType::MOUSE && dlgImpl->mIeApplied) {
+			auto mouseMsg = (TigMsgMouse*)msg;
+			if (mouseMsg->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE)
+				ieDialogSkins.Scroll(((int)mouseMsg->arg3) > 0 ? 1 : -1);
+			return TRUE;
+		}
 		if (msg->type == TigMsgType::MOUSE || msg->type == TigMsgType::WIDGET)
 			return TRUE;
 		if (msg->type == TigMsgType::CHAR){
@@ -655,6 +771,10 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, 5);
 			if (idx <= -1 || idx >= /*REPLY_COUNT*/ 5) return;
 			if (!dlgImpl->mResponseTexts[idx]){
+				return;
+			}
+			if (dlgImpl->mIeApplied) {
+				ieDialogSkins.RenderReply(dlgImpl->mIeView, dlgImpl->mIeLayout, idx, (int)uiManager->GetButtonState(id));
 				return;
 			}
 			if (config.enlargeDialogFonts)

@@ -420,6 +420,9 @@
     <ClCompile Include="ui\ui_dialog.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui\ui_dialog_ieskin.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
     <ClCompile Include="ui\ui_combat.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -918,6 +921,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_dialog.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_dialog_ieskin.h">
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_combat.h">
