@@ -234,11 +234,10 @@ Feats: Cleave, Power Attack
 } // Special: Contact with an evil summoned outsider.
 
 
-{13016}Dragon Disciple{A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+{13016}Dragon Disciple{A descendant of dragonkind who ignites their dragon blood, slowly becoming a half-dragon.
 
-Requirements:
-Skill ranks: Knowledge (arcana) 8
-Spellcasting: Ability to cast arcane spells without preparation.
+Requirements: Knowledge (arcana) 8, speak Draconic.
+Spellcasting: Arcane spells without preparation.
 }
 
 
