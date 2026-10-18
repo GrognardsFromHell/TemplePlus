@@ -70,12 +70,10 @@ def CanCastInnateArcane(obj):
 	# "able to cast arcane spells without preparation" (sorcerer, bard, and any Temple+ spontaneous arcane class)
 	return obj.highest_spontaneous_arcane_class > 0
 
-def SpeaksDraconic( obj ):
-	return 1 # languages are not implemented in ToEE
-
+# Knowledge (arcana) and languages aren't implemented in ToEE. As with the Mystic Theurge,
+# character level stands in for the skill ranks (8 ranks needs character level 5).
 def KnowledgeArcanaCheck( obj ):
-	# Knowledge (arcana) 8 ranks
-	return max(obj.skill_ranks_get(skill_knowledge_arcana), obj.skill_ranks_get(skill_knowledge_all)) >= 8
+	return obj.stat_level_get(stat_level) >= 5
 
 def ObjMeetsPrereqs( obj ):
 	if not KnowledgeArcanaCheck(obj):
