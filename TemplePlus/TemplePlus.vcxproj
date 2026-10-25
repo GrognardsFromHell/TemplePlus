@@ -272,6 +272,7 @@
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="obj_anomaly_log.cpp" />
     <ClCompile Include="anomaly_notices.cpp" />
+    <ClCompile Include="obj_handle_validator.cpp" />
     <ClCompile Include="spell.cpp" />
     <ClCompile Include="tig\tig_tokenizer.cpp" />
     <ClCompile Include="gamesystems\timeevents.cpp" />
@@ -513,6 +514,7 @@
     <ClInclude Include="obj.h" />
     <ClInclude Include="obj_anomaly_log.h" />
     <ClInclude Include="anomaly_notices.h" />
+    <ClInclude Include="obj_handle_validator.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="temple_enums.h" />
     <ClInclude Include="tig\tig_mes.h" />

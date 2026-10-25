@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "objregistry.h"
+#include "../../obj_handle_validator.h"
 
 #include "../../obj.h"
 
@@ -108,6 +109,7 @@ ObjRegistry::It ObjRegistry::Remove(objHndl handle) {
 	if (it != mObjects.end()) {
 		// Destroy index entries as well
 		mObjectIndex.erase(it->second->id);
+		if (ObjHandleValidator::Enabled()) objHandleValidator.OnRemove(handle.handle);
 
 		return mObjects.erase(it);
 	}
@@ -132,6 +134,7 @@ objHndl ObjRegistry::Add(std::unique_ptr<GameObjectBody>&& ptr) {
 	// Cache for later use
 	lastObj = id;
 	lastObjBody = obj;
+	if (ObjHandleValidator::Enabled()) objHandleValidator.OnAdd(id.handle);
 
 	return id;
 
