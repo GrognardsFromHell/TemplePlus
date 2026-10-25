@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "obj_anomaly_log.h"
+#include "obj_handle_validator.h"
 #include "util/fixes.h"
 #include "tio/tio_utils.h"
 #include "ui/ui.h"
@@ -198,6 +199,7 @@ bool GameSystems::LoadGame(const string& filename) {
 	addresses.UiMmRelated2(63);
 	
 	logger->info("Completed loading of save game");
+	objHandleValidator.CheckAll("post-load sweep");
 	
 	uiSystems->GetParty().Update();
 	

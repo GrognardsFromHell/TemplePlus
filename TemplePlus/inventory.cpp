@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "common.h"
 #include "inventory.h"
+#include "obj_handle_validator.h"
+#include <intrin.h>
 #include "obj.h"
 #include "critter.h"
 #include "gamesystems/objects/objsystem.h"
@@ -816,6 +818,7 @@ int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray){
 		invenNumField = obj_f_container_inventory_num;
 		invenField = obj_f_container_inventory_list_idx;
 	} 
+	if (ObjHandleValidator::Enabled()) objHandleValidator.CheckInventory(objHandle.handle, "GetInventory(read)", _ReturnAddress());
 	auto numItems = obj->GetInt32(invenNumField);
 	if (numItems <= 0) return 0;
 	*inventoryArray = static_cast<objHndl*>(malloc(sizeof(objHndl)*numItems));
@@ -1152,6 +1155,7 @@ void InventorySystem::InsertAtLocation(objHndl item, objHndl receiver, int itemI
 	receiverObj->SetObjHndl(invenField, invenCount, item);
 	itemObj->SetInt32(obj_f_item_inv_location, itemInsertLocation);
 	itemObj->SetObjHndl(obj_f_item_parent, receiver);
+	if (ObjHandleValidator::Enabled()) objHandleValidator.CheckInventory(receiver.handle, "InsertAtLocation(write)", _ReturnAddress());
 
 	// Do updates and notifications
 	if (inventory.IsInvIdxWorn(itemInsertLocation)){
@@ -1877,6 +1881,7 @@ void InventorySystem::ForceRemove(objHndl item, objHndl parent){
 	}
 	parentObj->RemoveObjectId(invenField, N-1);
 	parentObj->SetInt32(invenNumField, N - 1);
+	if (ObjHandleValidator::Enabled()) objHandleValidator.CheckInventory(parent.handle, "ForceRemove(write)", _ReturnAddress());
 	itemObj->SetInt32(obj_f_item_inv_location, -1);
 	
 	if (inventory.IsInvIdxWorn(invIdxOrg)){
