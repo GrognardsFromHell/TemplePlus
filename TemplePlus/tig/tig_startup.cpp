@@ -281,16 +281,20 @@ void TigInitializer::LoadDataFiles() {
 				logger->error("Unable to add archive tpdata\\co8infra.dat");
 			}
 
-			if (modSupport.IsIWD()) {
-				// placeholder
-				logger->info("Icewind Dale module detected.");
-			}
-			else {
+			// co8fixes.dat carries fixed copies of Co8 New Content data files (e.g. rules\\jumppoint.tab),
+			// which shadow the active module's own copies. Only apply it to Co8 NC itself, or to a
+			// standalone Co8 install without TFE-X (where the Co8 DLL implies Co8 proper).
+			if (modSupport.IsCo8NCEdition() || !modSupport.HasTfexIni()) {
 				logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
 				result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
 				if (result != 0) {
 					logger->error("Unable to add archive tpdata\\co8fixes.dat");
 				}
+			}
+			else {
+				if (modSupport.IsIWD())
+					logger->info("Icewind Dale module detected.");
+				logger->info("Skipping Co8 file fixes tpdata\\co8fixes.dat: active TFE-X module \"{}\" is not Co8 New Content.", modSupport.GetActiveModuleName());
 			}
 		}
 		
