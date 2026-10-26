@@ -254,6 +254,43 @@ PyObject *PyDebug_GenerateClearanceFile()
 }
 
 /*
+ Bake the current map's path nodes for shipping (ie2toee map conversion):
+   debug.bake_pathnodes(dir[, max_dist_tiles]) -> (nodes, links, max_neighbours, non_reciprocal, clearance_sectors)
+ recalculates every node's neighbours with the real pathfinder (nearest first, capped at MAX_NEIGHBOURS,
+ optionally only within max_dist_tiles), writes pathnodenew.pnd + pathnodedist.pnd and clearance.bin into dir.
+*/
+PyObject *PyDebug_BakePathNodes(PyObject*, PyObject* args)
+{
+	const char* dir = nullptr;
+	float maxDist = 0;
+	if (!PyArg_ParseTuple(args, "s|f:bake_pathnodes", &dir, &maxDist))
+		return nullptr;
+	auto prevMax = PathNodeSys::recalcMaxDistTiles;
+	PathNodeSys::recalcMaxDistTiles = maxDist;
+	pathNodeSys.RecalculateAllNeighbours();
+	PathNodeSys::recalcMaxDistTiles = prevMax;
+	auto flushed = pathNodeSys.FlushNodes(dir);
+	pathNodeSys.GenerateClearanceFile(dir);
+	int links = 0, maxNeigh = 0, nonRecip = 0;
+	auto n = PathNodeSys::CountNodes(&links, &maxNeigh, &nonRecip);
+	int clrSectors = PathNodeSys::hasClearanceData ? PathNodeSys::clearanceData.clrIdx.numSectors : 0;
+	logger->info("bake_pathnodes {}: flushed {} nodes {} links {} max neighbours {} non-reciprocal {} clearance sectors {}", dir, flushed, n, links, maxNeigh, nonRecip, clrSectors);
+	if (!flushed)
+		return Py_BuildValue("(iiiii)", -1, links, maxNeigh, nonRecip, clrSectors);
+	return Py_BuildValue("(iiiii)", n, links, maxNeigh, nonRecip, clrSectors);
+}
+
+/*
+ debug.pathnode_stats() -> (nodes, links, max_neighbours, non_reciprocal, has_clearance)
+*/
+PyObject *PyDebug_PathNodeStats(PyObject*, PyObject*)
+{
+	int links = 0, maxNeigh = 0, nonRecip = 0;
+	auto n = PathNodeSys::CountNodes(&links, &maxNeigh, &nonRecip);
+	return Py_BuildValue("(iiiii)", n, links, maxNeigh, nonRecip, PathNodeSys::hasClearanceData ? 1 : 0);
+}
+
+/*
  check if destination is considered clear for inhabitation by a critter
 */
 PyObject *PyDebug_DestClear(PyObject*, PyObject* args)
@@ -368,6 +405,8 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "genclearance", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	{ "genclr", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	{ "getclr", (PyCFunction)PyDebug_GetLocClearance, METH_VARARGS, NULL },
+	{ "bake_pathnodes", (PyCFunction)PyDebug_BakePathNodes, METH_VARARGS, NULL },
+	{ "pathnode_stats", (PyCFunction)PyDebug_PathNodeStats, METH_VARARGS, NULL },
 	{ "pathto", (PyCFunction)PyDebug_PathTo, METH_VARARGS, NULL },
 	{ "breakp", (PyCFunction)PyDebug_BreakP, METH_VARARGS, NULL },
 	{ NULL, }

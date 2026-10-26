@@ -103,6 +103,8 @@ public:
 	static void SetDirs(char *loadDir, char*saveDir);
 
 	static void RecalculateNeighbours(MapPathNodeList* node);
+	static float recalcMaxDistTiles; // > 0: only consider nodes within this straight-line distance (tiles), nearest first
+	static int CountNodes(int* links = nullptr, int* maxNeigh = nullptr, int* nonRecip = nullptr);
 	void RecalculateAllNeighbours();
 	static bool WriteNodeDistToFile(MapPathNodeList* node, TioFile* tioFile);
 	BOOL FlushNodes(const char* saveDir = nullptr);
