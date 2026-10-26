@@ -62,8 +62,11 @@ static struct UiDialogAddresses : temple::AddressTable {
 
 
 
+static bool DialogPagingHandleChoice(int idx);
+
 class UiDialogImpl {
 	friend class UiDlg;
+	friend bool DialogPagingHandleChoice(int idx);
 	friend class UiDialogHooks;
 public:
 	UiDialogImpl(const UiSystemConf &config);
@@ -157,9 +160,225 @@ protected:
 };
 
 
+//*****************************************************************************
+//* Dialog reply paging
+//*
+//* The vanilla engine collects at most 5 PC replies per NPC line and silently
+//* drops the rest. We collect every reply that passes its conditions (each
+//* condition and reply is evaluated exactly once, as before) and, when there
+//* are more than 5, show them in pages:
+//*   first page: 4 replies + "More..."
+//*   middle:     "Back" + 3 replies + "More..."
+//*   last:       "Back" + the rest (at most 4)
+//* Switching pages only swaps the visible entries; the NPC line, its voice,
+//* scripts and reply conditions are not run again. Exactly 5 replies: no paging.
+//*****************************************************************************
+namespace DialogPaging {
+	constexpr int GATHER_MAX = 64; // patched cap of the engine's reply gatherer
+	enum SlotKind { Normal = 0, More = 1, Back = 2 };
+	struct Entry {
+		std::string text;
+		int skillUse, opcode, npcReplyId, field182C;
+		char *effect;
+	};
+	static struct {
+		DialogState *st = nullptr;
+		int lineNumber = -1;
+		std::vector<Entry> all;
+		int page = 0;
+		int kind[5] = { 0, };
+	} pager;
+	static const char *kMoreText = "More...";
+	static const char *kBackText = "Back";
+
+	static char *SlotText(DialogState *st, int i) { return st->pcLineText1 + i * 1000; }
+
+	static int CallLoadNpcLineInner(DialogState *dstate, int flag) {
+		int result;
+		void *fn = temple::GetPointer<void>(0x10038240);
+		__asm {
+			mov eax, dstate
+			push flag
+			mov ecx, fn
+			call ecx
+			add esp, 4
+			mov result, eax
+		}
+		return result;
+	}
+	static int CallGather(DialogState *dstate, int *ids) {
+		int result;
+		void *fn = temple::GetPointer<void>(0x100357d0);
+		__asm {
+			push esi
+			mov esi, dstate
+			push ids
+			mov ecx, fn
+			call ecx
+			add esp, 4
+			pop esi
+			mov result, eax
+		}
+		return result;
+	}
+	static void CallDefaultReply(DialogState *dstate, char *buf) {
+		void *fn = temple::GetPointer<void>(0x10035190);
+		__asm {
+			push edi
+			push ebx
+			mov edi, dstate
+			mov ebx, 0x190
+			push 0x1f3
+			push buf
+			mov ecx, fn
+			call ecx
+			add esp, 8
+			pop ebx
+			pop edi
+		}
+	}
+
+	static void SetSlot(DialogState *st, int i, const Entry &e) {
+		strncpy(SlotText(st, i), e.text.c_str(), 999);
+		SlotText(st, i)[999] = 0;
+		st->pcLineSkillUse[i] = e.skillUse;
+		st->pcReplyOpcode[i] = e.opcode;
+		st->npcReplyIds[i] = e.npcReplyId;
+		st->field_182C[i] = e.field182C;
+		st->effectFields[i] = e.effect;
+	}
+	static void SetSpecial(DialogState *st, int i, SlotKind k) {
+		Entry e{ k == More ? kMoreText : kBackText, 0, 0, st->lineNumber, 0, nullptr };
+		SetSlot(st, i, e);
+		pager.kind[i] = k;
+	}
+
+	static int PageCount() {
+		int n = (int)pager.all.size();
+		if (n <= 5) return 1;
+		int pages = 1, rest = n - 4;
+		while (rest > 4) { pages++; rest -= 3; }
+		return pages + 1;
+	}
+
+	static void ShowPage(DialogState *st, int page) {
+		int n = (int)pager.all.size();
+		int pages = PageCount();
+		page = std::max(0, std::min(page, pages - 1));
+		pager.page = page;
+		for (int i = 0; i < 5; i++) pager.kind[i] = Normal;
+		int slot = 0;
+		if (pages == 1) {
+			for (int i = 0; i < n && i < 5; i++) SetSlot(st, slot++, pager.all[i]);
+		} else {
+			int start = page == 0 ? 0 : 4 + 3 * (page - 1);
+			bool last = page == pages - 1;
+			int count = page == 0 ? 4 : (last ? n - start : 3);
+			if (page > 0) SetSpecial(st, slot++, Back);
+			for (int i = 0; i < count; i++) SetSlot(st, slot++, pager.all[start + i]);
+			if (!last) SetSpecial(st, slot++, More);
+		}
+		for (int i = slot; i < 5; i++) {
+			SlotText(st, i)[0] = 0;
+			st->effectFields[i] = nullptr;
+			st->pcLineSkillUse[i] = 0;
+		}
+		st->pcLines = slot;
+	}
+
+	static bool IsActiveFor(DialogState *st) {
+		return st && pager.st == st && pager.lineNumber == st->lineNumber && PageCount() > 1;
+	}
+
+	// replaces 0x100385F0 (usercall: eax = keep rng seed flag, ecx = state)
+	static void __cdecl BuildReplies(DialogState *st, int flag) {
+		for (int i = 0; i < 5; i++) {
+			st->effectFields[i] = nullptr;
+			SlotText(st, i)[0] = 0;
+		}
+		if (flag)
+			temple::GetRef<void(__cdecl)(int)>(0x10038db0)(st->rngSeed);
+		else
+			st->rngSeed = temple::GetRef<int(__cdecl)()>(0x10038dc0)();
+		pager.st = nullptr; pager.all.clear(); pager.page = 0;
+		for (auto &k : pager.kind) k = Normal;
+
+		if (!CallLoadNpcLineInner(st, flag))
+			return;
+
+		int ids[GATHER_MAX + 8];
+		int count = CallGather(st, ids);
+		if (count > GATHER_MAX) count = GATHER_MAX;
+
+		// Fill each reply once, into a scratch copy (the filler only writes the
+		// per-slot arrays), then keep the results.
+		static DialogState scratch;
+		scratch = *st;
+		for (int i = 0; i < count; i++) {
+			SlotText(&scratch, 0)[0] = 0;
+			scratch.effectFields[0] = nullptr;
+			scratch.pcLineSkillUse[0] = 0;
+			if (!temple::GetRef<int(__cdecl)(int, int, DialogState*)>(0x10035960)(ids[i], 0, &scratch))
+				continue;
+			pager.all.push_back(Entry{ SlotText(&scratch, 0), scratch.pcLineSkillUse[0], scratch.pcReplyOpcode[0],
+				scratch.npcReplyIds[0], scratch.field_182C[0], scratch.effectFields[0] });
+		}
+
+		if (pager.all.empty()) {
+			CallDefaultReply(st, SlotText(st, 0));
+			st->pcReplyOpcode[0] = 1;
+			st->pcLines = 1;
+			return;
+		}
+		pager.st = st;
+		pager.lineNumber = st->lineNumber;
+		ShowPage(st, 0);
+		if (pager.all.size() > 5)
+			logger->info("Dialog paging: line {} has {} replies, {} pages", st->lineNumber, pager.all.size(), PageCount());
+	}
+
+	void __declspec(naked) BuildRepliesWrapper() {
+		macAsmProl;
+		__asm {
+			push eax
+			push ecx
+			mov esi, BuildReplies
+			call esi
+			add esp, 8
+		}
+		macAsmEpil;
+		__asm retn;
+	}
+}
+
+// Handles a click/key on a paging entry; returns true if it was one.
+static bool DialogPagingHandleChoice(int idx) {
+	if (!dlgImpl) return false;
+	auto st = &dlgImpl->mSlot.state;
+	if (idx < 0 || idx >= 5 || !DialogPaging::IsActiveFor(st)) return false;
+	auto kind = DialogPaging::pager.kind[idx];
+	if (kind == DialogPaging::Normal) return false;
+	DialogPaging::ShowPage(st, DialogPaging::pager.page + (kind == DialogPaging::More ? 1 : -1));
+	logger->info("Dialog paging: page {}/{}", DialogPaging::pager.page + 1, DialogPaging::PageCount());
+	// refresh the reply widgets the same way 0x1014CE30 does, without re-adding the NPC line
+	auto &maxShown = temple::GetRef<int>(0x10BEC228);
+	for (int i = 0; i < 5; i++) {
+		dlgImpl->mResponseTexts[i] = i < st->pcLines ? DialogPaging::SlotText(st, i) : nullptr;
+		dlgImpl->mSkillsUsedInReply[i] = i < st->pcLines ? st->pcLineSkillUse[i] : 0;
+	}
+	if (st->pcLines > maxShown) maxShown = st->pcLines;
+	dlgImpl->UpdateWidgets();
+	return true;
+}
+
+
 class UiDialogHooks : public TempleFix
 {
 	void apply() override{
+		// reply paging: gather all valid replies (raise the gatherer's cap of 5) and page them
+		writeHex(0x10035945, "40"); // cmp ecx, 5 -> cmp ecx, 64 (DialogPaging::GATHER_MAX)
+		replaceFunction<void()>(0x100385F0, DialogPaging::BuildRepliesWrapper);
+
 		replaceFunction<void(__cdecl)()>(0x1014C030, [](){
 			if (dlgImpl){
 				dlgImpl->UpdateWidgets();
@@ -744,6 +963,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			if (chr >= '1' && chr <= '5'){
 				int responseIdx = chr - '1';
 				if (responseIdx < dlgImpl->mSlot.state.pcLines){
+					if (DialogPagingHandleChoice(responseIdx))
+						return TRUE;
 					//uiDialog->PcReplyLineExecute(dlgImpl->mSlot, idx);
 					auto result = temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x1014D510)(id, msg);
 					return result;
@@ -849,6 +1070,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 
 			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, /*REPLY_COUNT*/5);
 			if (idx <= -1 || idx >= 5 /*REPLY_COUNT*/ || idx >= dlgImpl->mSlot.state.pcLines)
+				return TRUE;
+			if (DialogPagingHandleChoice(idx))
 				return TRUE;
 
 			auto result = temple::GetRef<BOOL(__cdecl)(int, TigMsg*)>(0x1014D560)(id, msg);
