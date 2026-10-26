@@ -29,6 +29,7 @@
 #include "location.h"
 #include "action_sequence.h"
 #include "graphics/device.h"
+#include "info_regions.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -214,6 +215,8 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 		auto tigMsgMouse = (TigMsgMouse&)msg;
 		auto mouseFlags = tigMsgMouse.buttonStateFlags;
 		if (mouseFlags & MSF_LMB_RELEASED){
+			if (!GetMouseTarget(tigMsgMouse.x, tigMsgMouse.y) && InfoRegions::HandleClick(tigMsgMouse.x, tigMsgMouse.y))
+				return; // clicked an info region: show its text, don't walk
 			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114AF0)(msg); // normal LMB released handler
 		}
 		else if ( (mouseFlags & MSF_LMB_CLICK) || ( (mouseFlags & (MSF_POS_CHANGE | MSF_LMB_DOWN)) == (MSF_POS_CHANGE | MSF_LMB_DOWN))){
