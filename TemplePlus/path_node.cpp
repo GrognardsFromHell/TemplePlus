@@ -458,27 +458,6 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 	*(int*)&node->node.flags |= PNF_NEIGHBOUR_DISTANCES_SET;
 }
 
-int PathNodeSys::CountNodes(int* links, int* maxNeigh, int* nonRecip)
-{
-	int n = 0, l = 0, mx = 0, nr = 0;
-	for (auto node = pathNodeList; node; node = node->next) {
-		n++; l += node->node.neighboursCount;
-		if (node->node.neighboursCount > mx) mx = node->node.neighboursCount;
-		for (int i = 0; i < node->node.neighboursCount; i++) {
-			MapPathNode nb;
-			bool recip = false;
-			if (GetPathNode(node->node.neighbours[i], &nb))
-				for (int j = 0; j < nb.neighboursCount && !recip; j++)
-					recip = nb.neighbours[j] == node->node.id;
-			if (!recip) nr++;
-		}
-	}
-	if (links) *links = l;
-	if (maxNeigh) *maxNeigh = mx;
-	if (nonRecip) *nonRecip = nr;
-	return n;
-}
-
 void PathNodeSys::RecalculateAllNeighbours()
 {
 	auto node = pathNodeList;
