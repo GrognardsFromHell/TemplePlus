@@ -34,6 +34,7 @@
 #include "raycast.h"
 #include "hotkeys.h"
 #include "config/config.h"
+#include "info_regions.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -1072,7 +1073,17 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	if (specialCursor)
 		cursorState = specialCursor;
 
-	if (cursorState != cursorPrevState){
+	// Info regions: magnifier cursor while hovering one out of combat with nothing else under the cursor.
+	// It is pushed on top of the normal cursor and popped (ResetCursor) when the hover ends.
+	static bool sInfoHover = false;
+	bool infoHover = InfoRegions::Hovered() && !specialCursor && !combatSys.isCombatActive();
+	if (infoHover != sInfoHover) {
+		logger->debug("InfoRegions: hover {} (gameplay widget {}, raycast obj {})", infoHover, widgetEnteredGameplay, !!intgameTarget);
+		if (infoHover) sInfoHover = mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\IdentifyCursor.mdf") != 0;
+		else { MouseFuncs::ResetCursor(); sInfoHover = false; }
+	}
+
+	if (!sInfoHover && cursorState != cursorPrevState){
 		logger->debug("Changing cursor from {} to {}", cursorState, cursorPrevState);
 		if (cursorPrevState)
 			temple::GetRef<void(__cdecl)()>(0x101DD770)();

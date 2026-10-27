@@ -309,6 +309,7 @@ void UiInGame::HandleMouseMoveEvent(const TigMsg & msg)
 	}
 
 	auto mouseTarget = GetMouseTarget(msg.arg1, msg.arg2);
+	InfoRegions::SetHover(!mouseTarget && !combatSys.isCombatActive() && InfoRegions::IsOver(msg.arg1, msg.arg2));
 
 	if (!mouseTarget) {
 		return;

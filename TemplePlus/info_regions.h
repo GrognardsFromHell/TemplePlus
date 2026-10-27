@@ -5,4 +5,9 @@
 namespace InfoRegions {
 	// returns true if the click at these screen coordinates hit a region (and was handled)
 	bool HandleClick(int screenX, int screenY);
+	// true if these screen coordinates are inside a region of the current map (hover cursor)
+	bool IsOver(int screenX, int screenY);
+	// hover state, set on mouse moves by the in-game UI (nothing targetable under the cursor, out of combat)
+	void SetHover(bool hover);
+	bool Hovered();
 }

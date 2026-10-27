@@ -49,20 +49,30 @@ namespace InfoRegions {
 		return in;
 	}
 
-	bool HandleClick(int screenX, int screenY) {
+	static const Region *Hit(int screenX, int screenY) {
 		auto mapId = maps.GetCurrentMapId();
 		if (mapId != sMap) Load(mapId);
-		if (sRegions.empty()) return false;
+		if (sRegions.empty()) return nullptr;
 		auto loc = gameView->ScreenToTile(screenX, screenY);
 		float x = loc.location.locx + 0.5f + loc.off_x / INCH_PER_TILE, y = loc.location.locy + 0.5f + loc.off_y / INCH_PER_TILE;
-		for (auto &g : sRegions) {
-			if (!Inside(g, x, y)) continue;
-			logger->info("InfoRegions: click at {:.2f},{:.2f} hit {}", x, y, g.name);
-			auto leader = party.GetConsciousPartyLeader();
-			if (leader) uiDialog->ShowTextBubble(leader, objHndl::null, g.text);   // word-wrapped speech bubble, same as NPC barks
-			histSys.CreateFromFreeText((g.text + "\n\n").c_str());
-			return true;
-		}
-		return false;
+		for (auto &g : sRegions)
+			if (Inside(g, x, y)) return &g;
+		return nullptr;
+	}
+
+	bool IsOver(int screenX, int screenY) { return Hit(screenX, screenY) != nullptr; }
+
+	static bool sHover = false;
+	void SetHover(bool hover) { sHover = hover; }
+	bool Hovered() { return sHover; }
+
+	bool HandleClick(int screenX, int screenY) {
+		auto g = Hit(screenX, screenY);
+		if (!g) return false;
+		logger->info("InfoRegions: click hit {}", g->name);
+		auto leader = party.GetConsciousPartyLeader();
+		if (leader) uiDialog->ShowTextBubble(leader, objHndl::null, g->text);   // word-wrapped speech bubble, same as NPC barks
+		histSys.CreateFromFreeText((g->text + "\n\n").c_str());
+		return true;
 	}
 }
