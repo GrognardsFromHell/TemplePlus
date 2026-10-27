@@ -6,7 +6,7 @@
 #include "gameview.h"
 #include "maps.h"
 #include "party.h"
-#include "float_line.h"
+#include "ui/ui_dialog.h"
 #include "history.h"
 
 namespace InfoRegions {
@@ -59,7 +59,7 @@ namespace InfoRegions {
 			if (!Inside(g, x, y)) continue;
 			logger->info("InfoRegions: click at {:.2f},{:.2f} hit {}", x, y, g.name);
 			auto leader = party.GetConsciousPartyLeader();
-			if (leader) floatSys.floatMesLine(leader, 1, FloatLineColor::LightBlue, g.text.c_str());
+			if (leader) uiDialog->ShowTextBubble(leader, objHndl::null, g.text);   // word-wrapped speech bubble, same as NPC barks
 			histSys.CreateFromFreeText((g.text + "\n\n").c_str());
 			return true;
 		}
