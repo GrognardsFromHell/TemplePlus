@@ -8,6 +8,7 @@
 #include "tio/tio.h"
 #include "objlist.h"
 #include "obj.h"
+#include "party.h"
 #include "gamesystems/map/sector.h"
 #include "raycast.h"
 #include "gameview.h"
@@ -430,6 +431,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 	std::sort(cands.begin(), cands.end(), [](const std::pair<float, MapPathNodeList*>& x, const std::pair<float, MapPathNodeList*>& y) { return x.first < y.first; });
 	PathQuery pathQ;
 	PathQueryResult path;
+	auto bakeCritter = party.GetConsciousPartyLeader();
 	for (auto &cand : cands)
 	{
 		if (node->node.neighboursCount >= MAX_NEIGHBOURS)
@@ -438,7 +440,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 		pathQ.from = node->node.nodeLoc;
 		pathQ.to = neighbor->node.nodeLoc;
 		pathQ.flags = (PathQueryFlags) (PQF_DONT_USE_STRAIGHT_LINE | PQF_DONT_USE_PATHNODES | PQF_TO_EXACT | PQF_IGNORE_CRITTERS | PQF_IGNORE_CRITTERS_ON_DESTINATION);
-		pathQ.critter = 0;
+		pathQ.critter = bakeCritter;   // a real critter radius: with critter 0 the clearance check needs ~no room and links squeeze through gaps / along water edges
 		pathQ.flags2 = 0;
 		if (pathfindingSys.FindPath(&pathQ, &path ) > 0)
 		{
@@ -492,6 +494,23 @@ void PathNodeSys::RecalculateAllNeighbours()
 		node = node->next;
 	}
 	logger->info("Finished recalculating neighbours. Max neighbours is {}", maxNeighbours);
+	// keep only two-way links: with a real critter radius A->B can succeed where B->A fails (e.g. a node near a wall),
+	// and a one-way link makes the node chain search pick hops the pathfinder can't walk
+	int pruned = 0;
+	for (auto n1 = pathNodeList; n1; n1 = n1->next) {
+		int k = 0;
+		for (int i = 0; i < n1->node.neighboursCount; i++) {
+			bool recip = false;
+			for (auto n2 = pathNodeList; n2 && !recip; n2 = n2->next)
+				if (n2->node.id == n1->node.neighbours[i])
+					for (int j = 0; j < n2->node.neighboursCount && !recip; j++)
+						recip = n2->node.neighbours[j] == n1->node.id;
+			if (recip) { n1->node.neighbours[k] = n1->node.neighbours[i]; n1->node.neighDistances[k] = n1->node.neighDistances[i]; k++; }
+			else pruned++;
+		}
+		n1->node.neighboursCount = k;
+	}
+	logger->info("Pruned {} one-way neighbour links", pruned);
 	// verify reciprocity
 	node = pathNodeList;
 	while( node)
