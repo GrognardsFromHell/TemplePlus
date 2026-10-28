@@ -8,7 +8,6 @@
 #include "tio/tio.h"
 #include "objlist.h"
 #include "obj.h"
-#include "party.h"
 #include "gamesystems/map/sector.h"
 #include "raycast.h"
 #include "gameview.h"
@@ -431,7 +430,8 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 	std::sort(cands.begin(), cands.end(), [](const std::pair<float, MapPathNodeList*>& x, const std::pair<float, MapPathNodeList*>& y) { return x.first < y.first; });
 	PathQuery pathQ;
 	PathQueryResult path;
-	auto bakeCritter = party.GetConsciousPartyLeader();
+	// link with a normal PC's clearance: radius 25 in, the obj_f_radius of the medium PC protos (protos.tab 13000/13001)
+	pathfindingSys.nominalRadius = 25.0f;
 	for (auto &cand : cands)
 	{
 		if (node->node.neighboursCount >= MAX_NEIGHBOURS)
@@ -440,7 +440,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 		pathQ.from = node->node.nodeLoc;
 		pathQ.to = neighbor->node.nodeLoc;
 		pathQ.flags = (PathQueryFlags) (PQF_DONT_USE_STRAIGHT_LINE | PQF_DONT_USE_PATHNODES | PQF_TO_EXACT | PQF_IGNORE_CRITTERS | PQF_IGNORE_CRITTERS_ON_DESTINATION);
-		pathQ.critter = bakeCritter;   // a real critter radius: with critter 0 the clearance check needs ~no room and links squeeze through gaps / along water edges
+		pathQ.critter = 0;   // nominalRadius above: with radius 1 links squeezed through gaps / along water edges
 		pathQ.flags2 = 0;
 		if (pathfindingSys.FindPath(&pathQ, &path ) > 0)
 		{
@@ -457,6 +457,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 			}
 		}
 	}
+	pathfindingSys.nominalRadius = 0;
 	*(int*)&node->node.flags |= PNF_NEIGHBOUR_DISTANCES_SET;
 }
 

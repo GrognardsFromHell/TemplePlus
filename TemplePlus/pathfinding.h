@@ -173,6 +173,7 @@ struct Pathfinding : temple::AddressTable {
 	
 	int aStarMaxTimeMs;
 	int aStarMaxWindowMs;
+	float nominalRadius = 0; // > 0: clearance radius (inches) for critter-less queries (path node bake), else 1
 	int aStarTimeIdx;
 	int aStarTimeElapsed[20]; // array 20
 	int aStarTimeEnded[20]; //  array 20
