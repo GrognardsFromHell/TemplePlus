@@ -68,6 +68,11 @@ static bool isMoused = false;
 static bool isHandlingMsg = false;
 static bool showPathNodes = false;
 static bool showTiles = false;
+// sector tile painting: 0 blocker, 1 flyover, 2 cover (cover is whole-tile only)
+static int tilePaintFlag = 0;
+static int tileBrushSize = 1; // in tiles, or in subtiles (1/3 tile) when tilePaintSubtile
+static bool tilePaintSubtile = false;
+static int tilePaintMode = 0; // 0 toggle (by clicked spot), 1 set, 2 clear
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
@@ -631,19 +636,34 @@ bool DungeonMaster::HandlePaintTiles(const TigMsg& msg){
 			}
 
 			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
-				int flags = (int)sectorSys.GetTileFlags(mouseLoc);
-				int blockerMask = TileFlags::BlockX0Y0 | TileFlags::BlockX1Y0 | TileFlags::BlockX2Y0
-					| TileFlags::BlockX0Y1 | TileFlags::BlockX1Y1 | TileFlags::BlockX2Y1
-					| TileFlags::BlockX0Y2 | TileFlags::BlockX1Y2 | TileFlags::BlockX2Y2;
-				
-				if (flags & blockerMask) {
-					flags &= ~blockerMask;
+				// global subtile coords of the clicked spot (3x3 subtiles per tile)
+				auto subIdx = [](float off) { auto i = (int)((off + 14.142136f) / 9.428090f); return i < 0 ? 0 : (i > 2 ? 2 : i); };
+				int64_t cx = mouseLoc.location.locx * 3 + subIdx(mouseLoc.off_x);
+				int64_t cy = mouseLoc.location.locy * 3 + subIdx(mouseLoc.off_y);
+				auto unit = (tilePaintSubtile && tilePaintFlag != 2) ? 1 : 3;
+				if (unit == 3) { cx = cx / 3 * 3; cy = cy / 3 * 3; }
+				auto span = tileBrushSize * unit;
+				auto x0 = cx - (tileBrushSize - 1) / 2 * unit, y0 = cy - (tileBrushSize - 1) / 2 * unit;
+				auto bitFor = [](int sx, int sy) -> uint32_t {
+					auto base = tilePaintFlag == 1 ? (uint32_t)TileFlags::FlyOverX0Y0 : (uint32_t)TileFlags::BlockX0Y0;
+					return tilePaintFlag == 2 ? (uint32_t)TileFlags::ProvidesCover : base << (sy * 3 + sx);
+				};
+				// toggle mode: decide set/clear from the clicked subtile
+				auto set = tilePaintMode == 1;
+				if (tilePaintMode == 0) {
+					LocAndOffsets c; c.location.locx = (uint32_t)(cx / 3); c.location.locy = (uint32_t)(cy / 3); c.off_x = c.off_y = 0;
+					set = !((uint32_t)sectorSys.GetTileFlags(c) & bitFor((int)(cx % 3), (int)(cy % 3)));
 				}
-				else {
-					flags |= blockerMask;
+				for (auto gx = x0; gx < x0 + span; gx++) {
+					for (auto gy = y0; gy < y0 + span; gy++) {
+						if (gx < 0 || gy < 0) continue;
+						LocAndOffsets l; l.location.locx = (uint32_t)(gx / 3); l.location.locy = (uint32_t)(gy / 3); l.off_x = l.off_y = 0;
+						auto flags = (uint32_t)sectorSys.GetTileFlags(l);
+						auto bit = bitFor((int)(gx % 3), (int)(gy % 3));
+						flags = set ? (flags | bit) : (flags & ~bit);
+						sectorSys.SetTileFlags(l, (TileFlags)flags);
+					}
 				}
-				
-				sectorSys.SetTileFlags(mouseLoc, (TileFlags)flags);
 
 				dmSys.SetIsHandlingMsg(true);
 				return true;
@@ -1322,7 +1342,15 @@ void DungeonMaster::RenderSector()
 	TileRenderer::Enable(showTiles);
 
 	ImGui::Text("Paint");
-	if (ImGui::Button("Blocker")) {
+	ImGui::RadioButton("Blocker", &tilePaintFlag, 0); ImGui::SameLine();
+	ImGui::RadioButton("Flyover", &tilePaintFlag, 1); ImGui::SameLine();
+	ImGui::RadioButton("Cover (whole tile)", &tilePaintFlag, 2);
+	ImGui::RadioButton("Toggle", &tilePaintMode, 0); ImGui::SameLine();
+	ImGui::RadioButton("Set", &tilePaintMode, 1); ImGui::SameLine();
+	ImGui::RadioButton("Clear", &tilePaintMode, 2);
+	ImGui::Checkbox("Subtile resolution (1/3 tile)", &tilePaintSubtile);
+	ImGui::SliderInt("Brush size", &tileBrushSize, 1, 15);
+	if (ImGui::Button("Paint (LMB paints, RMB stops)")) {
 		ActivateAction(DungeonMasterAction::PaintTileBlock);
 	}
 }
