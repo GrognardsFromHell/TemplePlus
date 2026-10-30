@@ -300,6 +300,7 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
 
+    mGameSystems.GetClipping().RenderDebug();
     if (config.debugClipping) { 
         /*auto &renderClippingFlags = temple::GetRef<int>(0x10B3DB00) = 0x1B;
         renderClippingFlags |= 0x1B;

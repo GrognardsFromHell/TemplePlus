@@ -20,7 +20,8 @@ public:
 		device(g),
 		camera(camera),
 		material(CreateMaterial(g)),
-		debugMaterial(CreateDebugMaterial(g)),
+		debugMaterial(CreateDebugMaterial(g, false)),
+		debugLineMaterial(CreateDebugMaterial(g, true)),
 		mBufferBinding(material.GetVertexShader())
 	{
 		mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
@@ -33,12 +34,14 @@ public:
 	WorldCamera& camera;
 	Material material;
 	Material debugMaterial;
+	Material debugLineMaterial;
+	int pass = 0; // 0 depth-only occluders, 1 debug fill, 2 debug edges
 	BufferBinding mBufferBinding;
 	bool debug = false;
 	size_t rendered = 0;
 
 	static Material CreateMaterial(RenderingDevice &device);
-	static Material CreateDebugMaterial(RenderingDevice &device);
+	static Material CreateDebugMaterial(RenderingDevice &device, bool lines);
 };
 
 Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
@@ -59,16 +62,27 @@ Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
 
 }
 
-Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device) {
+// Debug overlay (debug.clipping(1)): drawn after the scene, no depth test/write, no culling.
+// lines=false: translucent cyan fill; lines=true: opaque yellow triangle edges.
+Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device, bool lines) {
 
 	RasterizerSpec rasterizerState;
-	rasterizerState.wireframe = false; // solid white fill: shows exactly the pixels the occluders cover
+	rasterizerState.wireframe = lines;
 	rasterizerState.cullMode = CullMode::None;
 
-	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
-	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
+	BlendSpec blendState;
+	blendState.blendEnable = true;
+	blendState.srcBlend = BlendOperand::SrcAlpha;
+	blendState.destBlend = BlendOperand::InvSrcAlpha;
 
-	return device.CreateMaterial({}, {}, rasterizerState, {}, vs, ps);
+	DepthStencilSpec depthState;
+	depthState.depthEnable = false;
+	depthState.depthWrite = false;
+
+	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
+	auto ps(device.GetShaders().LoadPixelShader(lines ? "clipping_debug_line_ps" : "clipping_debug_fill_ps"));
+
+	return device.CreateMaterial(blendState, depthState, rasterizerState, {}, vs, ps);
 
 }
 
@@ -197,6 +211,13 @@ struct ClippingGlobals {
 	XMFLOAT4 scale;
 };
 
+void ClippingSystem::RenderDebug() {
+	if (!mImpl->debug) return;
+	mImpl->pass = 1; Render();
+	mImpl->pass = 2; Render();
+	mImpl->pass = 0;
+}
+
 void ClippingSystem::Render() {
 
 	gfx::PerfGroup perfGroup(mImpl->device, "Clipping");
@@ -207,11 +228,7 @@ void ClippingSystem::Render() {
 		return;
 	}
 	
-	if (mImpl->debug) {
-		mImpl->device.SetMaterial(mImpl->debugMaterial);
-	} else {
-		mImpl->device.SetMaterial(mImpl->material);
-	}
+	mImpl->device.SetMaterial(mImpl->pass == 1 ? mImpl->debugMaterial : mImpl->pass == 2 ? mImpl->debugLineMaterial : mImpl->material);
 
 	auto& camera = mImpl->camera;
 

@@ -18,6 +18,7 @@ public:
 
 	void Load(const std::string& directory);
 	void Render();
+	void RenderDebug(); // translucent fill + edges over the finished scene when debug is on
 	void Unload();
 
 
