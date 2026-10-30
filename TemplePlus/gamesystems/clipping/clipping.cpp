@@ -62,7 +62,8 @@ Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
 Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device) {
 
 	RasterizerSpec rasterizerState;
-	rasterizerState.wireframe = true;
+	rasterizerState.wireframe = false; // solid white fill: shows exactly the pixels the occluders cover
+	rasterizerState.cullMode = CullMode::None;
 
 	auto vs(device.GetShaders().LoadVertexShader("clipping_vs"));
 	auto ps(device.GetShaders().LoadPixelShader("clipping_ps"));
