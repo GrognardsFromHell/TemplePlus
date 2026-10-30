@@ -10,6 +10,7 @@
 #include <pathfinding.h>
 #include <gamesystems/map/sector.h>
 #include <location.h>
+#include "config/config.h"
 
 static std::string GetNiceName(void* ptr) {
 	
@@ -342,7 +343,17 @@ PyObject *PyDebug_BreakP(PyObject*, PyObject* args)
 	return PyLong_FromLongLong(1);
 }
 
+// debug.clipping(on): draw the map's clipping (occluder) meshes as white wireframe (config.debugClipping); returns the old state
+static PyObject *PyDebug_Clipping(PyObject*, PyObject* args) {
+	int on = -1;
+	if (!PyArg_ParseTuple(args, "|i:clipping", &on)) return nullptr;
+	bool old = config.debugClipping;
+	if (on >= 0) config.debugClipping = on != 0;
+	return PyInt_FromLong(old ? 1 : 0);
+}
+
 static PyMethodDef PyDebug_Methods[] = {
+	{ "clipping", (PyCFunction)PyDebug_Clipping, METH_VARARGS, NULL },
 	{ "crash", (PyCFunction)PyDebug_Crash, METH_NOARGS, NULL },
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
