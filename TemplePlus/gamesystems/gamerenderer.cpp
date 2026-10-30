@@ -265,6 +265,8 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     
     mGameSystems.GetClipping().SetDebug(config.debugClipping);
     mGameSystems.GetClipping().Render();
+    // debug overlay right after the occluder pass: later in the frame the camera constants no longer match it
+    mGameSystems.GetClipping().RenderDebug();
     // renderFuncs.RenderClipping();
 
     mMapObjectRenderer->RenderMapObjects(
@@ -300,7 +302,6 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
 
-    mGameSystems.GetClipping().RenderDebug();
     if (config.debugClipping) { 
         /*auto &renderClippingFlags = temple::GetRef<int>(0x10B3DB00) = 0x1B;
         renderClippingFlags |= 0x1B;
