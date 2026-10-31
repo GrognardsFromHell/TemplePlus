@@ -898,6 +898,9 @@ TimeEventSystem::~TimeEventSystem() {
 void TimeEventSystem::Reset() {
 	auto reset = temple::GetPointer<void()>(0x100617a0);
 	reset();
+	mapTickAccumMs = 0;
+	mapTickIntervalMs = 1000;
+	mapTickEnabled = true; // retry the map_tick import (a module may provide it)
 }
 bool TimeEventSystem::SaveGame(TioFile *file) {
 
@@ -1073,6 +1076,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	if (!timeAdvanceBlockerCount || uiSystems->GetDlg().IsActive()) {
 
 		animTime.timeInMs += timeDeltaMs;
+		mapTickAccumMs += timeDeltaMs; // map script tick runs on the anim clock: stops while paused (menus, inventory, etc.)
 
 		if (animTime.timeInMs > 86400000) {
 			animTime.timeInDays += animTime.timeInMs / 86400000;
@@ -1167,7 +1171,56 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 		}
 	}
 
+	MapScriptTick();
 }
+
+/*
+	Periodic map-level script tick (for module area scripts). Calls the python function map_tick.on_tick(mapId, elapsedMs)
+	every N ms of the anim game clock (which does not advance while the game is paused by menus/inventory UI).
+	on_tick may return an int > 0 to set the next interval (default 1000 ms). Independent of the time event queue, so it
+	survives save/load and map changes. Inert if no map_tick module exists.
+*/
+void TimeEventSystem::MapScriptTick() {
+	if (!mapTickEnabled || mapTickAccumMs < mapTickIntervalMs)
+		return;
+	auto &map = gameSystems->GetMap();
+	if (!map.IsMapOpen() || map.IsClearingMap()) {
+		mapTickAccumMs = 0;
+		return;
+	}
+	auto elapsed = mapTickAccumMs;
+	mapTickAccumMs = 0;
+
+	if (!mapTickFunc) {
+		auto mod = PyImport_ImportModule("map_tick");
+		if (!mod) {
+			PyErr_Clear();
+			mapTickEnabled = false; // no module: disabled for this session
+			logger->info("MapScriptTick: no map_tick python module, map tick disabled.");
+			return;
+		}
+		mapTickFunc = PyObject_GetAttrString(mod, "on_tick");
+		Py_DECREF(mod);
+		if (!mapTickFunc || !PyCallable_Check(mapTickFunc)) {
+			PyErr_Clear();
+			Py_XDECREF(mapTickFunc);
+			mapTickFunc = nullptr;
+			mapTickEnabled = false;
+			logger->warn("MapScriptTick: map_tick.on_tick missing, map tick disabled.");
+			return;
+		}
+	}
+	auto res = PyObject_CallFunction(mapTickFunc, "ii", map.GetCurrentMapId(), (int)elapsed);
+	if (!res) {
+		logger->error("MapScriptTick: map_tick.on_tick raised an exception.");
+		PyErr_Print();
+		return;
+	}
+	if (PyInt_Check(res) && PyInt_AsLong(res) > 0)
+		mapTickIntervalMs = (uint32_t)PyInt_AsLong(res);
+	Py_DECREF(res);
+}
+
 const std::string &TimeEventSystem::GetName() const {
 	static std::string name("TimeEvent");
 	return name;
