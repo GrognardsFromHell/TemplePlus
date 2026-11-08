@@ -493,6 +493,34 @@ static void DrawNpcLine(const IeDialogSkins::Skin &s, const IeDlgView &v, const 
 	TE().RenderText(r, ft);
 }
 
+// The NPC portrait in the skin's portrait rect (panel-relative; it may sit outside the panel, e.g. beside the classic log).
+void IeDialogSkins::DrawPortrait(const Skin &s, const IeDlgView &v, const TigRect &panel) {
+	TigRect pr(panel.x + s.portrait.x, panel.y + s.portrait.y, s.portrait.width, s.portrait.height);
+	tig->GetShapeRenderer2d().DrawRectangle((float)pr.x - 1, (float)pr.y - 1, (float)pr.width + 2, (float)pr.height + 2, 0xFF000000);
+	if (mPortraitDialog != v.dialogId) {
+		mPortraitDialog = v.dialogId;
+		mPortraitTex = 0;
+		auto path = PortraitFor(v);
+		int texId = 0;
+		TigTextureRegistryEntry e;
+		if (!path.empty() && !textureFuncs.RegisterTexture(path.c_str(), &texId) && !textureFuncs.LoadTexture(texId, &e)) {
+			mPortraitTex = texId; mPortraitW = e.width; mPortraitH = e.height;
+		}
+		if (!mPortraitTex)
+			mPortraitTex = ToeePortrait(v.npc, mPortraitW, mPortraitH);
+		logger->info("IE dialog skin: portrait for dialog {}: '{}' {}x{}{}", v.dialogId, path, mPortraitW, mPortraitH,
+			mPortraitTex ? "" : " (not loaded)");
+	}
+	if (mPortraitTex && mPortraitW > 0 && mPortraitH > 0) {
+		// fill the IE portrait slot (54x84 in the EE) and crop the ToEE portrait to its aspect
+		float ta = (float)mPortraitW / mPortraitH, ra = (float)pr.width / pr.height;
+		TigRect src(0, 0, mPortraitW, mPortraitH);
+		if (ta > ra) { int w = (int)(mPortraitH * ra); src = TigRect((mPortraitW - w) / 2, 0, w, mPortraitH); }
+		else { int h = (int)(mPortraitW / ra); src = TigRect(0, (mPortraitH - h) / 2, mPortraitW, h); }
+		UiRenderer::DrawTexture(mPortraitTex, pr, src);
+	}
+}
+
 void IeDialogSkins::RenderMain(const IeDlgView &v, const IeDlgLayout &L) {
 	if (mCur < 0) return;
 	if (!mScaled) return;
@@ -543,6 +571,7 @@ void IeDialogSkins::RenderMain(const IeDlgView &v, const IeDlgLayout &L) {
 				DrawTex(*s.scrollKnob, cx - kw / 2, bot - dh - kh - range * pos, kw, kh);
 			}
 		}
+		if (v.active && s.hasPortrait) DrawPortrait(s, v, panel); // beside the log, when the skin has a slot
 		return;
 	}
 
@@ -555,32 +584,7 @@ void IeDialogSkins::RenderMain(const IeDlgView &v, const IeDlgLayout &L) {
 	}
 	if (!v.active) return;
 	if (s.panel) DrawFramed(*s.panel, panel, s.scale);
-	if (s.hasPortrait) {
-		TigRect pr(panel.x + s.portrait.x, panel.y + s.portrait.y, s.portrait.width, s.portrait.height);
-		tig->GetShapeRenderer2d().DrawRectangle((float)pr.x - 1, (float)pr.y - 1, (float)pr.width + 2, (float)pr.height + 2, 0xFF000000);
-		if (mPortraitDialog != v.dialogId) {
-			mPortraitDialog = v.dialogId;
-			mPortraitTex = 0;
-			auto path = PortraitFor(v);
-			int texId = 0;
-			TigTextureRegistryEntry e;
-			if (!path.empty() && !textureFuncs.RegisterTexture(path.c_str(), &texId) && !textureFuncs.LoadTexture(texId, &e)) {
-				mPortraitTex = texId; mPortraitW = e.width; mPortraitH = e.height;
-			}
-			if (!mPortraitTex)
-				mPortraitTex = ToeePortrait(v.npc, mPortraitW, mPortraitH);
-			logger->info("IE dialog skin: portrait for dialog {}: '{}' {}x{}{}", v.dialogId, path, mPortraitW, mPortraitH,
-				mPortraitTex ? "" : " (not loaded)");
-		}
-		if (mPortraitTex && mPortraitW > 0 && mPortraitH > 0) {
-			// fill the IE portrait slot (54x84 in the EE) and crop the ToEE portrait to its aspect
-			float ta = (float)mPortraitW / mPortraitH, ra = (float)pr.width / pr.height;
-			TigRect src(0, 0, mPortraitW, mPortraitH);
-			if (ta > ra) { int w = (int)(mPortraitH * ra); src = TigRect((mPortraitW - w) / 2, 0, w, mPortraitH); }
-			else { int h = (int)(mPortraitW / ra); src = TigRect(0, (mPortraitH - h) / 2, mPortraitW, h); }
-			UiRenderer::DrawTexture(mPortraitTex, pr, src);
-		}
-	}
+	if (s.hasPortrait) DrawPortrait(s, v, panel);
 	auto npcFt = Fmt(v.npcText, Style(s.font, s.cNpcText));
 	int npcH = std::max(MeasureH(npcFt, s.npcText.width), (int)s.npcText.height);
 	DrawNpcLine(s, v, TigRect(panel.x + s.npcText.x, panel.y + s.npcText.y, s.npcText.width, npcH + 4), false);

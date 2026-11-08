@@ -66,6 +66,7 @@ public:
 
 	struct Skin;
 private:
+	void DrawPortrait(const Skin &s, const IeDlgView &view, const TigRect &panel);
 	void LoadSelection();
 	int LoadSkin(const std::string &name);
 	std::string PortraitFor(const IeDlgView &view);
