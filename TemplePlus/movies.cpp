@@ -189,6 +189,52 @@ private:
 	uint32_t mElapsedTime;
 };
 
+
+namespace {
+
+// Movie/slide loops used to skip only on TigMsgType::KEYSTATECHANGE (any key down).
+// That message is posted from MainWindow::WndProc on WM_KEYDOWN after ToDirectInputKey.
+// Under Wine (virtual desktop / focus) WM_KEYDOWN often never reaches that WndProc, so
+// Esc / Space / Enter and clicks appear to do nothing. Poll GetAsyncKeyState as a
+// fallback, and also treat a mouse-button TigMsg as a skip. Arm only after the keys
+// that may have started the movie (e.g. the Begin Adventuring click) are released.
+bool MovieSkipHeld() {
+	return (GetAsyncKeyState(VK_SPACE) & 0x8000)
+		|| (GetAsyncKeyState(VK_RETURN) & 0x8000)
+		|| (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+		|| (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+		|| (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+}
+
+bool MovieSkipFromMsg(const TigMsg &msg) {
+	if (msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1)
+		return true;
+	if (msg.type == TigMsgType::MOUSE &&
+		(msg.arg4 & (MSF_LMB_CLICK | MSF_LMB_DOWN | MSF_RMB_CLICK | MSF_RMB_DOWN)))
+		return true;
+	return false;
+}
+
+// flags&1 still disables skip (vanilla).
+bool MovieSkipPoll(int flags, bool &armed) {
+	if (flags & 1)
+		return false;
+	TigMsg msg;
+	while (messageQueue->Process(msg)) {
+		if (MovieSkipFromMsg(msg))
+			return true;
+	}
+	if (MovieSkipHeld()) {
+		if (armed)
+			return true;
+	} else {
+		armed = true;
+	}
+	return false;
+}
+
+} // namespace
+
 int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int flags, uint32_t soundtrackId) {
 
 	movieFuncs.MovieIsPlaying = true;
@@ -246,6 +292,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 	
 	auto keyPressed = false;
+	auto skipArmed = !MovieSkipHeld();
 	while (!keyPressed && BinkRenderFrame(device, *movie, *texture)) {
 		device.ClearCurrentColorTarget(clearColor);
 
@@ -264,14 +311,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 		messageQueue->PollExternalEvents();
 
-		TigMsg msg;
-		while (messageQueue->Process(msg)) {
-			// Flags 1 seems to disable skip via keyboard. Also seems unused.
-			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
-				// TODO Wait for the key to be unpressed again
-				keyPressed = true;
-				break;
-			}
+		if (MovieSkipPoll(flags, skipArmed)) {
+			keyPressed = true;
 		}
 	}
 	
@@ -361,6 +402,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	
 	
 	bool keyPressed = false;
+	auto skipArmed = !MovieSkipHeld();
 	// until the sound ends, at least 3 s; a sound that failed to play no longer keeps the slide up forever (it used to
 	// wait for a key, which under Wine may never arrive and stalled the new-game slides)
 	while (!keyPressed && ((stream.IsValid() && stream.IsPlaying()) || sw.GetElapsedMs() < 3000)) {
@@ -381,14 +423,8 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 		messageQueue->PollExternalEvents();
 
-		TigMsg msg;
-		while (messageQueue->Process(msg)) {
-			// Flags 1 seems to disable skip via keyboard. Also seems unused.
-			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
-				// TODO Wait for the key to be unpressed again
-				keyPressed = true;
-				break;
-			}
+		if (MovieSkipPoll(flags, skipArmed)) {
+			keyPressed = true;
 		}
 	}
 
