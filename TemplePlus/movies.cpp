@@ -334,7 +334,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	
 	
 	bool keyPressed = false;
-	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
+	// until the sound ends, at least 3 s; a sound that failed to play no longer keeps the slide up forever (it used to
+	// wait for a key, which under Wine may never arrive and stalled the new-game slides)
+	while (!keyPressed && ((stream.IsValid() && stream.IsPlaying()) || sw.GetElapsedMs() < 3000)) {
 		
 		device.ClearCurrentColorTarget(clearColor);
 		
