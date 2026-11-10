@@ -21,6 +21,8 @@
 #include "tig/tig_font.h"
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
+#include "anomaly_notices.h"
+#include <infrastructure/vfs.h>
 
 using namespace gfx;
 using namespace temple;
@@ -288,6 +290,31 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	return 0;
 }
 
+// A slide sound that did not start: log why (as far as we can tell) and raise an anomaly notice so playtesters report it.
+// temple.dll's movies.mes parser only takes a sound token ending in .mp3, so any other extension arrives here as the bare
+// "sound\speech\slide\" folder.
+static void ReportSlideSoundFailure(const char *imageFile, const char *soundFile) {
+	std::string snd(soundFile ? soundFile : "");
+	std::string why;
+	if (snd.empty() || snd.back() == '\\' || snd.back() == '/')
+		why = "no sound file name (movies.mes: the slide's sound must end in .mp3)";
+	else if (!vfs->FileExists(snd))
+		why = "file not found";
+	else {
+		why = "Miles could not start the stream";
+		if (auto mss = GetModuleHandleA("mss32.dll")) {
+			using LastErrorFn = char *(__stdcall *)();
+			if (auto lastError = reinterpret_cast<LastErrorFn>(GetProcAddress(mss, "_AIL_last_error@0"))) {
+				auto msg = lastError();
+				if (msg && *msg) why += fmt::format(" (AIL_last_error: {})", msg);
+			}
+		}
+	}
+	logger->error("Unable to play sound '{}' during slideshow '{}': {}", snd, imageFile ? imageFile : "", why);
+	anomalyNotices.Report("slide_sound", snd, fmt::format("Slide sound did not play: {}", snd),
+		fmt::format("slide={} reason={}", imageFile ? imageFile : "", why));
+}
+
 int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, const SubtitleLine* subtitles, int flags, int soundtrackId) {
 	logger->info("Play Movie Slide {} {} {} {}", imageFile, soundFile, flags, soundtrackId);
 
@@ -324,7 +351,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 	if (soundFile) {
 		if (!stream.Play(soundFile, TigSoundType::Voice)) {
-			logger->error("Unable to play sound {} during slideshow.", soundFile);
+			ReportSlideSoundFailure(imageFile, soundFile);
 		} else {
 			stream.SetVolume(*tigSoundAddresses.movieVolume);
 		}
