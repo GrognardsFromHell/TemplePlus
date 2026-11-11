@@ -141,10 +141,19 @@ public:
 			return orgObjlistInsertInternal(objs, handle);
 			});
 
-		// game-mode sector load: re-apply the DM tile edits saved for this map (see TileEdits)
-		static BOOL(__cdecl*orgSectorLoadGameMode)(SectorLoc, Sector*) =
+		// sector load (SectorLock calls *0x10AB7420, set at init to one of these two): re-apply the DM tile edits
+		// saved for this map (see TileEdits)
+		static BOOL(__cdecl*orgSectorLoadA)(SectorLoc, Sector*) =
 			replaceFunction<BOOL(__cdecl)(SectorLoc, Sector*)>(0x10083210, [](SectorLoc secLoc, Sector* sect)->BOOL {
-			auto result = orgSectorLoadGameMode(secLoc, sect);
+			auto result = orgSectorLoadA(secLoc, sect);
+			if (result && sect) {
+				TileEdits::ApplyToSector(sect);
+			}
+			return result;
+		});
+		static BOOL(__cdecl*orgSectorLoadB)(SectorLoc, Sector*) =
+			replaceFunction<BOOL(__cdecl)(SectorLoc, Sector*)>(0x10082E00, [](SectorLoc secLoc, Sector* sect)->BOOL {
+			auto result = orgSectorLoadB(secLoc, sect);
 			if (result && sect) {
 				TileEdits::ApplyToSector(sect);
 			}
@@ -854,6 +863,7 @@ void RecordChange(locXY loc, uint32_t before, uint32_t after) {
 void ApplyToSector(Sector* sect) {
 	if (sEdits.empty() || !sect) return;
 	auto base = sect->secLoc.GetBaseTile();
+	int applied = 0;
 	for (auto& kv : sEdits) {
 		auto loc = locXY::fromField(kv.first);
 		if (loc.locx < base.locx || loc.locx >= base.locx + SECTOR_SIDE_SIZE
@@ -866,7 +876,10 @@ void ApplyToSector(Sector* sect) {
 		auto prot = ProtectedMask(loc);
 		auto now = (cur & ~(e.clear & ~prot)) | (e.set & ~prot);
 		sect->tilePkt.tiles[idx].flags = (TileFlags)now;
+		applied++;
 	}
+	if (applied)
+		logger->debug("DM tile edits: re-applied {} tiles to sector {},{} of map {}", applied, sect->secLoc.x(), sect->secLoc.y(), sMapId);
 }
 
 static std::string Changes(uint32_t set, uint32_t clear) {
