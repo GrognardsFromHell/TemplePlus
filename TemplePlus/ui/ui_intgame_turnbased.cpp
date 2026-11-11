@@ -1075,9 +1075,15 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 
 	// Info regions: magnifier cursor while hovering one out of combat with nothing else under the cursor.
 	// It is pushed on top of the normal cursor and popped (ResetCursor) when the hover ends.
+	// InfoRegions::Hovered() is only refreshed by mouse moves that reach the in-game handler, so it goes stale when the
+	// cursor leaves for a UI widget (party bar, buttons), the view scrolls under a still cursor, the LMB is held, or a
+	// radial menu takes the mouse. Re-check the region under the current cursor every frame as well. While a picker is
+	// active its cursor sits on top of ours, so leave the state alone (a ResetCursor now would pop the picker's cursor).
 	static bool sInfoHover = false;
-	bool infoHover = InfoRegions::Hovered() && !specialCursor && !combatSys.isCombatActive();
-	if (infoHover != sInfoHover) {
+	bool infoHover = InfoRegions::Hovered() && !specialCursor && !combatSys.isCombatActive()
+		&& widgetEnteredRender && radialMenus.GetActiveRadialMenuNode() == -1
+		&& InfoRegions::IsOver(mouseState->x, mouseState->y);
+	if (infoHover != sInfoHover && !uiPicker.PickerActiveCheck()) {
 		logger->debug("InfoRegions: hover {} (gameplay widget {}, raycast obj {})", infoHover, widgetEnteredGameplay, !!intgameTarget);
 		if (infoHover) sInfoHover = mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\IdentifyCursor.mdf") != 0;
 		else { MouseFuncs::ResetCursor(); sInfoHover = false; }
