@@ -147,7 +147,7 @@ public:
 			replaceFunction<BOOL(__cdecl)(SectorLoc, Sector*)>(0x10083210, [](SectorLoc secLoc, Sector* sect)->BOOL {
 			auto result = orgSectorLoadA(secLoc, sect);
 			if (result && sect) {
-				TileEdits::ApplyToSector(sect);
+				TileEdits::ApplyToSector(secLoc, sect);
 			}
 			return result;
 		});
@@ -155,7 +155,7 @@ public:
 			replaceFunction<BOOL(__cdecl)(SectorLoc, Sector*)>(0x10082E00, [](SectorLoc secLoc, Sector* sect)->BOOL {
 			auto result = orgSectorLoadB(secLoc, sect);
 			if (result && sect) {
-				TileEdits::ApplyToSector(sect);
+				TileEdits::ApplyToSector(secLoc, sect);
 			}
 			return result;
 		});
@@ -860,9 +860,12 @@ void RecordChange(locXY loc, uint32_t before, uint32_t after) {
 	sUnsaved++;
 }
 
-void ApplyToSector(Sector* sect) {
+static int sSectorLoads = 0;
+
+void ApplyToSector(SectorLoc secLoc, Sector* sect) {
+	sSectorLoads++;
 	if (sEdits.empty() || !sect) return;
-	auto base = sect->secLoc.GetBaseTile();
+	auto base = secLoc.GetBaseTile(); // (sect->secLoc is filled in by the caller only after the load)
 	int applied = 0;
 	for (auto& kv : sEdits) {
 		auto loc = locXY::fromField(kv.first);
@@ -879,7 +882,7 @@ void ApplyToSector(Sector* sect) {
 		applied++;
 	}
 	if (applied)
-		logger->debug("DM tile edits: re-applied {} tiles to sector {},{} of map {}", applied, sect->secLoc.x(), sect->secLoc.y(), sMapId);
+		logger->debug("DM tile edits: re-applied {} tiles to sector {},{} of map {}", applied, secLoc.x(), secLoc.y(), sMapId);
 }
 
 static std::string Changes(uint32_t set, uint32_t clear) {
@@ -1014,6 +1017,9 @@ void OnMapClose() {
 		if (Save(path, err) < 0) logger->error("DM tile edits: autosave failed: {}", err);
 		else logger->info("DM tile edits: autosaved unsaved edits on leaving map {}", sMapId);
 	}
+	if (sMapId)
+		logger->debug("DM tile edits: map {} closed ({} sector loads seen)", sMapId, sSectorLoads);
+	sSectorLoads = 0;
 	sMapId = 0;
 	sMapName.clear();
 	sEdits.clear();

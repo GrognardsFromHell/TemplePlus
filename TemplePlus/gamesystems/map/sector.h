@@ -429,7 +429,7 @@ extern LegacySectorSystem sectorSys;
 namespace TileEdits {
 	void OnMapOpen(int mapId, const std::string& mapName); // autosaves the previous map if dirty, loads this map's file
 	void OnMapClose();                                     // autosaves unsaved edits
-	void ApplyToSector(Sector* sect);                      // called after a sector was read from disk
+	void ApplyToSector(SectorLoc secLoc, Sector* sect);    // called after a sector was read from disk
 	void RecordChange(locXY loc, uint32_t before, uint32_t after);
 	void Protect(locXY loc, uint32_t mask);
 	uint32_t ProtectedMask(locXY loc);
