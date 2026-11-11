@@ -417,3 +417,27 @@ public:
 };
 
 extern LegacySectorSystem sectorSys;
+
+/*
+	DM tile edits: tile flags painted by hand in the DM "Sector Tiles" editor.
+	Only the tiles the user painted are recorded, as bit masks (flags = (flags & ~clear) | set), so re-applying is
+	idempotent and never rewrites bits the user did not touch. Saved as JSON to
+	<Saved Games>\TemplePlus\dm_tile_edits\<module>\map<id>.json and re-applied whenever a sector of that map loads.
+	Door safety: bits that scripts toggle at runtime (game.tile_flags_set, e.g. the ie2toee door cells) are
+	"protected" for the open map; the painter skips them and they are never saved or re-applied.
+*/
+namespace TileEdits {
+	void OnMapOpen(int mapId, const std::string& mapName); // autosaves the previous map if dirty, loads this map's file
+	void OnMapClose();                                     // autosaves unsaved edits
+	void ApplyToSector(Sector* sect);                      // called after a sector was read from disk
+	void RecordChange(locXY loc, uint32_t before, uint32_t after);
+	void Protect(locXY loc, uint32_t mask);
+	uint32_t ProtectedMask(locXY loc);
+	int Save(std::string& pathOut, std::string& errOut);   // number of tiles written, -1 on error
+	int TileCount();
+	int UnsavedCount();
+	int SkippedDoorBits();
+	void NoteSkippedDoorBits(int n);
+	std::string FolderForDisplay();
+	std::string CurrentFileForDisplay();
+}

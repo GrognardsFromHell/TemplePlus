@@ -56,6 +56,7 @@
 #include <animgoals/animgoals_debugrenderer.h>
 #include <gamesystems\tilerender.h>
 #include <maps.h>
+#include "gamesystems/map/sector.h"
 
 DungeonMaster dmSys;
 
@@ -659,9 +660,17 @@ bool DungeonMaster::HandlePaintTiles(const TigMsg& msg){
 						if (gx < 0 || gy < 0) continue;
 						LocAndOffsets l; l.location.locx = (uint32_t)(gx / 3); l.location.locy = (uint32_t)(gy / 3); l.off_x = l.off_y = 0;
 						auto flags = (uint32_t)sectorSys.GetTileFlags(l);
+						if (flags == 0xFFFFFFFFu) continue; // sector not loadable (off the map)
 						auto bit = bitFor((int)(gx % 3), (int)(gy % 3));
+						// door cells are switched by scripts at runtime: never paint them (would seal / unseal a door)
+						if (bit & TileEdits::ProtectedMask(l.location)) {
+							if (((flags & bit) != 0) != set) TileEdits::NoteSkippedDoorBits(1);
+							continue;
+						}
+						auto before = flags;
 						flags = set ? (flags | bit) : (flags & ~bit);
-						sectorSys.SetTileFlags(l, (TileFlags)flags);
+						if (flags != before && sectorSys.SetTileFlags(l, (TileFlags)flags))
+							TileEdits::RecordChange(l.location, before, flags);
 					}
 				}
 
@@ -1353,6 +1362,23 @@ void DungeonMaster::RenderSector()
 	if (ImGui::Button("Paint (LMB paints, RMB stops)")) {
 		ActivateAction(DungeonMasterAction::PaintTileBlock);
 	}
+
+	// saved hand-painted edits (re-applied automatically whenever this map's sectors load)
+	static std::string tileEditStatus;
+	ImGui::Separator();
+	auto unsaved = TileEdits::UnsavedCount();
+	ImGui::Text("Painted tiles on this map: %d%s", TileEdits::TileCount(), unsaved ? "  (unsaved changes)" : "");
+	if (ImGui::Button("Save Tile Edits")) {
+		std::string path, err;
+		auto n = TileEdits::Save(path, err);
+		tileEditStatus = n < 0 ? fmt::format("Save failed: {}", err) : fmt::format("Saved {} tiles to {}", n, path);
+	}
+	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Writes only the tiles you painted (map, tile, flags before/after) as JSON.\nThey are re-applied every time this map loads. Unsaved edits are also saved when you leave the map.");
+	auto file = TileEdits::CurrentFileForDisplay();
+	ImGui::TextWrapped("File: %s", file.empty() ? TileEdits::FolderForDisplay().c_str() : file.c_str());
+	if (!tileEditStatus.empty()) ImGui::TextWrapped("%s", tileEditStatus.c_str());
+	if (TileEdits::SkippedDoorBits() > 0)
+		ImGui::TextWrapped("Door cells protected: %d subtile(s) not painted (doors switch these themselves).", TileEdits::SkippedDoorBits());
 }
 
 void DungeonMaster::RenderActiveSpells()

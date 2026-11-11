@@ -10,6 +10,13 @@
 #include "gamesystems/mapsystem.h"
 #include "gamesystems/timeevents.h"
 #include "gamesystems/objects/objsystem.h"
+#include "config/config.h"
+#include "util/folderutils.h"
+#include <infrastructure/version.h>
+#include <infrastructure/stringutil.h>
+#include <fstream>
+#include <sstream>
+#include <ctime>
 
 static_assert(temple::validate_size<SectorTilePacket, 66052>::value, "SectorTilePacket has incorrect size");
 static_assert(temple::validate_size<TileListEntry, 112>::value, "TileListEntry has incorrect size");
@@ -133,6 +140,16 @@ public:
 			replaceFunction<BOOL(__cdecl)(SectorObjects*, objHndl)>(0x100C1A20, [](SectorObjects*objs, objHndl handle)->BOOL {
 			return orgObjlistInsertInternal(objs, handle);
 			});
+
+		// game-mode sector load: re-apply the DM tile edits saved for this map (see TileEdits)
+		static BOOL(__cdecl*orgSectorLoadGameMode)(SectorLoc, Sector*) =
+			replaceFunction<BOOL(__cdecl)(SectorLoc, Sector*)>(0x10083210, [](SectorLoc secLoc, Sector* sect)->BOOL {
+			auto result = orgSectorLoadGameMode(secLoc, sect);
+			if (result && sect) {
+				TileEdits::ApplyToSector(sect);
+			}
+			return result;
+		});
 
 		static BOOL(__cdecl*orgSectorLoadObjs)(SectorObjects*, TioFile *, SectorLoc)
 		=replaceFunction<BOOL(__cdecl)(SectorObjects* , TioFile* , SectorLoc )>(0x100C1B20,
@@ -757,3 +774,248 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 	Expects(tileListSize <= 5);
 	return tileListSize;
 }
+
+
+/* ---------------- DM tile edits (see sector.h) ---------------- */
+namespace TileEdits {
+
+struct Edit {
+	uint32_t orig = 0;    // flags as read from the map's sector file (before any edit)
+	uint32_t set = 0;     // bits the user switched on
+	uint32_t clear = 0;   // bits the user switched off
+	bool origKnown = false;
+};
+
+static int sMapId = 0;
+static std::string sMapName;
+static std::map<uint64_t, Edit> sEdits;        // key: locXY field (y << 32 | x)
+static std::map<uint64_t, uint32_t> sProtected; // script-owned (door) bits of the open map
+static int sUnsaved = 0;
+static int sSkippedDoorBits = 0;
+
+static const uint32_t kEditableMask = 0x0FFFFE00; // block + flyover subtile bits and cover
+
+static std::wstring Folder() {
+	return GetUserDataFolder() + L"dm_tile_edits\\";
+}
+
+static std::wstring ModuleFolder() {
+	auto module = config.defaultModule.empty() ? std::string("ToEE") : config.defaultModule;
+	return Folder() + std::wstring(module.begin(), module.end()) + L"\\";
+}
+
+static std::wstring MapFile(int mapId) {
+	return ModuleFolder() + fmt::format(L"map{}.json", mapId);
+}
+
+static std::string Narrow(const std::wstring& w) {
+	return ucs2_to_utf8(w);
+}
+
+std::string FolderForDisplay() { return Narrow(ModuleFolder()); }
+std::string CurrentFileForDisplay() { return sMapId ? Narrow(MapFile(sMapId)) : std::string(); }
+int TileCount() { return (int)sEdits.size(); }
+int UnsavedCount() { return sUnsaved; }
+int SkippedDoorBits() { return sSkippedDoorBits; }
+
+uint32_t ProtectedMask(locXY loc) {
+	auto it = sProtected.find(loc.ToField());
+	return it == sProtected.end() ? 0 : it->second;
+}
+
+void Protect(locXY loc, uint32_t mask) {
+	mask &= kEditableMask;
+	if (!mask) return;
+	sProtected[loc.ToField()] |= mask;
+	// an edit recorded before the bits became script-owned must not keep them
+	auto it = sEdits.find(loc.ToField());
+	if (it != sEdits.end()) {
+		it->second.set &= ~mask;
+		it->second.clear &= ~mask;
+		if (!it->second.set && !it->second.clear) sEdits.erase(it);
+	}
+}
+
+void RecordChange(locXY loc, uint32_t before, uint32_t after) {
+	auto changed = (before ^ after) & kEditableMask & ~ProtectedMask(loc);
+	if (!changed) return;
+	auto& e = sEdits[loc.ToField()];
+	if (!e.origKnown) { e.orig = before; e.origKnown = true; }
+	auto on = after & changed, off = ~after & changed;
+	e.set = (e.set | on) & ~off;
+	e.clear = (e.clear | off) & ~on;
+	// drop bits that are back to the map's own value
+	e.set &= ~e.orig;
+	e.clear &= e.orig;
+	if (!e.set && !e.clear) sEdits.erase(loc.ToField());
+	sUnsaved++;
+}
+
+void ApplyToSector(Sector* sect) {
+	if (sEdits.empty() || !sect) return;
+	auto base = sect->secLoc.GetBaseTile();
+	for (auto& kv : sEdits) {
+		auto loc = locXY::fromField(kv.first);
+		if (loc.locx < base.locx || loc.locx >= base.locx + SECTOR_SIDE_SIZE
+			|| loc.locy < base.locy || loc.locy >= base.locy + SECTOR_SIDE_SIZE)
+			continue;
+		auto idx = (loc.locx - base.locx) + SECTOR_SIDE_SIZE * (loc.locy - base.locy);
+		auto& e = kv.second;
+		auto cur = (uint32_t)sect->tilePkt.tiles[idx].flags;
+		if (!e.origKnown) { e.orig = cur; e.origKnown = true; }
+		auto prot = ProtectedMask(loc);
+		auto now = (cur & ~(e.clear & ~prot)) | (e.set & ~prot);
+		sect->tilePkt.tiles[idx].flags = (TileFlags)now;
+	}
+}
+
+static std::string Changes(uint32_t set, uint32_t clear) {
+	std::string out;
+	auto add = [&](uint32_t mask, char sign) {
+		for (int i = 0; i < 9; i++) {
+			if (mask & (0x200u << i)) out += fmt::format("{}\"{}block {},{}\"", out.empty() ? "" : ", ", sign, i % 3, i / 3);
+		}
+		for (int i = 0; i < 9; i++) {
+			if (mask & (0x40000u << i)) out += fmt::format("{}\"{}flyover {},{}\"", out.empty() ? "" : ", ", sign, i % 3, i / 3);
+		}
+		if (mask & 0x8000000u) out += fmt::format("{}\"{}cover\"", out.empty() ? "" : ", ", sign);
+	};
+	add(set, '+');
+	add(clear, '-');
+	return out;
+}
+
+static std::string JsonEscape(const std::string& s) {
+	std::string out;
+	for (auto c : s) {
+		if (c == '"' || c == '\\') { out += '\\'; out += c; }
+		else if ((unsigned char)c < 0x20) out += ' ';
+		else out += c;
+	}
+	return out;
+}
+
+int Save(std::string& pathOut, std::string& errOut) {
+	if (!sMapId) { errOut = "No map is open."; return -1; }
+	CreateDirectoryW(Folder().c_str(), nullptr);
+	CreateDirectoryW(ModuleFolder().c_str(), nullptr);
+	auto path = MapFile(sMapId);
+	pathOut = Narrow(path);
+
+	char timeBuf[32] = {};
+	auto now = time(nullptr);
+	tm utc; gmtime_s(&utc, &now);
+	strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%dT%H:%M:%SZ", &utc);
+
+	std::ostringstream o;
+	o << "{\n";
+	o << "  \"format\": \"templeplus-dm-tile-edits\",\n";
+	o << "  \"version\": 1,\n";
+	o << "  \"module\": \"" << JsonEscape(config.defaultModule) << "\",\n";
+	o << "  \"map_id\": " << sMapId << ",\n";
+	o << "  \"map_name\": \"" << JsonEscape(sMapName) << "\",\n";
+	o << "  \"saved_utc\": \"" << timeBuf << "\",\n";
+	o << "  \"templeplus\": \"" << JsonEscape(GetTemplePlusVersion()) << "\",\n";
+	o << "  \"apply\": \"flags = (flags & ~clear) | set. Bits: block subtile (sx,sy) = 0x200 << (sy*3+sx), flyover = 0x40000 << (sy*3+sx), cover = 0x8000000\",\n";
+	o << "  \"tiles\": [";
+	bool first = true;
+	for (auto& kv : sEdits) {
+		auto loc = locXY::fromField(kv.first);
+		auto& e = kv.second;
+		auto after = (e.orig & ~e.clear) | e.set;
+		o << (first ? "\n" : ",\n");
+		first = false;
+		o << fmt::format("    {{\"x\": {}, \"y\": {}, \"before\": {}, \"after\": {}, \"set\": {}, \"clear\": {}, \"changes\": [{}]}}",
+			loc.locx, loc.locy, e.orig, after, e.set, e.clear, Changes(e.set, e.clear));
+	}
+	o << (first ? "]\n" : "\n  ]\n");
+	o << "}\n";
+
+	auto tmpPath = path + L".tmp";
+	{
+		std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
+		if (!f) { errOut = "Cannot write " + Narrow(tmpPath); return -1; }
+		f << o.str();
+		if (!f.good()) { errOut = "Write failed: " + Narrow(tmpPath); return -1; }
+	}
+	if (!MoveFileExW(tmpPath.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING)) {
+		errOut = "Cannot replace " + pathOut;
+		return -1;
+	}
+	sUnsaved = 0;
+	logger->info("DM tile edits: saved {} tiles of map {} to {}", sEdits.size(), sMapId, pathOut);
+	return (int)sEdits.size();
+}
+
+// tiny lenient reader for the format written above: every {...} inside "tiles" with integer x, y, set, clear
+static bool ReadInt(const std::string& obj, const char* key, int64_t& out) {
+	auto k = std::string("\"") + key + "\"";
+	auto pos = obj.find(k);
+	if (pos == std::string::npos) return false;
+	pos = obj.find(':', pos + k.size());
+	if (pos == std::string::npos) return false;
+	pos++;
+	while (pos < obj.size() && isspace((unsigned char)obj[pos])) pos++;
+	char* end = nullptr;
+	auto v = _strtoi64(obj.c_str() + pos, &end, 10);
+	if (end == obj.c_str() + pos) return false;
+	out = v;
+	return true;
+}
+
+static void Load() {
+	sEdits.clear();
+	auto path = MapFile(sMapId);
+	std::ifstream f(path, std::ios::binary);
+	if (!f) return;
+	std::stringstream ss; ss << f.rdbuf();
+	auto text = ss.str();
+	auto pos = text.find("\"tiles\"");
+	if (pos == std::string::npos) { logger->warn("DM tile edits: no \"tiles\" in {}", Narrow(path)); return; }
+	int loaded = 0, bad = 0;
+	while (true) {
+		auto open = text.find('{', pos);
+		if (open == std::string::npos) break;
+		auto close = text.find('}', open);
+		if (close == std::string::npos) break;
+		auto obj = text.substr(open, close - open + 1);
+		pos = close + 1;
+		int64_t x, y, set = 0, clear = 0, before = 0;
+		if (!ReadInt(obj, "x", x) || !ReadInt(obj, "y", y) || x < 0 || y < 0) { bad++; continue; }
+		ReadInt(obj, "set", set); ReadInt(obj, "clear", clear);
+		Edit e;
+		e.set = (uint32_t)set & kEditableMask;
+		e.clear = (uint32_t)clear & kEditableMask & ~e.set;
+		if (ReadInt(obj, "before", before)) { e.orig = (uint32_t)before; e.origKnown = true; }
+		if (!e.set && !e.clear) continue;
+		sEdits[locXY{ (uint32_t)x, (uint32_t)y }.ToField()] = e;
+		loaded++;
+	}
+	logger->info("DM tile edits: loaded {} tiles for map {} from {}{}", loaded, sMapId, Narrow(path),
+		bad ? fmt::format(" ({} entries skipped)", bad) : std::string());
+}
+
+void OnMapClose() {
+	if (sMapId && sUnsaved > 0) {
+		std::string path, err;
+		if (Save(path, err) < 0) logger->error("DM tile edits: autosave failed: {}", err);
+		else logger->info("DM tile edits: autosaved unsaved edits on leaving map {}", sMapId);
+	}
+	sMapId = 0;
+	sMapName.clear();
+	sEdits.clear();
+	sProtected.clear();
+	sUnsaved = 0;
+	sSkippedDoorBits = 0;
+}
+
+void OnMapOpen(int mapId, const std::string& mapName) {
+	OnMapClose();
+	sMapId = mapId;
+	sMapName = mapName;
+	Load();
+}
+
+void NoteSkippedDoorBits(int n) { sSkippedDoorBits += n; }
+
+} // namespace TileEdits
