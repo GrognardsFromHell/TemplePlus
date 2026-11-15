@@ -216,19 +216,19 @@ int MouseFuncs::SetCursor(int shaderId) {
 	return 0;
 }
 
-int(MouseFuncs::SetCursorFromMaterial)(std::string matName){
+static int LoadCursorMaterialToDevice(const std::string &matName) {
 	auto material = tig->GetMdfFactory().GetByName(matName);
 
 	if (!material) {
 		logger->error("Unable to get or load cursor material {}", matName);
-		return false;
+		return -1;
 	}
 
 	auto primaryTexture = material->GetPrimaryTexture();
 
 	if (!primaryTexture) {
 		logger->error("Material {} has no texture and cannot be used as a cursor", material->GetName());
-		return false;
+		return -1;
 	}
 
 	int hotspotX = 0;
@@ -243,9 +243,26 @@ int(MouseFuncs::SetCursorFromMaterial)(std::string matName){
 	}
 
 	tig->GetRenderingDevice().SetCursor(hotspotX, hotspotY, primaryTexture);
-	auto shaderId = material->GetId();
+	return material->GetId();
+}
+
+int(MouseFuncs::SetCursorFromMaterial)(std::string matName){
+	auto shaderId = LoadCursorMaterialToDevice(matName);
+	if (shaderId == -1) return false;
 	stashedCursorShaderIds.push_back(shaderId);
 	return true;
+}
+
+bool MouseFuncs::OverlayCursorFromMaterial(const std::string &matName) {
+	return LoadCursorMaterialToDevice(matName) != -1;
+}
+
+int MouseFuncs::CursorStackTop() {
+	return stashedCursorShaderIds.empty() ? -1 : stashedCursorShaderIds.back();
+}
+
+size_t MouseFuncs::CursorStackSize() {
+	return stashedCursorShaderIds.size();
 }
 
 void MouseFuncs::ResetCursor() {
