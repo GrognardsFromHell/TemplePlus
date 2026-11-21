@@ -4,7 +4,7 @@
 #include "raycast.h"
 #include "util/fixes.h"
 
-static class RaycastHooks : public TempleFix {
+static class ScreenPickHooks : public TempleFix {
 public:
 
 	void apply() override {

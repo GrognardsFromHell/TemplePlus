@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "common.h"
+#include "container_art.h"
 #include "raycast.h"
 #include "objlist.h"
 #include "critter.h"
@@ -152,6 +153,8 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 	objHndl selectedByCylinder = objHndl::null;
 	float closestCylinderHit = std::numeric_limits<float>::max();
 	objHndl selectedByMesh = objHndl::null;
+	objHndl paintedContainer = objHndl::null;
+	float smallestPolygon = std::numeric_limits<float>::max();
 	float closestMeshHit = std::numeric_limits<float>::max();
 
 	if (hitTest3d) {
@@ -202,6 +205,15 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 			if (flags & GRF_ExcludeUnconscious && critterSys.IsDeadOrUnconscious(handle)) {
 				continue;
 			}
+		}
+
+		if (type == obj_t_container && ContainerArt::HasPolygon(handle)) {
+			auto area = ContainerArt::HitArea(handle, worldCoord.x, worldCoord.z);
+			if (area > 0 && area < smallestPolygon) {
+				smallestPolygon = area;
+				paintedContainer = handle;
+			}
+			continue; // The painted shape replaces the chest mesh's hit area.
 		}
 
 		//auto name = objects.GetDisplayName(handle, handle);
@@ -278,6 +290,9 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 		return true;
 	} else if (flags & GRF_HITTEST_SEL_CIRCLE && selectedByCircle) {
 		*pickedHandle = selectedByCircle;
+		return true;
+	} else if (paintedContainer) {
+		*pickedHandle = paintedContainer;
 		return true;
 	} else {
 		*pickedHandle = objHndl::null;

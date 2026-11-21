@@ -209,6 +209,7 @@
     <ClCompile Include="ui\ui_dialog.cpp" />
     <ClCompile Include="ui\ui_dialog_ieskin.cpp" />
     <ClCompile Include="info_regions.cpp" />
+    <ClCompile Include="container_art.cpp" />
     <ClCompile Include="ui\ui_ingame.cpp" />
     <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
@@ -312,6 +313,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="info_regions.h" />
+    <ClInclude Include="container_art.h" />
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="animgoals\animgoal.h" />

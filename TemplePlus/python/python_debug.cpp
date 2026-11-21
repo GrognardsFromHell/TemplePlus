@@ -1,5 +1,6 @@
 
 #include "stdafx.h"
+#include "ui/alert_debug.h"
 #include "python_debug.h"
 #include "python_object.h"
 #include "../condition.h"
@@ -366,7 +367,16 @@ static PyObject *PyDebug_Clipping(PyObject*, PyObject* args) {
 	return PyInt_FromLong(old ? 1 : 0);
 }
 
+static PyObject *PyDebug_Alerts(PyObject*, PyObject* args) {
+	int on = -1;
+	if (!PyArg_ParseTuple(args, "|i:alerts", &on)) return nullptr;
+	bool old = alertDebug::Enabled();
+	if (on >= 0) alertDebug::SetEnabled(on != 0);
+	return PyBool_FromLong(old);
+}
+
 static PyMethodDef PyDebug_Methods[] = {
+	{ "alerts", PyDebug_Alerts, METH_VARARGS, "Show newly recruited allies and their alert search distances." },
 	{ "clipping", (PyCFunction)PyDebug_Clipping, METH_VARARGS, NULL },
 	{ "crash", (PyCFunction)PyDebug_Crash, METH_NOARGS, NULL },
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },

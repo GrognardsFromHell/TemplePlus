@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "obj_anomaly_log.h"
 #include "mapobjrender.h"
+#include "container_art.h"
 #include <util/fixes.h>
 #include <obj.h>
 #include "gamesystems/map/sector.h"
@@ -155,6 +156,14 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 		return;
 	}
 
+	if (type == obj_t_container && ContainerArt::HasPolygon(handle)) {
+		auto loc = objects.GetLocationFull(handle);
+		if ((addresses.GetFogStatus(loc.location, loc.off_x, loc.off_y) & 1)
+			&& ((mShowHighlights && objects.getInt32(handle, obj_f_container_inventory_num) > 0)
+				|| ContainerArt::IsHovered(handle)))
+			ContainerArt::DrawOutline(handle);
+		return;
+	}
 	// Dont draw secret doors that haven't been found yet
 	auto secretDoorFlags = objects.GetSecretDoorFlags(handle);
 	if (secretDoorFlags & OSDF_SECRET_DOOR) {
@@ -441,6 +450,7 @@ void MapObjectRenderer::RenderOccludedObject(objHndl handle) {
 	mTotalLastFrame++;
 
 	auto type = objects.GetType(handle);
+	if (type == obj_t_container && ContainerArt::HasPolygon(handle)) return;
 	auto flags = objects.GetFlags(handle);
 
 	// Dont render destroyed or disabled objects
@@ -605,6 +615,12 @@ void MapObjectRenderer::RenderObjectHighlight(objHndl handle, const gfx::MdfRend
 
 	// Hide invisible objects we're supposed to show them
 	if ((flags & OF_INVISIBLE) != 0) {
+		return;
+	}
+	if (type == obj_t_container && ContainerArt::HasPolygon(handle)) {
+		auto loc = objects.GetLocationFull(handle);
+		if (addresses.GetFogStatus(loc.location, loc.off_x, loc.off_y) & 1)
+			ContainerArt::DrawOutline(handle);
 		return;
 	}
 

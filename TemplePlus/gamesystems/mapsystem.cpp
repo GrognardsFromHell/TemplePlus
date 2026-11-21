@@ -1,6 +1,8 @@
 
 #include "stdafx.h"
+#include "container_art.h"
 #include "mapsystem.h"
+#include "map_alert.h"
 
 #include "config/config.h"
 #include "util/streams.h"
@@ -49,6 +51,7 @@ struct MapListEntry {
 	int newGameX = 0; // optional new-game start position (NewGameX/NewGameY keys)
 	int newGameY = 0;
 	bool newGameStart = false; // Flag: NEW_GAME_START
+	int alertDistance = -1; // optional maximum ally alert radius, in tiles
 	MapType type = MapType::None;
 	
 	bool IsOutdoors() const {
@@ -132,6 +135,10 @@ void MapSystem::LoadModule() {
 		// The rest are key value pairs
 		for (size_t i = 3; i < parts.size(); ++i) {			
 			auto subParts = split(parts[i], ':', true);
+			if (subParts.size() != 2) {
+				logger->warn("MapList.mes: invalid option on map {}", entry.id);
+				continue;
+			}
 			auto key = subParts[0];
 			auto value = subParts[1];
 
@@ -145,6 +152,13 @@ void MapSystem::LoadModule() {
 				} else if (!strncmp(value.data(), "TUTORIAL_MAP", value.size())) {
 					entry.type = MapType::TutorialMap;
 				}
+			} else if (key.size() == 13 && !strncmp(key.data(), "AlertDistance", 13)) {
+				auto text = std::string(value.begin(), value.end());
+				entry.alertDistance = ParseMapAlertDistance(text);
+				if (entry.alertDistance < 0)
+					logger->warn("MapList.mes: invalid AlertDistance '{}' on map {}; using engine defaults", text, entry.id);
+				else
+					logger->info("MapList.mes: map {} ally alert distance capped at {} tiles", entry.id, entry.alertDistance);
 			} else if (key.size() == 8 && !strncmp(key.data(), "NewGameX", 8)) {
 				entry.newGameX = atoi(value.data());
 			} else if (key.size() == 8 && !strncmp(key.data(), "NewGameY", 8)) {
@@ -326,6 +340,7 @@ void MapSystem::LoadModule() {
 }
 
 void MapSystem::UnloadModule() {
+	mCurrentMap = nullptr;
 	mMaps.clear();
 }
 
@@ -996,6 +1011,11 @@ int MapSystem::GetHighestMapId() const
 	return highestId;
 }
 
+int MapSystem::GetAlertDistance(int defaultRange) const
+{
+	return LimitMapAlertDistance(defaultRange, mCurrentMap ? mCurrentMap->alertDistance : -1);
+}
+
 locXY MapSystem::GetStartPos(int mapId) const
 {
 	locXY result{ 0, 0 };
@@ -1170,6 +1190,7 @@ void MapSystem::CloseMap()
 	if (!mMapClosed)
 	{
 		mMapClosed = true;
+		ContainerArt::Clear();
 		TileEdits::OnMapClose(); // autosaves unsaved DM tile edits
 		
 		static auto turnBasedReset = temple::GetPointer<void()>(0x10092A50);
@@ -1358,6 +1379,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 
 	mMapOpen = true;
 	mMapClosed = false;
+	ContainerArt::Load(dataDir);
 
 	logger->info("Finished loading the map");
 }

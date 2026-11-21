@@ -2451,6 +2451,8 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 int Pathfinding::GetPartialPath(Path* path, Path* pathTrunc, float startDistFeet, float endDistFeet)
 {
+	if (!path || !pathTrunc)
+		return 0;
 	return addresses.GetPartialPath(path, pathTrunc, startDistFeet, endDistFeet);
 }
 
