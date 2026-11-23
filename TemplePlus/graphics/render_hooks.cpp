@@ -546,7 +546,7 @@ int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XM
 	extendedBottomRight.y++;
 
 	shapeRenderer.DrawRectangleOutline(*topLeft, extendedBottomRight, color);
-
+	uiManager->RenderingTabulate(-1, 1);
 	return 0;
 }
 

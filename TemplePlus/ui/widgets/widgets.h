@@ -27,6 +27,9 @@ public:
 	virtual bool IsScrollView() const {
 		return false;
 	}
+	virtual bool IsScrollBar() const {
+		return false;
+	}
 
 	/**
 	 * Picks the widget a the x,y coordinate local to this widget. 
@@ -377,6 +380,10 @@ public:
 	}
 
 	void Render() override;
+
+	bool IsScrollBar() const override {
+		return true;
+	}
 
 	void SetValueChangeHandler(std::function<void(int)> handler) {
 		mValueChanged = handler;

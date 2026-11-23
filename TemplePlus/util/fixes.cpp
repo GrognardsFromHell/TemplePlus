@@ -62,6 +62,12 @@ void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
 	memcpy(temple::Dll::GetInstance().GetAddress(offset), buffer, totalSize);
 }
 
+void TempleFix::writeAddress(uint32_t offset, void* addr)
+{
+	auto targetAddress = reinterpret_cast<int32_t>(addr);
+	write(offset, &targetAddress, sizeof(targetAddress));
+}
+
 void *TempleFix::replaceFunctionInternal(uint32_t offset, void* replaceWith) {
 	void* original = nullptr;
 	auto target = temple::Dll::GetInstance().GetAddress(offset);

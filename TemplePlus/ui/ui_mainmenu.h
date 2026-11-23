@@ -58,6 +58,7 @@ public:
 	const std::string &GetName() const override;
 
 	bool IsVisible() const;
+	bool IsIngame() const;
 
 	void Show(MainMenuPage page);
 	void Hide();

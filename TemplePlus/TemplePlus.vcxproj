@@ -134,6 +134,8 @@
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
     <ClCompile Include="python\python_gui.cpp" />
+    <ClCompile Include="python\python_dialog.cpp" />
+    <ClCompile Include="gamesystems\autoplayer.cpp" />
     <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
@@ -315,6 +317,8 @@
     <ClInclude Include="info_regions.h" />
     <ClInclude Include="container_art.h" />
     <ClInclude Include="action_sequence.h" />
+    <ClInclude Include="gamesystems\autoplayer.h" />
+    <ClInclude Include="python\pybind_common.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="animgoals\animgoal.h" />
     <ClInclude Include="animgoals\animgoals.h" />

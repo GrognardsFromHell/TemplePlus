@@ -1043,6 +1043,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	// advance the time played
 
 	timePlayed.timeInMs += timeDeltaMs;
+	mSessionTime += GameTime(0, timeDeltaMs); // session time: like time played, but not reset by loading a save
 
 	if (timePlayed.timeInMs > 86400000) {
 		timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
@@ -1265,6 +1266,16 @@ GameTime TimeEventSystem::GetAnimTime()
 {
 	static auto GameTime_GetAnim = temple::GetPointer<uint64_t()>(0x1005FC60);
 	return GameTime_GetAnim();
+}
+
+GameTime TimeEventSystem::GetRealTime()
+{
+	return temple::GetRef<GameTime>(0x10AA83B8);
+}
+
+GameTime TimeEventSystem::GetTimeSession()
+{
+	return mSessionTime;
 }
 
 bool TimeEventSystem::IsDaytime() {

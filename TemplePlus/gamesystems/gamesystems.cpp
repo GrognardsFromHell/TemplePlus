@@ -44,6 +44,7 @@
 #include "ui/ui_systems.h"
 #include <aas/aas_model_factory.h>
 #include <poison.h>
+#include "autoplayer.h"
 
 using namespace gfx;
 
@@ -809,6 +810,20 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(79 / 79.0f);
 	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
 	mPoison = InitializeSystem<PoisonSystem>(loadingScreen);
+	// Optional autoplayer driver: only when templeplus/autoplayer.py is installed (see ToEE_Autoplayer)
+	if (vfs->FileExists("templeplus\\lib\\templeplus\\autoplayer.py")) {
+		mAutoplayer = InitializeSystem<AutoplayerSystem>(loadingScreen);
+	}
+}
+
+bool GameSystems::IsIngame() const
+{
+	if (IsResetting()) {
+		return false;
+	}
+	auto curMap  = GetMap().GetCurrentMapId();
+	auto shopMap = GetMap().GetMapIdByType(MapType::ShoppingMap);
+	return curMap == shopMap;
 }
 
 void GameSystems::EndGame() {

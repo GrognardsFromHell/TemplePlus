@@ -550,6 +550,10 @@
     <ClCompile Include="gamesystems\map\text_floater.cpp">
       <Filter>Map System</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_dialog.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="gamesystems\autoplayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -650,6 +654,10 @@
     <ClInclude Include="python\python_debug.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="python\pybind_common.h">
+      <Filter>python</Filter>
+    </ClInclude>
+    <ClInclude Include="gamesystems\autoplayer.h" />
     <ClInclude Include="python\python_header.h">
       <Filter>python</Filter>
     </ClInclude>

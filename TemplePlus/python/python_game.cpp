@@ -50,6 +50,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_worldmap.h"
 #include "ui/ui_char.h"
+#include "ui/ui_mainmenu.h"
 #include "infrastructure/elfhash.h"
 #include "ui/ui_alert.h"
 #include "d20_class.h"
@@ -60,6 +61,7 @@
 #include <tig/tig_keyboard.h>
 #include "gamesystems/map/sector.h"
 #include "graphics/mapterrain.h"
+#include <infrastructure/keyboard.h>
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -182,6 +184,16 @@ static PyObject* PyGame_GetTime(PyObject*, void*) {
 	return PyTimeStamp_Create();
 }
 
+
+static PyObject* PyGame_GetTimePlayed(PyObject*, void*) {
+	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetRealTime());
+	return result;
+}
+static PyObject* PyGame_GetTimeSession(PyObject*, void*) {
+	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetTimeSession());
+	return result;
+}
+
 static PyObject* PyGame_GetLeader(PyObject*, void*) {
 	return PyObjHndl_Create(pyGameAddresses.PartyGetLeader());
 }
@@ -259,6 +271,12 @@ static PyObject* PyGame_CharUIDisplayType(PyObject* obj, void*) {
 	return PyInt_FromLong((uint32_t)result);
 }
 
+static PyObject* PyGame_CharUIPage(PyObject* obj, void*) {
+	auto result = uiSystems->GetChar().GetPageType();
+	return PyInt_FromLong((uint32_t)result);
+}
+
+
 
 static PyGetSetDef PyGameGettersSetters[] = {
 	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
@@ -271,7 +289,11 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
 	{"leader", PyGame_GetLeader, NULL, NULL},
 	{"elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
+
 	{"time", PyGame_GetTime, NULL, NULL},
+	{"time_played", PyGame_GetTimePlayed, NULL, NULL},
+	{"time_session", PyGame_GetTimeSession, NULL, NULL},
+
 	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
 	{"ggv", PyGame_GetGlobalVars, NULL, NULL },
 	{"global_flags", PyGame_GetGlobalFlags, NULL, NULL},
@@ -282,6 +304,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
 	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
 	{"char_ui_display_type", PyGame_CharUIDisplayType, NULL, NULL},
+	{"char_ui_page", PyGame_CharUIPage, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -898,8 +921,8 @@ PyObject* PyGame_SaveGame(PyObject*, PyObject* args) {
 PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 {
 	PyObject *locOrObj;
-
-	if (!PyArg_ParseTuple(args, "O:game.scroll_to",  &locOrObj)) {
+	int smooth = 1;
+	if (!PyArg_ParseTuple(args, "O|i:game.scroll_to",  &locOrObj, &smooth)) {
 		return 0;
 	}
 
@@ -915,8 +938,13 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 		return nullptr;
 	}
 
-	gameSystems->GetLocation().CenterOnSmooth(targetLoc.locx, targetLoc.locy);
-
+	if (smooth) {
+		gameSystems->GetLocation().CenterOnSmooth(targetLoc.locx, targetLoc.locy);
+	}
+	else {
+		gameSystems->GetLocation().CenterOn(targetLoc.locx, targetLoc.locy);
+	}
+	
 	Py_RETURN_TRUE;
 }
 
@@ -981,14 +1009,27 @@ PyObject* PyGame_Keypress(PyObject*, PyObject* args) {
 	}
 	logger->info("game.keypress: {}", dik);
 
-	TigMsg tigMsg;
-	tigMsg.createdMs = timeGetTime();
-	tigMsg.type = TigMsgType::KEYSTATECHANGE;
-	tigMsg.arg1 = dik;
-	tigMsg.arg2 = 0; // Means it has changed to unpressed
-	if (tigMsg.arg1 != 0) {
-		messageQueue->Enqueue(tigMsg);
+	{
+		TigMsg tigMsg;
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::KEYSTATECHANGE;
+		tigMsg.arg1 = dik;
+		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		if (tigMsg.arg1 != 0) {
+			messageQueue->Enqueue(tigMsg);
+		}
 	}
+	{
+		TigMsg tigMsg;
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::CHAR;
+		tigMsg.arg1 = infrastructure::gKeyboard.ToVirtualKey(dik);
+		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		if (tigMsg.arg1 != 0) {
+			messageQueue->Enqueue(tigMsg);
+		}
+	}
+	
 
 	Py_RETURN_TRUE;
 }
@@ -1011,6 +1052,12 @@ PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
 	}
 	else if (PyLong_Check(locOrObj)) {
 		targetLoc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+	}
+	else if (PyTuple_Check(locOrObj)) {
+		if (!PyArg_ParseTuple(locOrObj, "ii:game.mouse_move_to", &targetLoc.locx, &targetLoc.locy)) {
+			PyErr_SetString(PyExc_TypeError, "mouse_move_to tuple arg must (x,y).");
+			return nullptr;
+		}
 	}
 	else {
 		PyErr_SetString(PyExc_TypeError, "mouse_move_to argument must be either a tile location (long) or an object handle.");
@@ -1048,6 +1095,45 @@ PyObject* PyGame_MouseClick(PyObject*, PyObject* args)
 		mouseFuncs.SetButtonState((MouseButton)clickType, false);
 	}
 	
+	Py_RETURN_TRUE;
+}
+
+PyObject* PyGame_MouseScroll(PyObject*, PyObject* args)
+{
+	int wheelDelta = 0;
+	if (!PyArg_ParseTuple(args, "i:game.mouse_scroll", &wheelDelta)) {
+		return nullptr;
+	}
+	if (!wheelDelta)
+		Py_RETURN_NONE;
+	auto mousePos = mouseFuncs.GetPos();
+
+	TigMsgMouse tigMsg;
+	tigMsg.createdMs = timeGetTime();
+	tigMsg.type = TigMsgType::MOUSE;
+	tigMsg.x = mousePos.x;
+	tigMsg.y = mousePos.y;
+	tigMsg.buttonStateFlags |= MouseStateFlags::MSF_SCROLLWHEEL_CHANGE;
+	tigMsg.arg3 = wheelDelta;
+
+	messageQueue->Enqueue(tigMsg);
+	
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_MouseSetState(PyObject*, PyObject* args)
+{
+	int clickType = 0;
+	int pressed = 0;
+
+	if (!PyArg_ParseTuple(args, "ii:game.mouse_set_button_state", &clickType, &pressed)) {
+		return nullptr;
+	}
+
+	if (clickType >= (int)MouseButton::LEFT && clickType <= (int)MouseButton::MIDDLE) {
+		mouseFuncs.SetButtonState((MouseButton)clickType, pressed != 0);
+	}
+
 	Py_RETURN_TRUE;
 }
 
@@ -1185,6 +1271,11 @@ PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
 	auto time = gameSystems->GetTimeEvent().GetTime();
 	auto formattedTime = gameSystems->GetTimeEvent().FormatTime(time);
 	return PyString_FromString(formattedTime.c_str());
+}
+
+
+PyObject* PyGame_IsIngame(PyObject*, PyObject* args) {
+	return PyInt_FromLong(gameSystems->IsIngame());
 }
 
 PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
@@ -1596,6 +1687,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_chain_lightning", PyGame_PfxChainLightning, METH_VARARGS, NULL},
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
+	{"is_ingame", PyGame_IsIngame, METH_VARARGS, "Is in active game (i.e. not in main menu screen)"},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{"keypress", PyGame_Keypress, METH_VARARGS, NULL},
@@ -1606,6 +1698,8 @@ static PyMethodDef PyGameMethods[]{
 	{ "ground_overlay_remove", PyGame_GroundOverlayRemove, METH_VARARGS, NULL },
 	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
 	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
+	{"mouse_set_button_state", PyGame_MouseSetState, METH_VARARGS, "args: (button_type: int, pressed: int), left = 0, right = 1, middle = 2"},
+	{"mouse_scroll", PyGame_MouseScroll, METH_VARARGS},
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},

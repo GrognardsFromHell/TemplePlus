@@ -122,6 +122,7 @@ class GMeshSystem;
 class PathNodeSystem;
 class GameSystemLoadingScreen;
 class PoisonSystem;
+class AutoplayerSystem;
 
 class GameSystems {
 public:
@@ -452,6 +453,11 @@ public:
 		return *mPoison;
 	}
 
+	AutoplayerSystem& GetAutoplayer() const {
+		Expects(!!mAutoplayer);
+		return *mAutoplayer;
+	}
+
 	// All systems that want to listen to map events
 	const std::vector<MapCloseAwareGameSystem*> &GetMapCloseAwareSystems() const {
 		return mMapCloseAwareSystems;
@@ -478,6 +484,8 @@ public:
 
 	// Ends the game, resets the game systems and returns to the main menu.
 	void EndGame();
+
+	bool IsIngame() const;
 
 	void AdvanceTime();
 
@@ -623,6 +631,7 @@ private:
 	std::unique_ptr<ItemHighlightSystem> mItemHighlight;
 	std::unique_ptr<PathXSystem> mPathX;
 	std::unique_ptr<PoisonSystem> mPoison;
+	std::unique_ptr<AutoplayerSystem> mAutoplayer;
 
 	std::unique_ptr<class LegacyGameSystemResources> mLegacyResources;
 
