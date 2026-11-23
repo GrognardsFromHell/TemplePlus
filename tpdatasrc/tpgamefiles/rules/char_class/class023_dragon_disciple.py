@@ -6,9 +6,6 @@ import char_class_utils
 def GetConditionName():
 	return "Dragon Disciple"
 
-def GetSpellCasterConditionName():
-	return "Dragon Disciple Spellcasting"
-
 def GetCategory():
 	return "Core 3.5 Ed Prestige Classes"
 
@@ -24,6 +21,12 @@ classEnum = stat_level_dragon_disciple
 
 
 class_feats = {
+1: ("Dragon Disciple Natural Armor", "Dragon Disciple Bonus Spells", "Dragon Disciple Heritage"),
+2: ("Dragon Disciple Claws and Bite", "Dragon Disciple Ability Boost"),
+3: ("Dragon Disciple Breath Weapon",),
+5: ("Dragon Disciple Blindsense",),
+9: ("Dragon Disciple Wings",),
+10: ("Dragon Disciple Dragon Apotheosis",),
 }
 
 class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_gather_information, skill_knowledge_all, skill_listen, skill_profession, skill_search, skill_spellcraft, skill_spot)
@@ -38,7 +41,7 @@ def GetSkillPtsPerLevel():
 	return 2
 	
 def GetBabProgression():
-	return base_attack_bonus_type_martial
+	return base_attack_bonus_type_semi_martial # 3/4 (SRD)
 
 def IsFortSaveFavored():
 	return 1
@@ -49,7 +52,7 @@ def IsRefSaveFavored():
 def IsWillSaveFavored():
 	return 1
 def GetSpellListType():
-	return spell_list_type_none # dragon disciples only advance bonus spells
+	return spell_list_type_none # dragon disciples don't advance casting; they get bonus spells per day (see dragon_disciple.py)
 
 def IsClassSkill(skillEnum):
 	return char_class_utils.IsClassSkill(class_skills, skillEnum)
@@ -63,36 +66,18 @@ def GetClassFeats():
 def IsAlignmentCompatible( alignment):
 	return 1
 
-def CanCastInnateArcane(obj): #todo: generalize
-	if obj.stat_level_get(stat_level_bard) > 0:
-		return 1
-	if obj.stat_level_get(stat_level_sorcerer) > 0:
-		return 1
-	return 0
-	
-def SpeaksDraconic( obj ):
-	return 1 # languages not implemented in ToEE
+def CanCastInnateArcane(obj):
+	# "able to cast arcane spells without preparation" (sorcerer, bard, and any Temple+ spontaneous arcane class)
+	return obj.highest_spontaneous_arcane_class > 0
 
+# Knowledge (arcana) and languages aren't implemented in ToEE. As with the Mystic Theurge,
+# character level stands in for the skill ranks (8 ranks needs character level 5).
 def KnowledgeArcanaCheck( obj ):
-	# if (obj.skill_ranks_get(skill_knowledge_arcana) < 8): #knowledge skill not implemented in ToEE
-		# return 0
-	if obj.stat_level_get(stat_level) < 5: # a replacement for checking knowledge arcana
-		return 0
-	return 1
+	return obj.stat_level_get(stat_level) >= 5
 
 def ObjMeetsPrereqs( obj ):
-	return 0 # WIP
-	
 	if not KnowledgeArcanaCheck(obj):
 		return 0
-	if (not obj.has_feat(feat_cleave) ):
+	if not CanCastInnateArcane(obj):
 		return 0
-	if (not obj.has_feat(feat_power_attack) ):
-		return 0
-	if (not CanCastInnateArcane(obj)):
-		return 0
-	# if (not obj.has_feat(feat_improved_sunder) ): # sunder not yet implemented
-		# return 0
-	#if (not obj.d20_query('EVIL_OUTSIDER_CONTACTED')):
-	#	return 0
 	return 1

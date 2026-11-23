@@ -1,0 +1,5 @@
+name: Dragon Disciple Heritage
+flags: 8
+prereqs:
+description:  A dragon disciple chooses a dragon variety (black, blue, green, red, white, brass, bronze, copper, gold or silver) from the Class radial menu. It sets the energy type of his breath weapon and of his dragon apotheosis immunity. The choice is permanent.
+prereq descr: Dragon Disciple level 1.

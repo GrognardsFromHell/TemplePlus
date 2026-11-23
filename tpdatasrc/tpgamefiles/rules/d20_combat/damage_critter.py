@@ -55,7 +55,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     evt_obj_dam.attack_packet.set_flags(flags)
 
     #Set weapon used
-    usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker)
+    usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker, d20_data)
     evt_obj_dam.attack_packet.set_weapon_used(usedWeapon)
 
     #Check ammo

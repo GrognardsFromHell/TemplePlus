@@ -1,0 +1,5 @@
+name: Dragon Disciple Ability Boost
+flags: 8
+prereqs:
+description:  A dragon disciple's ability scores increase: Str +2 at 2nd and 4th level, Con +2 at 6th, Int +2 at 8th, and Str +4 and Cha +2 at 10th (dragon apotheosis).
+prereq descr: Dragon Disciple level 2.

@@ -1839,3 +1839,49 @@ DispIoSpellsPerDay::DispIoSpellsPerDay()
 	unk = 3001;
 	unk2 = 0;
 }
+
+
+EvtObjExtraNaturalAttacks::EvtObjExtraNaturalAttacks(objHndl handleIn)
+{
+	this->dispIOType = evtObjTypeExtraNaturalAttacks;
+	handle = handleIn;
+}
+
+void EvtObjExtraNaturalAttacks::Dispatch()
+{
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return;
+	auto _dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	dispatch.DispatcherProcessor(_dispatcher, dispTypeGetExtraNaturalAttacks, 0, this);
+}
+
+void EvtObjExtraNaturalAttacks::Add(int attackType, int dicePacked, int damType, int flags)
+{
+	NaturalAttackEntry e;
+	e.attackType = attackType;
+	e.dicePacked = dicePacked;
+	e.damType = (DamageType)damType;
+	e.flags = flags;
+	if (!(e.flags & (NAF_PRIMARY | NAF_SECONDARY)))
+		e.flags |= NAF_PRIMARY;
+	attacks.push_back(e);
+}
+
+void EvtObjExtraNaturalAttacks::AddProtoAttacks()
+{
+	if (!handle) return;
+	auto n = critterSys.GetNumNaturalAttacks(handle);
+	for (int i = 0; i < n && attacks.size() < 16; i++) {
+		NaturalAttackEntry e;
+		e.attackType = critterSys.GetCritterAttackType(handle, i);
+		e.dicePacked = critterSys.GetCritterDamageDice(handle, i);
+		e.damType = critterSys.GetCritterAttackDamageType(handle, i);
+		e.protoIdx = i;
+		// same convention the proto path uses for half Str: slot 0 primary, the rest secondary
+		e.flags = critterSys.GetDamageIdx(handle, i) > 0 ? NAF_SECONDARY : NAF_PRIMARY;
+		if (e.attackType == 1 || e.attackType == 4 || e.attackType == 5) e.flags |= NAF_NEEDS_FREE_HAND;
+		if (e.attackType == 0) e.flags |= NAF_MOUTH;
+		attacks.push_back(e);
+	}
+}

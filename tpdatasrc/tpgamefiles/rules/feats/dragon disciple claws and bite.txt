@@ -1,0 +1,5 @@
+name: Dragon Disciple Claws and Bite
+flags: 8
+prereqs:
+description:  At 2nd level, a dragon disciple gains two claw attacks (1d4, 1d3 if Small, 1d6 if Large) and a bite attack (1d6, 1d4 if Small, 1d8 if Large). Unarmed, they replace unarmed strikes; when wielding weapons, they are made as secondary natural attacks (-5 to hit, half Str), if a hand (claws) is free. A buckler, or Prefer One Handed Wield with a one-handed weapon, leaves a claw hand free.
+prereq descr: Dragon Disciple level 2.

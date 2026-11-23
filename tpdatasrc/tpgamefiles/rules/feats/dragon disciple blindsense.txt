@@ -1,0 +1,5 @@
+name: Dragon Disciple Blindsense
+flags: 8
+prereqs:
+description:  At 5th level a dragon disciple gains blindsense out to 30 feet (60 feet at 10th level). In Temple+ he notices and can target creatures within range even if he cannot see them, but concealment and invisibility miss chances still apply.
+prereq descr: Dragon Disciple level 5.

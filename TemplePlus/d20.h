@@ -10,6 +10,12 @@
 #define ATTACK_CODE_PRIMARY 0
 #define ATTACK_CODE_OFFHAND 99 // originally 4
 #define ATTACK_CODE_NATURAL_ATTACK 999 //originally 9
+// Natural weapon blend (opt-in): "extra" natural attacks granted by conditions via
+// dispTypeGetExtraNaturalAttacks. Code ATTACK_CODE_EXTRA_NATURAL + 1 + k = extra natural attack k.
+// Never produced unless some condition supplies extra natural attacks.
+#define ATTACK_CODE_EXTRA_NATURAL 1999
+inline bool IsCritterNaturalAttackCode(int code) { return code > ATTACK_CODE_NATURAL_ATTACK && code <= ATTACK_CODE_EXTRA_NATURAL; }
+inline bool IsExtraNaturalAttackCode(int code) { return code > ATTACK_CODE_EXTRA_NATURAL; }
 #include "tab_file.h"
 #include "gamesystems/objects/gameobject.h"
 
