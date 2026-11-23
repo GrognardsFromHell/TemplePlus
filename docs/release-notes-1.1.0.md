@@ -31,6 +31,15 @@ The first 1.1 release. It adds a new prestige class, data-driven module support 
 - **Object handle validator** for inventory corruption (ini `debugObjHandles`, debug only).
 - **Alert debug overlay** (`debug.alerts(1)`) and a goal overlay (`tpgui.set_autoplayer_goals`).
 
+## Autoplayer support
+- The ToEE autoplayer can now run on stock Temple+, so players can watch it play. Install the [ToEE autoplayer](https://github.com/DudeMcDude/toee_autoplayer) scripts and launch with the startup automation variables. The autoplayer game system only starts when `templeplus/autoplayer.py` is installed.
+- New Python APIs for UI automation and scripting:
+  - **game:** `is_ingame`, `time_played`, `time_session`, `char_ui_page`, `mouse_scroll`, `mouse_set_button_state`, `scroll_to(loc, smooth)`, and `mouse_move_to((x, y))`. `keypress` now also sends a character event.
+  - **gamedialog** (new module): `is_engaged()` and `get_current_state()`, returning the dialog state (script id, line, replies, reply opcode/effect/skill, NPC reply id).
+  - **tpgui:** widget lookup and inspection (`_get_active_windows`, `_get_legacy_*`, `_get_adv_widget_*`, widget names, rendered text, scrollbars, button state), `game_is_focused`, `map_from_scene`, `world_to_screen`.
+  - **Other:** `tpactions.cur_seq_reset`, `obj.is_performing()`, `obj.ai_strategy_execute()`, `SpellEntry.ai_spell_type`, timestamp `delta_ms`/`add_ms`/comparison, and `logbook.set_key_entry_need_to_notify`.
+- Enter now confirms the logbook key entry dialog.
+
 ## Startup automation
 - `TP_AUTOLOAD=<save>` loads a savegame at startup, skipping the main menu, and `TP_AUTOEXEC=<command>` runs a console/Python command. Both do nothing unless set. They are used by the ToEE autoplayer and for repeatable playtests; see `docs/startup-automation.md`.
 
