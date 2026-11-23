@@ -10,6 +10,7 @@
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
+#include "ui/ui_legacysystems.h" // TP_AUTOLOAD (main menu hide / party bar refresh)
 #include "movies.h"
 #include "python/pythonglobal.h"
 #include "mainloop.h"
@@ -179,6 +180,26 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	logger->info("[Running Startup.txt]");
 	auto &console = tig.GetConsole();
 	console.RunBatchFile("Startup.txt");
+
+	// Startup automation (see docs/startup-automation.md): TP_AUTOLOAD loads a savegame, TP_AUTOEXEC runs one
+	// console/Python command. Both are inert unless the environment variable is set. Used by the autoplayer
+	// and for repeatable playtests.
+	if (auto autoLoad = getenv("TP_AUTOLOAD")) {
+		logger->info("[TP_AUTOLOAD] Loading savegame '{}'", autoLoad);
+		uiSystems.GetMM().Hide();
+		gameSystems.DestroyPlayerObject();
+		auto ok = gameSystems.LoadGame(autoLoad);
+		logger->info("[TP_AUTOLOAD] LoadGame returned {}", ok);
+		uiSystems.GetParty().Update();
+		auto& blockers = temple::GetRef<int>(0x10AA83D8);
+		while (blockers > 0) {
+			temple::GetPointer<void()>(0x10060410)();
+		}
+	}
+	if (auto autoExec = getenv("TP_AUTOEXEC")) {
+		logger->info("[TP_AUTOEXEC] Executing: {}", autoExec);
+		console.Execute(autoExec, true);
+	}
 	logger->info("[Beginning Game]");	
 
 	Updater updater;
