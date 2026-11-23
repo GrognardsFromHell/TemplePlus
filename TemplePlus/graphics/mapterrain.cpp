@@ -84,6 +84,35 @@ void TerrainSystem::Render() {
 		}
 	}
 
+	// Ground overlays (canvas pixel space, drawn over the tiles)
+	if (!sOverlays.empty()) {
+		XMCOLOR color(mTerrainTintRed, mTerrainTintGreen, mTerrainTintBlue, 1);
+		for (auto& it : sOverlays) {
+			auto& ov = it.second;
+			auto x = terrainOriginX + ov.x, y = terrainOriginY + ov.y;
+			if (x + ov.w < 0 || y + ov.h < 0 || x >= viewportWidth || y >= viewportHeight)
+				continue;
+			auto texture = mDevice.GetTextures().Resolve(ov.texture, false);
+			if (!texture->IsValid())
+				continue;
+			mShapeRenderer.DrawRectangle((float)x, (float)y, (float)ov.w, (float)ov.h, *texture, color);
+		}
+	}
+
+}
+
+std::map<int, TerrainSystem::GroundOverlay> TerrainSystem::sOverlays;
+
+void TerrainSystem::SetOverlay(int id, const GroundOverlay& ov) {
+	sOverlays[id] = ov;
+}
+
+void TerrainSystem::RemoveOverlay(int id) {
+	sOverlays.erase(id);
+}
+
+void TerrainSystem::ClearOverlays() {
+	sOverlays.clear();
 }
 
 void TerrainSystem::RenderTile(int x, int y, const TigRect& destRect) {
