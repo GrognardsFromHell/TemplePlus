@@ -207,6 +207,8 @@
     <ClCompile Include="ui\ui_char_editor.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_dialog_ieskin.cpp" />
+    <ClCompile Include="info_regions.cpp" />
     <ClCompile Include="ui\ui_ingame.cpp" />
     <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
@@ -309,6 +311,7 @@
     <ClCompile Include="ui\ui_mainmenu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="info_regions.h" />
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="animgoals\animgoal.h" />
@@ -474,6 +477,7 @@
     <ClInclude Include="traps.h" />
     <ClInclude Include="ui\ui_combat.h" />
     <ClInclude Include="ui\ui_dialog.h" />
+    <ClInclude Include="ui\ui_dialog_ieskin.h" />
     <ClInclude Include="ui\ui_intgame_select.h" />
     <ClInclude Include="ui\ui_turn_based.h" />
     <ClInclude Include="ui\ui_tutorial.h" />

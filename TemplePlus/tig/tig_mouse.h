@@ -32,6 +32,11 @@ struct MouseFuncs : temple::AddressTable {
 	static int (__cdecl SetCursor)(int shaderId);
 	static int (__cdecl SetCursorFromMaterial)(std::string matName);
 	static void(__cdecl ResetCursor)();
+	// Shows a material as the cursor WITHOUT pushing it on the cursor stack (a temporary overlay such as the info-region
+	// magnifier). Undo with RefreshCursor(), which re-applies the stack top. Never unbalances other users' push/pop.
+	static bool OverlayCursorFromMaterial(const std::string &matName);
+	static int CursorStackTop();   // shader id on top of the cursor stack, -1 if empty
+	static size_t CursorStackSize();
 	void (__cdecl *SetButtonState)(MouseButton button, bool pressed);
 	void SetPos(int x, int y, int wheelDelta);
 	void RefreshCursor();

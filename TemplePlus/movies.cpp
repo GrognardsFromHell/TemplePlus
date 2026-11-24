@@ -21,6 +21,8 @@
 #include "tig/tig_font.h"
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
+#include "anomaly_notices.h"
+#include <infrastructure/vfs.h>
 
 using namespace gfx;
 using namespace temple;
@@ -187,6 +189,52 @@ private:
 	uint32_t mElapsedTime;
 };
 
+
+namespace {
+
+// Movie/slide loops used to skip only on TigMsgType::KEYSTATECHANGE (any key down).
+// That message is posted from MainWindow::WndProc on WM_KEYDOWN after ToDirectInputKey.
+// Under Wine (virtual desktop / focus) WM_KEYDOWN often never reaches that WndProc, so
+// Esc / Space / Enter and clicks appear to do nothing. Poll GetAsyncKeyState as a
+// fallback, and also treat a mouse-button TigMsg as a skip. Arm only after the keys
+// that may have started the movie (e.g. the Begin Adventuring click) are released.
+bool MovieSkipHeld() {
+	return (GetAsyncKeyState(VK_SPACE) & 0x8000)
+		|| (GetAsyncKeyState(VK_RETURN) & 0x8000)
+		|| (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+		|| (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+		|| (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+}
+
+bool MovieSkipFromMsg(const TigMsg &msg) {
+	if (msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1)
+		return true;
+	if (msg.type == TigMsgType::MOUSE &&
+		(msg.arg4 & (MSF_LMB_CLICK | MSF_LMB_DOWN | MSF_RMB_CLICK | MSF_RMB_DOWN)))
+		return true;
+	return false;
+}
+
+// flags&1 still disables skip (vanilla).
+bool MovieSkipPoll(int flags, bool &armed) {
+	if (flags & 1)
+		return false;
+	TigMsg msg;
+	while (messageQueue->Process(msg)) {
+		if (MovieSkipFromMsg(msg))
+			return true;
+	}
+	if (MovieSkipHeld()) {
+		if (armed)
+			return true;
+	} else {
+		armed = true;
+	}
+	return false;
+}
+
+} // namespace
+
 int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int flags, uint32_t soundtrackId) {
 
 	movieFuncs.MovieIsPlaying = true;
@@ -244,6 +292,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 	
 	auto keyPressed = false;
+	auto skipArmed = !MovieSkipHeld();
 	while (!keyPressed && BinkRenderFrame(device, *movie, *texture)) {
 		device.ClearCurrentColorTarget(clearColor);
 
@@ -262,14 +311,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 		messageQueue->PollExternalEvents();
 
-		TigMsg msg;
-		while (messageQueue->Process(msg)) {
-			// Flags 1 seems to disable skip via keyboard. Also seems unused.
-			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
-				// TODO Wait for the key to be unpressed again
-				keyPressed = true;
-				break;
-			}
+		if (MovieSkipPoll(flags, skipArmed)) {
+			keyPressed = true;
 		}
 	}
 	
@@ -286,6 +329,31 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	device.ShowCursor();
 
 	return 0;
+}
+
+// A slide sound that did not start: log why (as far as we can tell) and raise an anomaly notice so playtesters report it.
+// temple.dll's movies.mes parser only takes a sound token ending in .mp3, so any other extension arrives here as the bare
+// "sound\speech\slide\" folder.
+static void ReportSlideSoundFailure(const char *imageFile, const char *soundFile) {
+	std::string snd(soundFile ? soundFile : "");
+	std::string why;
+	if (snd.empty() || snd.back() == '\\' || snd.back() == '/')
+		why = "no sound file name (movies.mes: the slide's sound must end in .mp3)";
+	else if (!vfs->FileExists(snd))
+		why = "file not found";
+	else {
+		why = "Miles could not start the stream";
+		if (auto mss = GetModuleHandleA("mss32.dll")) {
+			using LastErrorFn = char *(__stdcall *)();
+			if (auto lastError = reinterpret_cast<LastErrorFn>(GetProcAddress(mss, "_AIL_last_error@0"))) {
+				auto msg = lastError();
+				if (msg && *msg) why += fmt::format(" (AIL_last_error: {})", msg);
+			}
+		}
+	}
+	logger->error("Unable to play sound '{}' during slideshow '{}': {}", snd, imageFile ? imageFile : "", why);
+	anomalyNotices.Report("slide_sound", snd, fmt::format("Slide sound did not play: {}", snd),
+		fmt::format("slide={} reason={}", imageFile ? imageFile : "", why));
 }
 
 int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, const SubtitleLine* subtitles, int flags, int soundtrackId) {
@@ -324,7 +392,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 	if (soundFile) {
 		if (!stream.Play(soundFile, TigSoundType::Voice)) {
-			logger->error("Unable to play sound {} during slideshow.", soundFile);
+			ReportSlideSoundFailure(imageFile, soundFile);
 		} else {
 			stream.SetVolume(*tigSoundAddresses.movieVolume);
 		}
@@ -334,7 +402,10 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	
 	
 	bool keyPressed = false;
-	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
+	auto skipArmed = !MovieSkipHeld();
+	// until the sound ends, at least 3 s; a sound that failed to play no longer keeps the slide up forever (it used to
+	// wait for a key, which under Wine may never arrive and stalled the new-game slides)
+	while (!keyPressed && ((stream.IsValid() && stream.IsPlaying()) || sw.GetElapsedMs() < 3000)) {
 		
 		device.ClearCurrentColorTarget(clearColor);
 		
@@ -352,14 +423,8 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 		messageQueue->PollExternalEvents();
 
-		TigMsg msg;
-		while (messageQueue->Process(msg)) {
-			// Flags 1 seems to disable skip via keyboard. Also seems unused.
-			if (!(flags & 1) && msg.type == TigMsgType::KEYSTATECHANGE && LOBYTE(msg.arg2) == 1) {
-				// TODO Wait for the key to be unpressed again
-				keyPressed = true;
-				break;
-			}
+		if (MovieSkipPoll(flags, skipArmed)) {
+			keyPressed = true;
 		}
 	}
 

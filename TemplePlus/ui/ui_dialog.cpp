@@ -19,6 +19,7 @@
 #include "gamesystems/legacysystems.h"
 #include "mod_support.h"
 #include "gamesystems\objects\objsystem.h"
+#include "ui_dialog_ieskin.h"
 
 UiDlg* uiDialog = nullptr;
 UiDialogImpl * dlgImpl = nullptr;
@@ -61,8 +62,11 @@ static struct UiDialogAddresses : temple::AddressTable {
 
 
 
+static bool DialogPagingHandleChoice(int idx);
+
 class UiDialogImpl {
 	friend class UiDlg;
+	friend bool DialogPagingHandleChoice(int idx);
 	friend class UiDialogHooks;
 public:
 	UiDialogImpl(const UiSystemConf &config);
@@ -137,15 +141,244 @@ protected:
 
 	void ShowDialogWidgets();
 	void UpdateWidgets();
+	void UpdateWidgetsStock();
+
+	// Infinity Engine style skin (ui_dialog_ieskin.h): selected per module / per conversation from
+	// art\interface\dialog_ie\skins.json. While a skin applies, the stock widgets are moved to the skin's
+	// layout and drawn by the skin; IeSkinUpdate() restores the stock geometry otherwise.
+	bool IeSkinUpdate();
+	void IeSkinRestore();
+	int mScreenW = 1024, mScreenH = 768;
+	IeDlgView mIeView;
+	IeDlgLayout mIeLayout;
+	bool mIeApplied = false;
+	bool mIeStockSaved = false;
+	TigRect mStockWnd, mStockResp, mStockReplies[5], mStockHead, mStockHeadTgt;
 
 
 
 };
 
 
+//*****************************************************************************
+//* Dialog reply paging
+//*
+//* The vanilla engine collects at most 5 PC replies per NPC line and silently
+//* drops the rest. We collect every reply that passes its conditions (each
+//* condition and reply is evaluated exactly once, as before) and, when there
+//* are more than 5, show them in pages:
+//*   first page: 4 replies + "More..."
+//*   middle:     "Back" + 3 replies + "More..."
+//*   last:       "Back" + the rest (at most 4)
+//* Switching pages only swaps the visible entries; the NPC line, its voice,
+//* scripts and reply conditions are not run again. Exactly 5 replies: no paging.
+//*****************************************************************************
+namespace DialogPaging {
+	constexpr int GATHER_MAX = 64; // patched cap of the engine's reply gatherer
+	enum SlotKind { Normal = 0, More = 1, Back = 2 };
+	struct Entry {
+		std::string text;
+		int skillUse, opcode, npcReplyId, field182C;
+		char *effect;
+	};
+	static struct {
+		DialogState *st = nullptr;
+		int lineNumber = -1;
+		std::vector<Entry> all;
+		int page = 0;
+		int kind[5] = { 0, };
+	} pager;
+	static const char *kMoreText = "More...";
+	static const char *kBackText = "Back";
+
+	static char *SlotText(DialogState *st, int i) { return st->pcLineText1 + i * 1000; }
+
+	static int CallLoadNpcLineInner(DialogState *dstate, int flag) {
+		int result;
+		void *fn = temple::GetPointer<void>(0x10038240);
+		__asm {
+			mov eax, dstate
+			push flag
+			mov ecx, fn
+			call ecx
+			add esp, 4
+			mov result, eax
+		}
+		return result;
+	}
+	static int CallGather(DialogState *dstate, int *ids) {
+		int result;
+		void *fn = temple::GetPointer<void>(0x100357d0);
+		__asm {
+			push esi
+			mov esi, dstate
+			push ids
+			mov ecx, fn
+			call ecx
+			add esp, 4
+			pop esi
+			mov result, eax
+		}
+		return result;
+	}
+	static void CallDefaultReply(DialogState *dstate, char *buf) {
+		void *fn = temple::GetPointer<void>(0x10035190);
+		__asm {
+			push edi
+			push ebx
+			mov edi, dstate
+			mov ebx, 0x190
+			push 0x1f3
+			push buf
+			mov ecx, fn
+			call ecx
+			add esp, 8
+			pop ebx
+			pop edi
+		}
+	}
+
+	static void SetSlot(DialogState *st, int i, const Entry &e) {
+		strncpy(SlotText(st, i), e.text.c_str(), 999);
+		SlotText(st, i)[999] = 0;
+		st->pcLineSkillUse[i] = e.skillUse;
+		st->pcReplyOpcode[i] = e.opcode;
+		st->npcReplyIds[i] = e.npcReplyId;
+		st->field_182C[i] = e.field182C;
+		st->effectFields[i] = e.effect;
+	}
+	static void SetSpecial(DialogState *st, int i, SlotKind k) {
+		Entry e{ k == More ? kMoreText : kBackText, 0, 0, st->lineNumber, 0, nullptr };
+		SetSlot(st, i, e);
+		pager.kind[i] = k;
+	}
+
+	static int PageCount() {
+		int n = (int)pager.all.size();
+		if (n <= 5) return 1;
+		int pages = 1, rest = n - 4;
+		while (rest > 4) { pages++; rest -= 3; }
+		return pages + 1;
+	}
+
+	static void ShowPage(DialogState *st, int page) {
+		int n = (int)pager.all.size();
+		int pages = PageCount();
+		page = std::max(0, std::min(page, pages - 1));
+		pager.page = page;
+		for (int i = 0; i < 5; i++) pager.kind[i] = Normal;
+		int slot = 0;
+		if (pages == 1) {
+			for (int i = 0; i < n && i < 5; i++) SetSlot(st, slot++, pager.all[i]);
+		} else {
+			int start = page == 0 ? 0 : 4 + 3 * (page - 1);
+			bool last = page == pages - 1;
+			int count = page == 0 ? 4 : (last ? n - start : 3);
+			if (page > 0) SetSpecial(st, slot++, Back);
+			for (int i = 0; i < count; i++) SetSlot(st, slot++, pager.all[start + i]);
+			if (!last) SetSpecial(st, slot++, More);
+		}
+		for (int i = slot; i < 5; i++) {
+			SlotText(st, i)[0] = 0;
+			st->effectFields[i] = nullptr;
+			st->pcLineSkillUse[i] = 0;
+		}
+		st->pcLines = slot;
+	}
+
+	static bool IsActiveFor(DialogState *st) {
+		return st && pager.st == st && pager.lineNumber == st->lineNumber && PageCount() > 1;
+	}
+
+	// replaces 0x100385F0 (usercall: eax = keep rng seed flag, ecx = state)
+	static void __cdecl BuildReplies(DialogState *st, int flag) {
+		for (int i = 0; i < 5; i++) {
+			st->effectFields[i] = nullptr;
+			SlotText(st, i)[0] = 0;
+		}
+		if (flag)
+			temple::GetRef<void(__cdecl)(int)>(0x10038db0)(st->rngSeed);
+		else
+			st->rngSeed = temple::GetRef<int(__cdecl)()>(0x10038dc0)();
+		pager.st = nullptr; pager.all.clear(); pager.page = 0;
+		for (auto &k : pager.kind) k = Normal;
+
+		if (!CallLoadNpcLineInner(st, flag))
+			return;
+
+		int ids[GATHER_MAX + 8];
+		int count = CallGather(st, ids);
+		if (count > GATHER_MAX) count = GATHER_MAX;
+
+		// Fill each reply once, into a scratch copy (the filler only writes the
+		// per-slot arrays), then keep the results.
+		static DialogState scratch;
+		scratch = *st;
+		for (int i = 0; i < count; i++) {
+			SlotText(&scratch, 0)[0] = 0;
+			scratch.effectFields[0] = nullptr;
+			scratch.pcLineSkillUse[0] = 0;
+			if (!temple::GetRef<int(__cdecl)(int, int, DialogState*)>(0x10035960)(ids[i], 0, &scratch))
+				continue;
+			pager.all.push_back(Entry{ SlotText(&scratch, 0), scratch.pcLineSkillUse[0], scratch.pcReplyOpcode[0],
+				scratch.npcReplyIds[0], scratch.field_182C[0], scratch.effectFields[0] });
+		}
+
+		if (pager.all.empty()) {
+			CallDefaultReply(st, SlotText(st, 0));
+			st->pcReplyOpcode[0] = 1;
+			st->pcLines = 1;
+			return;
+		}
+		pager.st = st;
+		pager.lineNumber = st->lineNumber;
+		ShowPage(st, 0);
+		if (pager.all.size() > 5)
+			logger->info("Dialog paging: line {} has {} replies, {} pages", st->lineNumber, pager.all.size(), PageCount());
+	}
+
+	void __declspec(naked) BuildRepliesWrapper() {
+		macAsmProl;
+		__asm {
+			push eax
+			push ecx
+			mov esi, BuildReplies
+			call esi
+			add esp, 8
+		}
+		macAsmEpil;
+		__asm retn;
+	}
+}
+
+// Handles a click/key on a paging entry; returns true if it was one.
+static bool DialogPagingHandleChoice(int idx) {
+	if (!dlgImpl) return false;
+	auto st = &dlgImpl->mSlot.state;
+	if (idx < 0 || idx >= 5 || !DialogPaging::IsActiveFor(st)) return false;
+	auto kind = DialogPaging::pager.kind[idx];
+	if (kind == DialogPaging::Normal) return false;
+	DialogPaging::ShowPage(st, DialogPaging::pager.page + (kind == DialogPaging::More ? 1 : -1));
+	logger->info("Dialog paging: page {}/{}", DialogPaging::pager.page + 1, DialogPaging::PageCount());
+	// refresh the reply widgets the same way 0x1014CE30 does, without re-adding the NPC line
+	auto &maxShown = temple::GetRef<int>(0x10BEC228);
+	for (int i = 0; i < 5; i++) {
+		dlgImpl->mResponseTexts[i] = i < st->pcLines ? DialogPaging::SlotText(st, i) : nullptr;
+		dlgImpl->mSkillsUsedInReply[i] = i < st->pcLines ? st->pcLineSkillUse[i] : 0;
+	}
+	if (st->pcLines > maxShown) maxShown = st->pcLines;
+	dlgImpl->UpdateWidgets();
+	return true;
+}
+
+
 class UiDialogHooks : public TempleFix
 {
 	void apply() override{
+		// reply paging: gather all valid replies (raise the gatherer's cap of 5) and page them
+		writeHex(0x10035945, "40"); // cmp ecx, 5 -> cmp ecx, 64 (DialogPaging::GATHER_MAX)
+		replaceFunction<void()>(0x100385F0, DialogPaging::BuildRepliesWrapper);
+
 		replaceFunction<void(__cdecl)()>(0x1014C030, [](){
 			if (dlgImpl){
 				dlgImpl->UpdateWidgets();
@@ -286,7 +519,87 @@ void UiDialogImpl::ShowDialogWidgets()
 }
 
 /* 0x1014C030 */
-void UiDialogImpl::UpdateWidgets(){
+void UiDialogImpl::UpdateWidgets() {
+	UpdateWidgetsStock();
+	IeSkinUpdate();
+}
+
+static void SetWidgetRect(LgcyWidget *w, const TigRect &r) {
+	if (!w) return;
+	w->xrelated += r.x - w->x; w->yrelated += r.y - w->y;
+	w->x = r.x; w->y = r.y; w->width = r.width; w->height = r.height;
+}
+
+static TigRect WidgetRect(LgcyWidget *w) {
+	return w ? TigRect(w->x, w->y, w->width, w->height) : TigRect(0, 0, 0, 0);
+}
+
+void UiDialogImpl::IeSkinRestore() {
+	if (!mIeApplied) return;
+	mIeApplied = false;
+	SetWidgetRect(uiManager->GetWindow(mWndId), mStockWnd);
+	SetWidgetRect(uiManager->GetWindow(mResponseWndId), mStockResp);
+	for (int i = 0; i < 5; i++) SetWidgetRect(uiManager->GetButton(mReplyBtnIds[i]), mStockReplies[i]);
+	SetWidgetRect(uiManager->GetButton(mHeadBtnId), mStockHead);
+	mHeadBtnTgtRect = mStockHeadTgt;
+	UpdateWidgetsStock();
+}
+
+bool UiDialogImpl::IeSkinUpdate() {
+	auto &st = mSlot.state;
+	// the ToEE dialog file id is the NPC's dialog script id (upper 16 bits of the speech id, see DialogState)
+	int dialogId = mSlot.scriptId;
+	if (dialogId <= 0) dialogId = st.dialogScriptId;
+	if (dialogId <= 0) dialogId = (st.speechId >> 16) & 0xFFFF;
+	if (!ieDialogSkins.Select(dialogId)) {
+		IeSkinRestore();
+		return false;
+	}
+	if (!mIeApplied && !mIeStockSaved) {
+		mStockWnd = WidgetRect(uiManager->GetWindow(mWndId));
+		mStockResp = WidgetRect(uiManager->GetWindow(mResponseWndId));
+		for (int i = 0; i < 5; i++) mStockReplies[i] = WidgetRect(uiManager->GetButton(mReplyBtnIds[i]));
+		mStockHead = WidgetRect(uiManager->GetButton(mHeadBtnId));
+		mStockHeadTgt = mHeadBtnTgtRect;
+		mIeStockSaved = true;
+	}
+	auto &v = mIeView;
+	v.npc = st.npc; v.pc = st.pc; v.dialogId = dialogId;
+	v.npcText = st.npcLineText;
+	v.replyCount = std::max(0, std::min(st.pcLines, 5));
+	const char *pcTexts[5] = { st.pcLineText1, st.pcLineText2, st.pcLineText3, st.pcLineText4, st.pcLineText5 };
+	for (int i = 0; i < 5; i++)
+		v.replies[i] = mResponseTexts[i] ? mResponseTexts[i] : (i < v.replyCount ? pcTexts[i] : "");
+	v.history.clear();
+	int n = 0;
+	for (auto it = mDlgLineList; it && n < 200; it = it->prev, n++)
+		v.history.emplace_back((it->flags & 1) != 0, it->lineText ? it->lineText : "");
+	v.historyMode = (mFlags & UiDialogFlags::DialogHistoryShow) != 0;
+	v.active = mIsActive != 0;
+	v.screenW = mScreenW; v.screenH = mScreenH;
+	mIeLayout = ieDialogSkins.Layout(v);
+	static std::string sLastLogged;
+	if (v.active && v.npcText != sLastLogged) { // one line per NPC line: where the skin put things (for tests)
+		sLastLogged = v.npcText;
+		auto &L = mIeLayout;
+		std::string rr;
+		for (int i = 0; i < v.replyCount; i++)
+			rr += fmt::format(" {}:{},{},{},{}", i + 1, L.replies[i].x, L.replies[i].y, L.replies[i].width, L.replies[i].height);
+		logger->info("IE dialog skin '{}': dialog {} panel {},{},{},{} replies{}{}", ieDialogSkins.CurrentName(), dialogId,
+			L.panelX, L.panelY, L.panelW, L.panelH, rr, L.continueMode ? (L.continueIsEnd ? " [end button]" : " [continue button]") : "");
+	}
+	SetWidgetRect(uiManager->GetWindow(mWndId), mIeLayout.wnd);
+	SetWidgetRect(uiManager->GetWindow(mResponseWndId), mIeLayout.responseWnd);
+	for (int i = 0; i < 5; i++)
+		SetWidgetRect(uiManager->GetButton(mReplyBtnIds[i]), i < v.replyCount ? mIeLayout.replies[i] : TigRect(0, 0, 0, 0));
+	SetWidgetRect(uiManager->GetButton(mHeadBtnId), mIeLayout.headBtn);
+	mHeadBtnTgtRect = mIeLayout.headBtn;
+	uiManager->SetHidden(mScrollbarId, true);
+	mIeApplied = true;
+	return true;
+}
+
+void UiDialogImpl::UpdateWidgetsStock(){
 
 	if (!mIsActive){
 		if (mFlags & UiDialogFlags::DialogHistoryShow) {
@@ -458,10 +771,17 @@ void UiDlg::ShowHistory()
 /* 0x1014D9B0 */
 BOOL UiDialogImpl::WidgetsInit(int w, int h)
 {
+	mScreenW = w; mScreenH = h;
+	mIeApplied = false; mIeStockSaved = false; // widgets are rebuilt with stock geometry
+	ieDialogSkins.Deactivate();
 	
 	LgcyWindow dlgWnd(9, h - 374, 611, 292);
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId){
+		if (dlgImpl->IeSkinUpdate()) {
+			ieDialogSkins.RenderMain(dlgImpl->mIeView, dlgImpl->mIeLayout);
+			return;
+		}
 		if (config.enlargeDialogFonts)
 			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 		else
@@ -532,6 +852,10 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 			TigMsgMouse* mouseMsg = (TigMsgMouse*)msg;
 			if (!(mouseMsg->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE))
 				return TRUE;
+			if (dlgImpl->mIeApplied) { // IE skin: wheel scrolls the conversation log
+				ieDialogSkins.Scroll(((int)mouseMsg->arg3) > 0 ? 1 : -1);
+				return TRUE;
+			}
 			auto scrollbar = uiManager->GetScrollBar(dlgImpl->mScrollbarId);
 			if (!scrollbar->handleMessage)
 				return TRUE;
@@ -557,6 +881,10 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 	mHeadBtnId = dlgWnd.AddChildButton("Head btn", 581, 1, 23, 18,
 		[](int id) {
 		auto state = uiManager->GetButtonState(id);
+		if (dlgImpl->mIeApplied) {
+			ieDialogSkins.RenderHistoryButton(dlgImpl->mIeLayout, (int)state);
+			return;
+		}
 		auto texId = dlgImpl->mHeadBtnTexNormal;
 		switch (state){
 		case LgcyButtonState::Disabled:
@@ -613,6 +941,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 	static LgcyWindow responseWnd(16, h - 221, 611, 139);
 	responseWnd.flags = 1;
 	responseWnd.render = [](int id){
+		if (dlgImpl->mIeApplied) return;
 		auto flags = dlgImpl->mFlags;
 		if (flags & UiDialogFlags::DialogHistoryShow){
 			auto wnd = uiManager->GetWindow(id);
@@ -621,6 +950,12 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 		}
 	};
 	responseWnd.handleMessage = [](int id, TigMsg*msg) {
+		if (msg->type == TigMsgType::MOUSE && dlgImpl->mIeApplied) {
+			auto mouseMsg = (TigMsgMouse*)msg;
+			if (mouseMsg->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE)
+				ieDialogSkins.Scroll(((int)mouseMsg->arg3) > 0 ? 1 : -1);
+			return TRUE;
+		}
 		if (msg->type == TigMsgType::MOUSE || msg->type == TigMsgType::WIDGET)
 			return TRUE;
 		if (msg->type == TigMsgType::CHAR){
@@ -628,6 +963,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			if (chr >= '1' && chr <= '5'){
 				int responseIdx = chr - '1';
 				if (responseIdx < dlgImpl->mSlot.state.pcLines){
+					if (DialogPagingHandleChoice(responseIdx))
+						return TRUE;
 					//uiDialog->PcReplyLineExecute(dlgImpl->mSlot, idx);
 					auto result = temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x1014D510)(id, msg);
 					return result;
@@ -655,6 +992,10 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, 5);
 			if (idx <= -1 || idx >= /*REPLY_COUNT*/ 5) return;
 			if (!dlgImpl->mResponseTexts[idx]){
+				return;
+			}
+			if (dlgImpl->mIeApplied) {
+				ieDialogSkins.RenderReply(dlgImpl->mIeView, dlgImpl->mIeLayout, idx, (int)uiManager->GetButtonState(id));
 				return;
 			}
 			if (config.enlargeDialogFonts)
@@ -729,6 +1070,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 
 			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, /*REPLY_COUNT*/5);
 			if (idx <= -1 || idx >= 5 /*REPLY_COUNT*/ || idx >= dlgImpl->mSlot.state.pcLines)
+				return TRUE;
+			if (DialogPagingHandleChoice(idx))
 				return TRUE;
 
 			auto result = temple::GetRef<BOOL(__cdecl)(int, TigMsg*)>(0x1014D560)(id, msg);

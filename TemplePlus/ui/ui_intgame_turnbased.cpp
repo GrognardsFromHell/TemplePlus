@@ -34,6 +34,7 @@
 #include "raycast.h"
 #include "hotkeys.h"
 #include "config/config.h"
+#include "info_regions.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -1072,16 +1073,48 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	if (specialCursor)
 		cursorState = specialCursor;
 
+	auto static &shaderIds = temple::GetRef<int[32]>(0x118A0900);
 	if (cursorState != cursorPrevState){
 		logger->debug("Changing cursor from {} to {}", cursorState, cursorPrevState);
 		if (cursorPrevState)
 			temple::GetRef<void(__cdecl)()>(0x101DD770)();
 
-		auto static &shaderIds = temple::GetRef<int[32]>(0x118A0900);
 		if (cursorState){
 			MouseFuncs::SetCursor(shaderIds[cursorState]);
 		}
 		cursorPrevState = cursorState;
+	}
+
+	// Info regions: magnifier cursor while hovering one out of combat with nothing else under the cursor.
+	// It is drawn as an overlay on the device only and is NOT pushed on the cursor stack: pushing it (and popping with
+	// ResetCursor when the hover ended) interleaved with other push/pop users (portrait drag, pickers, item drag, the
+	// cursor-state change above) and popped their cursor instead of ours, leaving the screen stuck on a stale cursor
+	// (e.g. the party portrait drag icon). Now the stack is never touched; ending the hover just re-applies the stack top.
+	// InfoRegions::Hovered() is only refreshed by mouse moves that reach the in-game handler, so also re-check the region
+	// under the current cursor every frame, and only overlay while the in-game cursor is the one on top of the stack.
+	static bool sInfoHover = false;
+	static int sOverlayTop = -1;
+	static size_t sOverlaySize = 0;
+	auto stackTop = MouseFuncs::CursorStackTop();
+	auto stackSize = MouseFuncs::CursorStackSize();
+	bool intgameCursorOnTop = stackTop != -1 && (!cursorPrevState || stackTop == shaderIds[cursorPrevState]);
+	bool infoHover = InfoRegions::Hovered() && !specialCursor && !combatSys.isCombatActive()
+		&& widgetEnteredRender && radialMenus.GetActiveRadialMenuNode() == -1
+		&& !uiPicker.PickerActiveCheck() && intgameCursorOnTop
+		&& InfoRegions::IsOver(mouseState->x, mouseState->y);
+	if (infoHover) {
+		// (Re)apply when starting, or when anything changed the stack (and hence the device cursor) since we drew it.
+		if (!sInfoHover || stackTop != sOverlayTop || stackSize != sOverlaySize) {
+			if (!sInfoHover) logger->debug("InfoRegions: hover on");
+			sInfoHover = MouseFuncs::OverlayCursorFromMaterial("art\\interface\\cursors\\IdentifyCursor.mdf");
+			sOverlayTop = stackTop;
+			sOverlaySize = stackSize;
+		}
+	}
+	else if (sInfoHover) {
+		logger->debug("InfoRegions: hover off");
+		mouseFuncs.RefreshCursor();
+		sInfoHover = false;
 	}
 
 	cursorStateForIntgameFocus = 0;

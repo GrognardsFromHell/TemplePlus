@@ -2,6 +2,8 @@
 
 #include "../gamesystems/gamesystem.h"
 #include <temple/dll.h>
+#include <map>
+#include <string>
 
 struct TigRect;
 
@@ -56,6 +58,20 @@ public:
 	TerrainSystem& operator=(TerrainSystem&&) = delete;
 	
 	void UpdateDayNight();
+
+	/**
+	 * Ground overlays ("ground patches"): textures drawn on top of the ground art at a fixed
+	 * ground-canvas pixel position (same space as the 256px ground tiles), after the tiles.
+	 * Used e.g. for imported Infinity Engine door tiles (open/closed variants swapped at runtime).
+	 */
+	struct GroundOverlay {
+		std::string texture;
+		int x, y, w, h; // canvas pixels
+	};
+	static void SetOverlay(int id, const GroundOverlay& ov);
+	static void RemoveOverlay(int id);
+	static void ClearOverlays();
+	static std::map<int, GroundOverlay> sOverlays;
 private:
 	gfx::RenderingDevice& mDevice;
 	gfx::ShapeRenderer2d& mShapeRenderer;

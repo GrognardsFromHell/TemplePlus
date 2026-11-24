@@ -58,6 +58,8 @@
 #include <pybind11/embed.h>
 #include <gamesystems/mapsystem.h>
 #include <tig/tig_keyboard.h>
+#include "gamesystems/map/sector.h"
+#include "graphics/mapterrain.h"
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -918,6 +920,52 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+// Sector tile flags (Block/FlyOver per subtile, see TileFlags). Used by imported-map door scripts to
+// switch a door's impeded cells between its open and closed state at runtime.
+PyObject* PyGame_TileFlagsGet(PyObject*, PyObject* args) {
+	locXY loc;
+	if (!PyArg_ParseTuple(args, "L:game.tile_flags_get", &loc)) {
+		return nullptr;
+	}
+	LocAndOffsets l{ loc, 0, 0 };
+	return PyLong_FromUnsignedLong((unsigned long)sectorSys.GetTileFlags(l));
+}
+
+PyObject* PyGame_TileFlagsSet(PyObject*, PyObject* args) {
+	locXY loc;
+	unsigned int flags;
+	if (!PyArg_ParseTuple(args, "LI:game.tile_flags_set", &loc, &flags)) {
+		return nullptr;
+	}
+	LocAndOffsets l{ loc, 0, 0 };
+	if (sectorSys.SetTileFlags(l, (TileFlags)flags)) {
+		Py_RETURN_TRUE;
+	}
+	Py_RETURN_FALSE;
+}
+
+// game.ground_overlay_set(id, texture_path, canvas_x, canvas_y, w, h) / game.ground_overlay_remove(id|-1 = all)
+PyObject* PyGame_GroundOverlaySet(PyObject*, PyObject* args) {
+	int id;
+	TerrainSystem::GroundOverlay ov;
+	char* tex;
+	if (!PyArg_ParseTuple(args, "isiiii:game.ground_overlay_set", &id, &tex, &ov.x, &ov.y, &ov.w, &ov.h)) {
+		return nullptr;
+	}
+	ov.texture = tex;
+	TerrainSystem::SetOverlay(id, ov);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_GroundOverlayRemove(PyObject*, PyObject* args) {
+	int id = -1;
+	if (!PyArg_ParseTuple(args, "|i:game.ground_overlay_remove", &id)) {
+		return nullptr;
+	}
+	if (id < 0) TerrainSystem::ClearOverlays(); else TerrainSystem::RemoveOverlay(id);
+	Py_RETURN_NONE;
+}
+
 PyObject* PyGame_Keypress(PyObject*, PyObject* args) {
 
 	int dik = 0;
@@ -1545,6 +1593,10 @@ static PyMethodDef PyGameMethods[]{
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{"keypress", PyGame_Keypress, METH_VARARGS, NULL},
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
+	{ "tile_flags_get", PyGame_TileFlagsGet, METH_VARARGS, NULL },
+	{ "tile_flags_set", PyGame_TileFlagsSet, METH_VARARGS, NULL },
+	{ "ground_overlay_set", PyGame_GroundOverlaySet, METH_VARARGS, NULL },
+	{ "ground_overlay_remove", PyGame_GroundOverlayRemove, METH_VARARGS, NULL },
 	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
 	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
