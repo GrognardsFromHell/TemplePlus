@@ -33,10 +33,12 @@ enum AnimSlotFlag {
 	ASF_STOP_PROCESSING = 2, // Used in context with "killing the animation slot"
 	ASF_UNK3 = 4, // Seen in goalstatefunc_82, goalstatefunc_83, set with 0x8 in
 	// goalstatefunc_42
+	ASF_ACTION = 4,
 	ASF_UNK4 = 8, // Seen in goalstatefunc_82, goalstatefunc_83, set with 0x8 in
 	// goalstatefunc_42
 	ASF_UNK5 = 0x10, // Seen in goalstatefunc_84_animated_forever, set in
 	// goalstatefunc_87
+	ASF_ANIMATING = 0x10,
 	ASF_UNK7 = 0x20, // Seen as 0x30 is cleared in goalstatefunc_7 and goalstatefunc_8
 	ASF_RUNNING = 0x40,
 	ASF_SPEED_RECALC = 0x80,
