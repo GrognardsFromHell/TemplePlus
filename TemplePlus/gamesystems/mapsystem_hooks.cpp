@@ -7,6 +7,11 @@
 #include "map/sector.h"
 #include <config/config.h>
 #include "gamesystems\objects\objsystem.h"
+#include "python/python_integration_obj.h"
+
+static int(__cdecl *orgNewGameStart)() = nullptr;
+static int sNewGameStartMap = 0;
+static locXY sNewGameStartLoc{ 0, 0 };
 
 enum esd_load_result : uint32_t {
 	PARTIALLY_EXPLORED = 0,
@@ -47,6 +52,7 @@ static class MapSystemHooks : public TempleFix {
 //	static int map_field1c(int);
 	static void map_preload_sectors_at(locXY loc);
 	static int get_map_by_type(int mapType);
+	static int new_game_start();
 	static BOOL is_in_clear_map_objs();
 	static BOOL is_map_open();
 	static void map_get_sector_dirs(char **dataDirOut, char **saveDirOut);
@@ -105,6 +111,7 @@ static class MapSystemHooks : public TempleFix {
 		// replaceFunction(0x1006fc60, map_field1c);
 		replaceFunction(0x1006fc90, map_preload_sectors_at);
 		replaceFunction(0x1006fd70, get_map_by_type);
+		orgNewGameStart = replaceFunction<int(__cdecl)()>(0x10111A80, new_game_start);
 		replaceFunction(0x1006fd90, is_in_clear_map_objs);
 		replaceFunction(0x1006fda0, is_map_open);
 		replaceFunction(0x1006fdb0, map_get_sector_dirs);
@@ -365,9 +372,91 @@ int MapSystemHooks::map_get_highest_map_id()
 }
 
 /* 0x10070fd0 */
+/*
+	New game start location (0x10111A80, called after party creation).
+	Precedence:
+	  1. Python: templeplus.new_game.get_start_location(alignment, default_map)
+	     (delegates to an optional module script scr\start_location.py)
+	  2. Rules\MapList.mes: the map with "Flag: NEW_GAME_START", at NewGameX/NewGameY if given,
+	     else at the map's MapList start position
+	  3. Engine (unchanged): the start map global 0x10BD3A48 if set, else the alignment
+	     vignette table at 0x102ACE40 (which Co8 / TOEEWB-patched DLLs modify)
+*/
+
+int MapSystemHooks::new_game_start()
+{
+	auto &mapSys = gameSystems->GetMap();
+	auto &dllStartMap = temple::GetRef<int>(0x10BD3A48);
+	auto alignment = temple::GetRef<int>(0x1080ABA4);
+	auto vignetteTable = temple::GetPointer<int>(0x102ACE40);
+	auto defaultMap = (dllStartMap && mapSys.IsValidMapId(dllStartMap)) ? dllStartMap
+		: ((alignment >= 0 && alignment < 10) ? vignetteTable[alignment] : 0);
+
+	int mapId = 0;
+	locXY loc{ 0, 0 };
+	const char *source = nullptr;
+
+	// 1. Python hook
+	{
+		auto args = Py_BuildValue("(ii)", alignment, defaultMap);
+		auto result = pythonObjIntegration.ExecuteScript("templeplus.new_game", "get_start_location", args);
+		Py_DECREF(args);
+		if (result && result != Py_None) {
+			int x = 0, y = 0;
+			if (PyInt_Check(result)) {
+				mapId = PyInt_AsLong(result);
+			}
+			else if (PyTuple_Check(result) && PyArg_ParseTuple(result, "i|ii", &mapId, &x, &y)) {
+				if (x > 0 && y > 0) loc = locXY{ (uint32_t)x, (uint32_t)y };
+			}
+			else {
+				PyErr_Clear();
+				logger->warn("New game: get_start_location returned an unsupported value; expected None, map id or (map, x, y)");
+			}
+			source = "Python (start_location.py)";
+		}
+		Py_XDECREF(result);
+	}
+
+	// 2. MapList "Flag: NEW_GAME_START"
+	// (not Type: START_MAP: vanilla marks Vignette-Chaotic 5104 with it, and the engine uses it
+	//  as the module-load map when there is no SHOPPING_MAP)
+	if (!mapId) {
+		mapId = mapSys.GetNewGameStartMap();
+		if (mapId) source = "MapList.mes NEW_GAME_START";
+	}
+
+	if (mapId && !mapSys.IsValidMapId(mapId)) {
+		logger->warn("New game: start map {} from {} is not a valid map; using the engine default", mapId, source);
+		mapId = 0;
+	}
+
+	if (!mapId) {
+		// 3. Engine default (start map global / alignment vignette)
+		logger->info("New game: starting on engine default map {} (alignment {})", defaultMap, alignment);
+		return orgNewGameStart();
+	}
+
+	if (!loc.locx || !loc.locy)
+		loc = mapSys.GetNewGameStartPos(mapId);
+	logger->info("New game: starting on map {} at ({}, {}) from {} (engine default would be {})",
+		mapId, loc.locx, loc.locy, source, defaultMap);
+
+	// Let the engine do the actual start via its start-map global, with the position override
+	auto prevGlobal = dllStartMap;
+	dllStartMap = mapId;
+	sNewGameStartMap = mapId;
+	sNewGameStartLoc = loc;
+	auto result = orgNewGameStart();
+	sNewGameStartMap = 0;
+	dllStartMap = prevGlobal;
+	return result;
+}
+
 BOOL MapSystemHooks::map_try_get_startpos(int mapId, uint64_t * startX, uint64_t * startY)
 {
-	auto startPos = gameSystems->GetMap().GetStartPos(mapId);
+	auto startPos = (sNewGameStartMap && mapId == sNewGameStartMap) ? sNewGameStartLoc
+		: gameSystems->GetMap().GetStartPos(mapId);
 	*startX = startPos.locx;
 	*startY = startPos.locy;
 	if (startPos.locx == 0 || startPos.locy == 0) {

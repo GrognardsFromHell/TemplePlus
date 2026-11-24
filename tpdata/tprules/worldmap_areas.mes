@@ -1,0 +1,60 @@
+// Temple+ worldmap area / entry point / access data
+// =====================================================================
+// Loaded at module load in this order, later entries overriding earlier ones:
+//   1. built-in defaults (compiled into Temple+, identical to this file)
+//   2. tprules\worldmap_areas.mes   (this file, Temple+ reference data)
+//   3. rules\worldmap_areas.mes     (optional; ship it in your module's data / .dat)
+// Anything not mentioned keeps its default, so a module only needs to list what it changes.
+// The game log reports what was loaded and every difference from the built-in defaults.
+//
+// Line format: [<unique line id>][Key: value, Key: value, ...]  written with curly braces
+// instead of the square brackets shown here (never put curly braces inside a comment: the
+// .mes parser reads them as entries). Line ids only need to be unique.
+//
+// 1) Area -> worldmap location (used by dialog travel, game.worldmap_travel_by_dialog(area)):
+//      [id][Area: <area id>, Location: <worldmap location id>]
+//    Area ids are the index in mes\area.mes (0..63). Location ids are the worldmap location
+//    buttons defined by the worldmap UI (engine / Co8 worldmap tables).
+//
+// 2) Entry points: a worldmap location teleports the party to a "teleport id". It can be a
+//    real map id (the party arrives at that map's MapList.mes start position) or a virtual id
+//    that resolves to a map + tile. Any town may define several entrances this way:
+//      [id][EntryPoint: <teleport id>, Map: <map id>, X: <tile x>, Y: <tile y>]
+//    Hommlet uses 5001 (main), 15001 (north) and 25001 (castle), all on map 5001.
+//
+// 3) Worldmap access: whether the worldmap can be opened while on a map:
+//      [id][Map: <map id>, WorldmapAccess: 1]     (or 0 to forbid)
+//    Maps not listed use the engine's built-in check (vanilla: 5001, 5002, 5051, 5062, 5068,
+//    5069, 5091, 5093, 5094, 5095, 5112, 5113; Co8 DLLs add 5108, 5121, 5132).
+//    No access rules are defined here on purpose, so each DLL keeps its own list.
+//
+// Related: the map -> area mapping is set per map in rules\MapList.mes with the "Area: <n>"
+// key (e.g. [5001][Map01-hommlet-exterior, 623, 421, Type: START_MAP, Area: 1, ...]).
+// Maps without it fall back to the engine's hardcoded table (patched by Co8 for its new areas).
+// =====================================================================
+
+// --- Area -> worldmap location (built-in defaults) ---
+{100}{Area: 0, Location: -1}
+{101}{Area: 1, Location: 9}
+{102}{Area: 2, Location: 1}
+{103}{Area: 3, Location: 3}
+{104}{Area: 4, Location: 6}
+{105}{Area: 5, Location: 0}
+{106}{Area: 6, Location: 4}
+{107}{Area: 7, Location: 7}
+{108}{Area: 8, Location: 2}
+{109}{Area: 9, Location: 5}
+{110}{Area: 10, Location: 8}
+{111}{Area: 11, Location: 12}
+{112}{Area: 12, Location: 13}
+{113}{Area: 13, Location: 0}
+{114}{Area: 14, Location: 14}
+{115}{Area: 15, Location: 15}
+{116}{Area: 16, Location: 16}
+
+// --- Entry points (Hommlet's three entrances) ---
+{200}{EntryPoint: 5001, Map: 5001, X: 623, Y: 421}
+{201}{EntryPoint: 15001, Map: 5001, X: 512, Y: 221}
+{202}{EntryPoint: 25001, Map: 5001, X: 433, Y: 626}
+
+// --- Worldmap access (none: engine defaults apply) ---
