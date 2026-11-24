@@ -265,6 +265,8 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     
     mGameSystems.GetClipping().SetDebug(config.debugClipping);
     mGameSystems.GetClipping().Render();
+    // debug overlay right after the occluder pass: later in the frame the camera constants no longer match it
+    mGameSystems.GetClipping().RenderDebug();
     // renderFuncs.RenderClipping();
 
     mMapObjectRenderer->RenderMapObjects(

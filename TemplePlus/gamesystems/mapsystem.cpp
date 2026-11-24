@@ -1170,6 +1170,7 @@ void MapSystem::CloseMap()
 	if (!mMapClosed)
 	{
 		mMapClosed = true;
+		TileEdits::OnMapClose(); // autosaves unsaved DM tile edits
 		
 		static auto turnBasedReset = temple::GetPointer<void()>(0x10092A50);
 		turnBasedReset();
@@ -1283,6 +1284,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 
 	mSectorSaveDir = saveDir;
 	mSectorDataDir = dataDir;
+	TileEdits::OnMapOpen(mapEntry->id, mapEntry->name); // DM tile edits: load before any sector of this map is read
 	
 	gameSystems->GetHeight().SetDataDirs(dataDir, saveDir);
 	gameSystems->GetPathNode().SetDataDirs(dataDir, saveDir);

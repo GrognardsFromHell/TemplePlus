@@ -10,6 +10,7 @@
 #include <pathfinding.h>
 #include <gamesystems/map/sector.h>
 #include <location.h>
+#include "config/config.h"
 
 static std::string GetNiceName(void* ptr) {
 	
@@ -228,16 +229,26 @@ PyObject *PyDebug_DumpAiTactics() {
 }
 
 
-PyObject *PyDebug_RecalculatePathNodeNeighbours()
+// debug.recalc_neighbours([max_dist_tiles]): optional straight-line limit for candidate links (0 = all nodes)
+PyObject *PyDebug_RecalculatePathNodeNeighbours(PyObject*, PyObject* args)
 {
+	float maxDist = 0;
+	if (!PyArg_ParseTuple(args, "|f:recalc_neighbours", &maxDist))
+		return nullptr;
+	PathNodeSys::recalcMaxDistTiles = maxDist;
 	pathNodeSys.RecalculateAllNeighbours();
+	PathNodeSys::recalcMaxDistTiles = 0;
 	return PyLong_FromLongLong(1);
 }
 
-PyObject *PyDebug_FlushNodes()
+// debug.flush_nodes([dir]): optional output dir (default: the save game's map dir)
+PyObject *PyDebug_FlushNodes(PyObject*, PyObject* args)
 {
-	pathNodeSys.FlushNodes();
-	return PyLong_FromLongLong(1);
+	const char* dir = nullptr;
+	if (!PyArg_ParseTuple(args, "|s:flush_nodes", &dir))
+		return nullptr;
+	auto ok = pathNodeSys.FlushNodes(dir);
+	return PyLong_FromLongLong(ok);
 }
 
 PyObject *PyDebug_ReciprocityDebug()
@@ -246,10 +257,14 @@ PyObject *PyDebug_ReciprocityDebug()
 	return PyLong_FromLongLong(1);
 }
 
-PyObject *PyDebug_GenerateClearanceFile()
+// debug.genclearance([dir]): optional output dir (default: the save game's map dir)
+PyObject *PyDebug_GenerateClearanceFile(PyObject*, PyObject* args)
 {
-	pathNodeSys.GenerateClearanceFile();
-	return PyLong_FromLongLong(1);
+	const char* dir = nullptr;
+	if (!PyArg_ParseTuple(args, "|s:genclearance", &dir))
+		return nullptr;
+	pathNodeSys.GenerateClearanceFile(dir);
+	return PyLong_FromLongLong(PathNodeSys::hasClearanceData ? PathNodeSys::clearanceData.clrIdx.numSectors : 0);
 }
 
 /*
@@ -342,15 +357,25 @@ PyObject *PyDebug_BreakP(PyObject*, PyObject* args)
 	return PyLong_FromLongLong(1);
 }
 
+// debug.clipping(on): draw the map's clipping (occluder) meshes as white wireframe (config.debugClipping); returns the old state
+static PyObject *PyDebug_Clipping(PyObject*, PyObject* args) {
+	int on = -1;
+	if (!PyArg_ParseTuple(args, "|i:clipping", &on)) return nullptr;
+	bool old = config.debugClipping;
+	if (on >= 0) config.debugClipping = on != 0;
+	return PyInt_FromLong(old ? 1 : 0);
+}
+
 static PyMethodDef PyDebug_Methods[] = {
+	{ "clipping", (PyCFunction)PyDebug_Clipping, METH_VARARGS, NULL },
 	{ "crash", (PyCFunction)PyDebug_Crash, METH_NOARGS, NULL },
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
 	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },
 	{ "dump_d20actions", (PyCFunction)PyDebug_DumpD20Actions, METH_NOARGS, NULL },
 	{ "dump_ai_tactics", (PyCFunction)PyDebug_DumpAiTactics, METH_NOARGS, NULL },
-	{ "recalc_neighbours", (PyCFunction)PyDebug_RecalculatePathNodeNeighbours, METH_NOARGS, NULL },
-	{ "flush_nodes", (PyCFunction)PyDebug_FlushNodes, METH_NOARGS, NULL },
+	{ "recalc_neighbours", (PyCFunction)PyDebug_RecalculatePathNodeNeighbours, METH_VARARGS, NULL },
+	{ "flush_nodes", (PyCFunction)PyDebug_FlushNodes, METH_VARARGS, NULL },
 	{ "recip", (PyCFunction)PyDebug_ReciprocityDebug, METH_NOARGS, NULL },
 	{ "destclear", (PyCFunction)PyDebug_DestClear, METH_VARARGS, NULL },
 	{ "tileflags", (PyCFunction)PyDebug_GetTileFlags, METH_VARARGS, NULL },

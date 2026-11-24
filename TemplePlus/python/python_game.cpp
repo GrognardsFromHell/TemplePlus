@@ -934,10 +934,17 @@ PyObject* PyGame_TileFlagsGet(PyObject*, PyObject* args) {
 PyObject* PyGame_TileFlagsSet(PyObject*, PyObject* args) {
 	locXY loc;
 	unsigned int flags;
-	if (!PyArg_ParseTuple(args, "LI:game.tile_flags_set", &loc, &flags)) {
+	unsigned int ownedMask = 0;
+	if (!PyArg_ParseTuple(args, "LI|I:game.tile_flags_set", &loc, &flags, &ownedMask)) {
 		return nullptr;
 	}
 	LocAndOffsets l{ loc, 0, 0 };
+	// bits a script switches at runtime (door cells) are script-owned: the DM tile editor must not paint, save or
+	// re-apply them. Optional 3rd arg = the full mask the script owns on this tile; otherwise the changed bits.
+	auto prev = (unsigned int)sectorSys.GetTileFlags(l);
+	if (prev != 0xFFFFFFFFu) {
+		TileEdits::Protect(loc, ownedMask ? ownedMask : (prev ^ flags));
+	}
 	if (sectorSys.SetTileFlags(l, (TileFlags)flags)) {
 		Py_RETURN_TRUE;
 	}

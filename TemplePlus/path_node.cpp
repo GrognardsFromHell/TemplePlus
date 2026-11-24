@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "common.h"
 #include "path_node.h"
+#include <algorithm>
+#include <vector>
 #include "pathfinding.h"
 #include "location.h"
 #include "tio/tio.h"
@@ -22,6 +24,7 @@ char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
 MapClearanceData PathNodeSys::clearanceData;
 bool PathNodeSys::hasClearanceData = false;
+float PathNodeSys::recalcMaxDistTiles = 0;
 struct PathNodeSysAddresses : temple::AddressTable
 {
 	
@@ -271,17 +274,14 @@ BOOL PathNodeSys::LoadNodesCurrent()
 	}
 
 	auto clearanceFile = tio_fopen(clearanceFileName, "rb");
-	if (hasClearanceData)
-	{
-		free(clearanceData.secClr);
-	}
+	clearanceData.Reset(); // frees and clears secClr (a bare free here left a dangling pointer: double free in GenerateClearanceFile after a map change)
 	hasClearanceData = false;
 	if (clearanceFile)
 	{
 		int readStatus = tio_fread(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, clearanceFile);
 		if (readStatus)
 		{	
-			clearanceData.secClr = new SectorClearanceData[clearanceData.clrIdx.numSectors];
+			clearanceData.secClr = (SectorClearanceData*)malloc(sizeof(SectorClearanceData) * clearanceData.clrIdx.numSectors); // freed with free() by Reset()
 			readStatus = tio_fread(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, clearanceFile);
 		}
 			
@@ -417,53 +417,47 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 {
 	if (!node)
 		return;
-	auto neighbor = pathNodeList;
+	// candidates nearest first, so the MAX_NEIGHBOURS cap keeps the closest links rather than the first ones in the list
+	std::vector<std::pair<float, MapPathNodeList*>> cands;
+	for (auto neighbor = pathNodeList; neighbor; neighbor = neighbor->next) {
+		if (node->node.id == neighbor->node.id)
+			continue;
+		auto distTiles = locSys.distBtwnLocAndOffs(node->node.nodeLoc, neighbor->node.nodeLoc) / INCH_PER_TILE;
+		if (recalcMaxDistTiles > 0 && distTiles > recalcMaxDistTiles)
+			continue;
+		cands.push_back({ distTiles, neighbor });
+	}
+	std::sort(cands.begin(), cands.end(), [](const std::pair<float, MapPathNodeList*>& x, const std::pair<float, MapPathNodeList*>& y) { return x.first < y.first; });
 	PathQuery pathQ;
 	PathQueryResult path;
-	while (neighbor)
+	// link with a normal PC's clearance: radius 25 in, the obj_f_radius of the medium PC protos (protos.tab 13000/13001)
+	pathfindingSys.nominalRadius = 25.0f;
+	for (auto &cand : cands)
 	{
-		if (node->node.id == neighbor->node.id)
-		{
-			neighbor = neighbor->next;
-			continue;
-		}
-			
+		if (node->node.neighboursCount >= MAX_NEIGHBOURS)
+			break;
+		auto neighbor = cand.second;
 		pathQ.from = node->node.nodeLoc;
 		pathQ.to = neighbor->node.nodeLoc;
 		pathQ.flags = (PathQueryFlags) (PQF_DONT_USE_STRAIGHT_LINE | PQF_DONT_USE_PATHNODES | PQF_TO_EXACT | PQF_IGNORE_CRITTERS | PQF_IGNORE_CRITTERS_ON_DESTINATION);
-		pathQ.critter = 0;
+		pathQ.critter = 0;   // nominalRadius above: with radius 1 links squeezed through gaps / along water edges
 		pathQ.flags2 = 0;
 		if (pathfindingSys.FindPath(&pathQ, &path ) > 0)
 		{
 			auto pathLen = pathfindingSys.GetPathLength(&path);
 			auto fromToDist = locSys.distBtwnLocAndOffs(pathQ.from, pathQ.to) / 12.0;
-
-			if ( pathLen < 6 * fromToDist && node->node.neighboursCount < MAX_NEIGHBOURS) // prevent extremely roundabout links
+			if ( pathLen < 6 * fromToDist) // prevent extremely roundabout links
 			{
-				
 				auto neighCntNew = ++node->node.neighboursCount;
-				//int neighSizeNew = 4 * (node->node.neighboursCount + 1);
-				// int *neighboursNew = (int*)realloc(neighbours, neighSizeNew);
-				
-				//node->node.neighbours = neighboursNew;
-				//neighboursNew[neighCntNew - 1] = neighbor->node.id;
 				node->node.neighbours[neighCntNew - 1] = neighbor->node.id;
-
-				// node->node.neighDistances = (float*)realloc(node->node.neighDistances, neighSizeNew);
 				if  (path.flags & PF_STRAIGHT_LINE_SUCCEEDED)
 					node->node.neighDistances[neighCntNew - 1] = -pathLen;
 				else
 					node->node.neighDistances[neighCntNew - 1] = pathLen;
-				
-
-			}
-			else
-			{
-				int aha = 0;
 			}
 		}
-		neighbor = neighbor->next;
 	}
+	pathfindingSys.nominalRadius = 0;
 	*(int*)&node->node.flags |= PNF_NEIGHBOUR_DISTANCES_SET;
 }
 
@@ -501,6 +495,23 @@ void PathNodeSys::RecalculateAllNeighbours()
 		node = node->next;
 	}
 	logger->info("Finished recalculating neighbours. Max neighbours is {}", maxNeighbours);
+	// keep only two-way links: with a real critter radius A->B can succeed where B->A fails (e.g. a node near a wall),
+	// and a one-way link makes the node chain search pick hops the pathfinder can't walk
+	int pruned = 0;
+	for (auto n1 = pathNodeList; n1; n1 = n1->next) {
+		int k = 0;
+		for (int i = 0; i < n1->node.neighboursCount; i++) {
+			bool recip = false;
+			for (auto n2 = pathNodeList; n2 && !recip; n2 = n2->next)
+				if (n2->node.id == n1->node.neighbours[i])
+					for (int j = 0; j < n2->node.neighboursCount && !recip; j++)
+						recip = n2->node.neighbours[j] == n1->node.id;
+			if (recip) { n1->node.neighbours[k] = n1->node.neighbours[i]; n1->node.neighDistances[k] = n1->node.neighDistances[i]; k++; }
+			else pruned++;
+		}
+		n1->node.neighboursCount = k;
+	}
+	logger->info("Pruned {} one-way neighbour links", pruned);
 	// verify reciprocity
 	node = pathNodeList;
 	while( node)
@@ -591,8 +602,8 @@ void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 
 	logger->info("Generating clearance data.");
 	int idx = -1;
-	auto secClrData = new SectorClearanceData();
 	clearanceData.Reset();
+	auto secClrData = (SectorClearanceData*)malloc(sizeof(SectorClearanceData)); // grown with realloc below
 
 	for (int secY = 0; secY < 16; secY++)
 	{
