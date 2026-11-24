@@ -13,7 +13,9 @@
 #include "gameview.h"
 
 UiManager *uiManager;
-
+LgcyWidgetId mLedgerCurId = -1;
+std::map<LgcyWidgetId, std::string> mTextLedger;
+std::map<LgcyWidgetId, int> mRenderLedger; // whether it draws something (other than text) on screen
 
 /**
  * Handles button click triggering.
@@ -126,7 +128,7 @@ public:
 			 if (*text == 0)
 				 return 1;
 
-			
+			 uiManager->RenderedTextTabulate(widgetId, text);
 
 			 TigRect extents(rect.x + wid->x, rect.y + wid->y, rect.width, rect.height);
 			 if (rect.x < 0 || rect.x > 10000 || rect.width > 10000 || rect.width < 0)
@@ -639,6 +641,9 @@ void UiManager::RemoveChildWidget(LgcyWidgetId id)
 
 void UiManager::Render()
 {
+	mTextLedger.clear();
+	mRenderLedger.clear();
+
 	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
 	auto activeWindows(mActiveWindows);
 
@@ -659,6 +664,7 @@ void UiManager::Render()
 		// Render the widget itself
 		auto renderFunc = window->render;
 		if (renderFunc) {
+			mLedgerCurId = windowId;
 			renderFunc(windowId);
 		}
 
@@ -667,10 +673,66 @@ void UiManager::Render()
 			auto childId = window->children[i];
 			auto child = GetWidget(childId);
 			if (!child->IsHidden() && child->render) {
+				mLedgerCurId = childId;
 				child->render(childId);
 			}
 		}
 	}
+	mLedgerCurId = -1;
+}
+
+void UiManager::RenderedTextTabulate(LgcyWidgetId id, const char* text)
+{
+	if (id == -1 && mLedgerCurId != -1){
+		if (mTextLedger.find(mLedgerCurId) == mTextLedger.end()) {
+			mTextLedger[mLedgerCurId] = fmt::format("[WID={}]", mLedgerCurId) + text;
+		}
+		return;
+	}
+	mTextLedger[mLedgerCurId] = text;
+	if (id != mLedgerCurId) { // many such cases!
+		if (mTextLedger.find(id) == mTextLedger.end()) {
+			mTextLedger[id] = fmt::format("[WID={}]", mLedgerCurId) + text;
+		}
+		else {
+			mTextLedger[id] += fmt::format("\n[WID={}]", mLedgerCurId) + text;
+		}
+	}
+}
+
+const char* UiManager::GetRenderedText(LgcyWidgetId id)
+{
+	auto it = mTextLedger.find(id);
+	if (it== mTextLedger.end())
+		return nullptr;
+	return it->second.c_str();
+}
+
+void UiManager::RenderingTabulate(LgcyWidgetId id, int val)
+{
+	if (id == -1 && mLedgerCurId != -1) {
+		if (mRenderLedger.find(mLedgerCurId) == mRenderLedger.end()) {
+			mRenderLedger[mLedgerCurId] |= val;
+		}
+		return;
+	}
+	mRenderLedger[mLedgerCurId] = val;
+	if (id != mLedgerCurId) { // many such cases!
+		if (mRenderLedger.find(id) == mRenderLedger.end()) {
+			mRenderLedger[id] = val;
+		}
+		else {
+			mRenderLedger[id] |= val;
+		}
+	}
+}
+
+int UiManager::GetRenderingStatus(LgcyWidgetId id)
+{
+	auto it = mRenderLedger.find(id);
+	if (it == mRenderLedger.end())
+		return 0;
+	return it->second;
 }
 
 LgcyWindow * UiManager::GetWindowAt(int x, int y)

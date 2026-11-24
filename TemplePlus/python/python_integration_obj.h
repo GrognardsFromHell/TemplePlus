@@ -111,6 +111,9 @@ public:
 	objHndl GetCounterObj() {
 		return mCounterObj;
 	}
+	int GetCounterScriptId() const {
+		return mCounterScriptId;
+	}
 	ObjScriptEvent GetCounterEvent() {
 		return mCounterEvent;
 	}

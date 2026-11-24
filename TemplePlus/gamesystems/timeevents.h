@@ -165,6 +165,8 @@ public:
 
 	GameTime GetTime();
 	GameTime GetAnimTime();
+	GameTime GetRealTime();
+	GameTime GetTimeSession(); // like real time but doesn't reset on reload
 
 	bool IsDaytime();
 
@@ -208,6 +210,7 @@ private:
 	
 	bool IsInAdvanceTime();
 
+	GameTime mSessionTime;
 private:
 	uint32_t mapTickAccumMs = 0;
 	uint32_t mapTickIntervalMs = 1000;

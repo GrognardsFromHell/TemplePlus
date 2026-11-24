@@ -5,9 +5,22 @@
 #include <gamesystems/objects/objsystem.h>
 #include <gamesystems/objects/gameobject.h>
 #include <party.h>
+#include <tig/tig_msg.h>
+#include <tig/tig_keyboard.h>
+#include <ui/ui.h>
 
 
 UiLogbook uiLogbook;
+
+
+class UiLogbookHooks : public TempleFix
+{
+	static BOOL KeyEntryWndMsg(int, TigMsg*); // support pressing enter to confirm
+	void apply() override {
+		
+		writeAddress(0x10197245 + 7, &KeyEntryWndMsg);
+	}
+} uiLogbookHooks;
 
 void UiLogbook::IncreaseAmount(PartyLogbookPacket & pkt, objHndl handle, int amount){
 
@@ -50,6 +63,11 @@ void UiLogbook::MarkKey(int keyId, const GameTime& gameTime){
 	temple::GetRef<void(__cdecl)(int, GameTime)>(0x1009A7B0)(keyId, gameTime);
 }
 
+void UiLogbook::KeyEntryNeedToNotifySet(bool setValue)
+{
+	temple::GetRef<int>(0x102FEDE0) = setValue ? 1 : 0;
+}
+
 BOOL PartyLogbookPacket::HasObj(objHndl handle){
 	for (auto i=0; i < LOGBOOK_MAX_PARTY_MEMBER_COUNT; i++){
 		ObjectId id = this->sub[i].id;
@@ -63,4 +81,17 @@ BOOL PartyLogbookPacket::HasObj(objHndl handle){
 
 BOOL PartyLogbookPacket::AddObj(objHndl handle){
 	return temple::GetRef<BOOL(__cdecl)(PartyLogbookPacket *, objHndl)>(0x10198C40)(this, handle);
+}
+
+BOOL UiLogbookHooks::KeyEntryWndMsg(int id, TigMsg* msg)
+{
+	if (msg->type == TigMsgType::CHAR) {
+		auto charMsg = (TigCharMsg*)msg;
+
+		if (charMsg->charCode == VK_RETURN) {
+			uiManager->SetHidden(id, true);
+			return TRUE;
+		}
+	}
+	return TRUE;
 }

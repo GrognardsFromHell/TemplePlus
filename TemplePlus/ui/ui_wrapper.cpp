@@ -9,6 +9,10 @@ static int ui_add_window(LgcyWindow *widget, size_t widgetSize, LgcyWidgetId *as
 	widget->type = LgcyWidgetType::Window;
 	assert(widget->GetSize() == widgetSize);
 	
+	// adding default name to be able to retrieve widgets
+	if (widget->name[0] == '\0') {
+		snprintf(widget->name, sizeof(LgcyWidget::name), "%s %d", sourceFile, lineNumber);
+	}
 	auto assignedId = uiManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
@@ -31,7 +35,10 @@ static int ui_scrollbar_add(LgcyScrollBar *widget, size_t widgetSize, LgcyWidget
 static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *assignedIdOut, const char *sourceFile, uint32_t lineNumber) {
 	widget->type = LgcyWidgetType::Button;
 	assert(widget->GetSize() == widgetSize);
-
+	// adding default name to be able to retrieve widgets
+	if (widget->name[0] == '\0') {
+		snprintf(widget->name, sizeof(LgcyWidget::name), "%s %d", sourceFile, lineNumber);
+	}
 	widget->sndHoverOn = -1;
 	widget->sndHoverOff = -1;
 	widget->sndClick = -1;

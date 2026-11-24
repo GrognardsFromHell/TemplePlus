@@ -8,6 +8,8 @@
 #include <ui/widgets/widgets.h>
 #include <tig/tig_startup.h>
 #include <graphics/device.h>
+#include <gameview.h>
+#include "mainwindow.h"
 
 namespace py = pybind11;
 //
@@ -79,6 +81,7 @@ namespace py = pybind11;
 //NAMESPACE_END(PYBIND11_NAMESPACE)
 #include "ui/ui_python.h"
 #include <ui/ui_systems.h>
+#include <python/python_object.h>
 
 
 UiPython * uiPython = nullptr;
@@ -139,10 +142,81 @@ WidgetButton* GetButton(const std::string& id) {
 	return (WidgetButton*)(wid);
 }
 
+WidgetContainer* GetAdvWidgetContainer(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsContainer()) return nullptr;
+
+	return (WidgetContainer*)(wid);
+}
+WidgetButton* GetAdvWidgetButton(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsButton()) return nullptr;
+
+	return (WidgetButton*)(wid);
+}
+WidgetScrollBar* GetAdvWidgetScrollbar(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsScrollBar()) return nullptr;
+
+	return (WidgetScrollBar*)(wid);
+}
+
+
 PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.doc() = "Temple+ GUI, used for custom user UIs.";
 	m.def("set_autoplayer_goals", &UISetAutoplayerGoals);
+
+	m.def("game_is_focused", []()->bool {
+		return GetFocus() == tig->GetMainWindow().GetHwnd();
+		});
+	m.def("_get_widget_id_at", [](int x, int y) {
+		auto id = uiManager->GetWidgetAt(x, y);
+		});
+	m.def("_get_active_windows", []()->std::vector<LgcyWidgetId> {
+		return uiManager->GetActiveWindows();
+		}, py::return_value_policy::copy);
+	m.def("_get_legacy_widget", [](LgcyWidgetId id)->LgcyWidget* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv)
+			return nullptr;
+		return wid;
+		}, py::return_value_policy::reference);
+	m.def("_get_legacy_window", [](LgcyWidgetId id)->LgcyWindow* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsWindow())
+			return nullptr;
+		return (LgcyWindow*)wid;
+		}, py::return_value_policy::reference);
+	m.def("_get_legacy_button", [](LgcyWidgetId id)->LgcyButton* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsButton())
+			return nullptr;
+		return (LgcyButton*)wid;
+		}, py::return_value_policy::reference);
+	m.def("_get_legacy_scrollbar", [](LgcyWidgetId id)->LgcyScrollBar* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsScrollBar())
+			return nullptr;
+		return (LgcyScrollBar*)wid;
+		}, py::return_value_policy::reference);
+
+
+
+
+	m.def("_get_adv_widget_container", &GetAdvWidgetContainer /*[](LgcyWidgetId id)->bool {
+		auto wid = GetAdvWidget("sheeit");
+		return wid!=nullptr;
+		}*/, py::return_value_policy::reference);
+	m.def("_get_adv_widget_button", &GetAdvWidgetButton /*[](LgcyWidgetId id)->bool {
+		auto wid = GetAdvWidget("sheeit");
+		return wid!=nullptr;
+		}*/, py::return_value_policy::reference);
+	m.def("_get_adv_widget_scrollbar", &GetAdvWidgetScrollbar, py::return_value_policy::reference);
 
 	m.def("_add_root_container", [](const std::string& id, int w, int h)->WidgetContainer* {
 		auto wid = uiPython->AddRootWidget(id);
@@ -204,12 +278,56 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.def("_get_button", &GetButton, py::return_value_policy::reference);
 
+	// maps from scene coordinates to screen coordinates
+	// note: this is not exactly the same as window coordinates, needs ClientToScreen conversion (done in python)
+	m.def("map_from_scene", [](int x, int y) {
+		auto result = tig->GetGameView().MapFromScene(x, y);
+		std::vector res = { result.x,result.y };
+		return res;
+		}
+	);
+	m.def("map_to_scene", [](int x, int y) {
+		auto result = tig->GetGameView().MapToScene(x, y);
+		std::vector res = { result.x,result.y };
+		return res;
+		});
+
+	m.def("world_to_screen", [](py::object obj) {
+
+		LocAndOffsets loc = LocAndOffsets::null;
+		auto pyObj = obj.ptr();
+		if (PyLong_Check(pyObj)) {
+			loc.location = locXY::fromField(PyLong_AsUnsignedLongLong(pyObj));
+		}
+		else if (PyObjHndl_Check(pyObj)) {
+			auto objHandle = PyObjHndl_AsObjHndl(pyObj);
+			loc = objects.GetLocationFull(objHandle);
+		}
+		else if (py::isinstance<LocAndOffsets>(obj)) {
+			loc = obj.cast<LocAndOffsets>();
+		}
+
+		auto worldPos = loc.ToInches3D();
+		auto uiPos = gameView->WorldToScreenUi(worldPos);
+		int x = uiPos.x, y = uiPos.y;
+		return std::vector<int>({ x,y });
+		});
+
+#pragma region classes
 	py::class_<WidgetBase>(m, "Widget")
 		.def_property_readonly("id", &WidgetBase::GetWidgetId)
+		.def_property_readonly("name", &WidgetBase::GetId)
+		.def_property_readonly("source_uri", &WidgetBase::GetSourceURI)
 		.def_property("width", &WidgetBase::GetWidth, &WidgetBase::SetWidth)
 		.def_property("height", &WidgetBase::GetHeight, &WidgetBase::SetHeight)
 		.def_property("x", &WidgetBase::GetX, &WidgetBase::SetX)
 		.def_property("y", &WidgetBase::GetY, &WidgetBase::SetY)
+		.def("abs_x", [](WidgetBase& self)->int {
+			return self.GetContentArea().x;
+			})
+		.def("abs_y", [](WidgetBase& self)->int {
+				return self.GetContentArea().y;
+			})
 		.def_property("pos", &WidgetBase::GetPos, &WidgetBase::SetPos)
 		.def_property("parent", &WidgetBase::GetParent, &WidgetBase::SetParent, py::return_value_policy::reference)
 		.def_property("visible", &WidgetBase::IsVisible, &WidgetBase::SetVisible)
@@ -274,6 +392,20 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 				me.AddContent(std::unique_ptr<WidgetContent>(content));
 			})*/
 		//.def_property_readonly("children", []() ->std::vector<int> {}&WidgetContainer::GetChildren) // eastl bah
+		.def_property_readonly("children_ids", [](WidgetContainer & self){
+				std::vector<std::string> result;
+				for (auto& child : self.GetChildren()) {
+					result.push_back(child->GetId());
+				}
+				return result;
+			})
+		.def_property_readonly("children_legacy_ids", [](WidgetContainer& self) {
+				std::vector<int> result;
+				for (auto& child : self.GetChildren()) {
+					result.push_back(child->GetWidgetId());
+				}
+				return result;
+			})
 		;
 	py::class_<WidgetButtonStyle>(m, "ButtonStyle")
 		.def_readwrite("image_normal", &WidgetButtonStyle::normalImagePath)
@@ -299,6 +431,92 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 			self.SetMouseMsgHandler([](const TigMouseMsg&) {return true; /* just so that it eats the message */ });
 			})
 		;
+	py::class_<WidgetScrollBar, WidgetContainer>(m, "ScrollBar")
+		.def_property("scrollbar_value", &WidgetScrollBar::GetValue, &WidgetScrollBar::SetValue)
+		.def_property_readonly("scrollbar_max", &WidgetScrollBar::GetMax)
+		;
 
+#pragma endregion
+	
+#pragma region Legacy Widgets
+	py::class_<LgcyWidget>(m, "LgcyWidget")
+		.def_property_readonly("is_window", &LgcyWidget::IsWindow)
+		.def_property_readonly("is_button", &LgcyWidget::IsButton)
+		.def_property_readonly("is_scrollbar", &LgcyWidget::IsScrollBar)
+		.def_property_readonly("is_hidden", &LgcyWidget::IsHidden)
+		// .def_readonly("name", &LgcyWidget::name) // fails for empty strings apparently - some Unicode error with byte 0x90 at pos 0
+		.def_property_readonly("name", [](LgcyWidget &self) ->py::bytes{
+			return self.name;
+			})
+		.def_readonly("id", &LgcyWidget::widgetId)
+		.def_readonly("parent_id", &LgcyWidget::parentId)
+		.def_readonly("width", &LgcyWidget::width)
+		.def_readonly("height", &LgcyWidget::height)
+		.def_readonly("x", &LgcyWidget::x)
+		.def_readonly("y", &LgcyWidget::y)
+		// duck typing window:
+		.def_property_readonly("children_count", [](LgcyWidget &self)->int {
+			if (!self.IsWindow())
+				return 0;
+			return ((LgcyWindow&)self).childrenCount;
+			})
+		.def_property_readonly("children", [](LgcyWidget& self)->std::vector<int> {
+				if (!self.IsWindow())
+					return std::vector<int>();
+				std::vector<int> result;
+				auto &wnd = (LgcyWindow&)self;
+				auto count = wnd.childrenCount;
+				for (auto i = 0; i < count; ++i) {
+					auto it = wnd.children[i];
+					if (it == 0)
+						break;
+					result.push_back(it);
+				}
+				return result;
+			})
+		.def_property_readonly("rendered_text", [](LgcyWidget& self)->py::bytes{
+				auto txt = uiManager->GetRenderedText(self.widgetId);
+				if (!txt)
+					return "";
+				return txt;
+			})
+		.def_property_readonly("render_status", [](LgcyWidget& self)->int {
+				auto val = uiManager->GetRenderingStatus(self.widgetId);
+				return val;
+			})
+		// duck typing scrollbars:
+		.def_property_readonly("scrollbar_value", 
+			/* get */ [](LgcyWidget& self)->int {
+				if (!self.IsScrollBar())
+					return -1;
+				auto& scrollbar = (LgcyScrollBar&)self;
+				return scrollbar.GetY();
+			})
+		.def_property_readonly("scrollbar_max",
+			/* get */ [](LgcyWidget& self)->int {
+				if (!self.IsScrollBar())
+					return -1;
+				auto& scrollbar = (LgcyScrollBar&)self;
+				return scrollbar.yMax;
+			})
+		;
 
+	py::class_<LgcyWindow, LgcyWidget>(m, "LgcyWindow")
+		.def_readonly("children", &LgcyWindow::children)
+		.def_readonly("children_count", &LgcyWindow::childrenCount)
+		;
+	py::enum_<LgcyButtonState>(m, "LgcyButtonState")
+		.value("Disabled", LgcyButtonState::Disabled)
+		.value("Normal", LgcyButtonState::Normal)
+		.value("Hovered", LgcyButtonState::Hovered)
+		.value("Down", LgcyButtonState::Down)
+		.value("Released", LgcyButtonState::Released)
+		.export_values()
+		;
+	py::class_<LgcyButton, LgcyWidget>(m, "LgcyButton")
+		.def_readonly("button_state", &LgcyButton::buttonState)
+		;
+	py::class_<LgcyScrollBar, LgcyWidget>(m, "LgcyScrollBar")
+		;
+#pragma endregion Legacy Widgets
 }

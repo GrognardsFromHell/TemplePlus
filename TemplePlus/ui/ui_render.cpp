@@ -139,6 +139,7 @@ bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRec
 		return 1;
 	if (text.empty())
 		return 1;
+	uiManager->RenderedTextTabulate(widgetId, text.c_str());
 
 	TigRect extents(rect.x + wid->x , rect.y + wid->y , rect.width,rect.height);
 
