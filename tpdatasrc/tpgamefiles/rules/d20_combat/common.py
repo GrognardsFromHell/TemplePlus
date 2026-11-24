@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 
 # Gets the weapon in the left hand.
 # This can be one of the following:
@@ -48,9 +49,12 @@ def getSecondaryWeapon(attacker):
     # otherwise left hand is secondary
     return weapl
 
-def getUsedWeapon(flags, attacker):
+def getUsedWeapon(flags, attacker, d20_data = 0):
     print "getUsedWeapon"
     unarmed = OBJ_HANDLE_NULL
+    # natural weapon blend: claws/bite never use the wielded weapon
+    if tpdp.is_extra_natural_attack_code(d20_data):
+        return unarmed
     #if flags & D20CAF_TOUCH_ATTACK:
     #    return unarmed # this fucks up thrown grenades
     if flags & D20CAF_SECONDARY_WEAPON:

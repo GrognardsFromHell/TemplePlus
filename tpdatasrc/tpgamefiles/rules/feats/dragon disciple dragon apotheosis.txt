@@ -1,0 +1,5 @@
+name: Dragon Disciple Dragon Apotheosis
+flags: 8
+prereqs:
+description:  At 10th level a dragon disciple becomes a half-dragon: +4 Str, +2 Cha, natural armor +4 (see the related features), immunity to sleep and paralysis effects, and immunity to his heritage's energy type. Darkvision and low-light vision are not modelled; the creature type does not change.
+prereq descr: Dragon Disciple level 10.

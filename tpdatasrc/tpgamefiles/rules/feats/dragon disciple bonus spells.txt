@@ -1,0 +1,5 @@
+name: Dragon Disciple Bonus Spells
+flags: 8
+prereqs:
+description:  At 1st, 2nd, 3rd, 5th, 6th, 7th and 9th level, a dragon disciple gains a bonus spell per day of the highest level his spontaneous arcane class can cast.
+prereq descr: Dragon Disciple level 1.

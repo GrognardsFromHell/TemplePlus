@@ -21,6 +21,7 @@
 #include <pybind11/stl.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
+#include "../d20.h"
 #include <condition.h>
 #include "python_spell.h"
 #include "turn_based.h"
@@ -261,6 +262,25 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return 0;
 		});
 
+	m.def("is_natural_attack_code", [](int code)->bool { return IsCritterNaturalAttackCode(code); }, "True for proto (monster) natural attack codes (1000..1999)");
+	m.def("is_extra_natural_attack_code", [](int code)->bool { return IsExtraNaturalAttackCode(code); }, "True for natural weapon blend attack codes (2000+)");
+	m.def("get_extra_natural_attacks", [](objHndl critter)->std::vector<std::tuple<int, int, int, int>> {
+		std::vector<std::tuple<int, int, int, int>> result;
+		auto plan = naturalBlend::Resolve(critter);
+		for (auto& e : plan.attacks)
+			result.push_back(std::make_tuple(e.attackType, e.dicePacked, (int)e.damType, e.flags));
+		return result;
+	}, "Usable extra natural attacks right now: list of (attack_type, packed_dice, damage_type, flags)");
+	m.def("get_natural_attack_proto_index", [](objHndl critter, int code)->int {
+		if (IsCritterNaturalAttackCode(code))
+			return code - (ATTACK_CODE_NATURAL_ATTACK + 1);
+		if (IsExtraNaturalAttackCode(code)) {
+			auto plan = naturalBlend::Resolve(critter);
+			size_t idx = code - (ATTACK_CODE_EXTRA_NATURAL + 1);
+			if (idx < plan.attacks.size()) return plan.attacks[idx].protoIdx;
+		}
+		return -1;
+	}, "Proto natural attack slot used by this attack code (proto 1000+i, or a blended extra natural attack fed from the proto), else -1");
 	m.def("cur_seq_get_turn_based_status_flags", []() {
 		int res = 0;
 		auto tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
@@ -1259,7 +1279,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoSpellsPerDay>(m, "EventObjSpellsPerDay", "Used for retrieving spells per day mods. Resurrected in Temple+!")
 		.def_readwrite("bonus_list", &DispIoSpellsPerDay::bonList)
-		.def_readwrite("caster_class", &DispIoSpellsPerDay::classCode)
+		.def_property("caster_class", [](DispIoSpellsPerDay& evt)->int { return (int)evt.classCode; }, [](DispIoSpellsPerDay& evt, int val) { evt.classCode = (Stat)val; })
 		.def_readwrite("spell_level", &DispIoSpellsPerDay::spellLvl)
 		.def_readwrite("base_caster_level", &DispIoSpellsPerDay::casterEffLvl)
 		;
@@ -1336,6 +1356,16 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("obj", &EvtObjAddMesh::handle, "An object")
 		.def_readonly("addmeshes", &EvtObjAddMesh::addmeshes, "The addmesh list")
 		.def("append", &EvtObjAddMesh::Append, "Adds an addmesh to the list")
+		;
+
+	py::class_<EvtObjExtraNaturalAttacks, DispIO>(m, "EvtObjExtraNaturalAttacks", "Natural weapon blend: add natural attacks (claw, bite...) usable alongside manufactured weapons.")
+		.def_readonly("obj", &EvtObjExtraNaturalAttacks::handle, "The critter")
+		.def("add_attack", [](EvtObjExtraNaturalAttacks& evt, int attackType, Dice& dice, int damType, int flags) {
+				evt.Add(attackType, dice.ToPacked(), damType, flags);
+			}, "add_attack(attack_type, dice, damage_type, flags): attack_type 0 bite 1 claw 2 rake 3 gore 4 slap 5 slam 6 sting; flags NAF_*",
+			py::arg("attack_type"), py::arg("dice"), py::arg("damage_type"), py::arg("flags") = (int)NAF_PRIMARY)
+		.def("add_proto_attacks", &EvtObjExtraNaturalAttacks::AddProtoAttacks, "Feeds the critter's proto natural attacks into the list (monster opt-in)")
+		.def("count", [](EvtObjExtraNaturalAttacks& evt)->int { return (int)evt.attacks.size(); })
 		;
 
 }
@@ -1611,6 +1641,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeAddMesh:
 		pbEvtObj = py::cast(static_cast<EvtObjAddMesh*>(args.dispIO));
+		break;
+
+	case dispTypeGetExtraNaturalAttacks:
+		pbEvtObj = py::cast(static_cast<EvtObjExtraNaturalAttacks*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

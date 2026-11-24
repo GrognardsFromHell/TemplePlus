@@ -3863,6 +3863,7 @@ ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 ET_OnSpellCasterGeneral = 101
 ET_OnAddMesh = 102
+ET_OnGetExtraNaturalAttacks = 103 # natural weapon blend: evt_obj.add_attack(type, dice, damage_type, flags) / add_proto_attacks()
 
 # Event Keys
 
@@ -4365,3 +4366,17 @@ SCF_GP = 8
 FEAT_INFO_NO_FEAT_INFO_FLAG = 0
 FEAT_INFO_DISREGARD_PREREQS = 4
 FEAT_INFO_BONUS_ONLY = 8
+
+
+# Natural weapon blend (ET_OnGetExtraNaturalAttacks)
+NAF_PRIMARY = 1
+NAF_SECONDARY = 2
+NAF_NEEDS_FREE_HAND = 4
+NAF_MOUTH = 8
+NATURAL_ATTACK_BITE = 0
+NATURAL_ATTACK_CLAW = 1
+NATURAL_ATTACK_RAKE = 2
+NATURAL_ATTACK_GORE = 3
+NATURAL_ATTACK_SLAP = 4
+NATURAL_ATTACK_SLAM = 5
+NATURAL_ATTACK_STING = 6

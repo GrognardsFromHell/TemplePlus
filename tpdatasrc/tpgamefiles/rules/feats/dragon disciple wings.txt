@@ -1,0 +1,5 @@
+name: Dragon Disciple Wings
+flags: 8
+prereqs:
+description:  At 9th level a dragon disciple grows a pair of wings. In Temple+ the wings are cosmetic only; flight is not modelled.
+prereq descr: Dragon Disciple level 9.

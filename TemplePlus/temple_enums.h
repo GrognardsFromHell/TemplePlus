@@ -1807,6 +1807,7 @@ enum enum_dispIO_type : uint32_t {
 	evtObjTypeSpellCaster, // new! used for querying spell caster specs (caster level, learnable spells, etc.)
 	evtObjTypeActionCost, // new! used for modifying action cost
 	evtObjTypeAddMesh,
+	evtObjTypeExtraNaturalAttacks, // new! natural weapon blend
 };
 
 // Note: if you add new stuff here, it must be on top! Otherwise python sync is ruined
@@ -1920,6 +1921,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeIgnoreDruidOathCheck = 100,
 	dispTypeSpellCasterGeneral = 101, // Uses EvtObjSpellCaster, to be used with specific keys only!
 	dispTypeAddMesh = 102, // used to fetch additional addmeshes
+	dispTypeGetExtraNaturalAttacks = 103, // natural weapon blend: conditions add natural attacks usable alongside weapons
 	dispTypeCount // used just for size definition purposes
 
 

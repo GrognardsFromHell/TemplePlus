@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 #include "tig/tig_mes.h"
+#include "dispatcher.h"
+#include <vector>
 
 
 #define ACT_SEQ_ARRAY_SIZE 0x20
@@ -368,3 +370,31 @@ uint32_t _turnBasedStatusInit(objHndl objHnd);
 const char * _ActionErrorString(uint32_t actnErrorCode);
 void __cdecl _ActSeqCurSetSpellPacket(SpellPacketBody *, int flag );
 int _GetNewHourglassState(objHndl performer, D20ActionType d20aType, int d20Data1, int radMenuActualArg, D20SpellData *d20SpellData);
+
+
+// ---------------------------------------------------------------------------
+// Natural weapon blend (opt-in): extra natural attacks (claws/bite...) used alongside
+// manufactured weapons, supplied by conditions via dispTypeGetExtraNaturalAttacks.
+// If no condition supplies any, every function below is a no-op.
+// ---------------------------------------------------------------------------
+struct NaturalBlendPlan {
+	std::vector<NaturalAttackEntry> attacks; // usable extra natural attacks, in order (index k <-> code ATTACK_CODE_EXTRA_NATURAL+1+k)
+	bool armed = false;          // wielding a manufactured weapon: every extra natural attack is secondary
+	bool replaceUnarmed = false; // no weapon and no proto natural attacks: extras replace unarmed strikes
+};
+namespace naturalBlend {
+	// Single switch: does a buckler leave the claw hand free? (light/heavy/tower shields always block it)
+	constexpr bool kBucklerLeavesHandFree = true;
+
+	NaturalBlendPlan Resolve(objHndl critter);
+	int FreeHands(objHndl critter);
+	bool HasHandNaturalAttack(objHndl critter); // has an extra natural attack that needs a free hand
+	bool HasMultiattack(objHndl critter);
+	bool IsSecondary(const NaturalBlendPlan& plan, size_t idx);
+	// Maps a raw attack-counter code to ATTACK_CODE_EXTRA_NATURAL+1+k when it falls in the
+	// performer's extra-natural range; otherwise returns rawCode unchanged.
+	int TranslateAttackCode(objHndl performer, int rawCode, int d20caf);
+	// Temple+-owned side table: performer -> [firstExtraCode, firstExtraCode+count)
+	void SetRange(objHndl performer, int firstExtraCode, int count);
+	void Reset(objHndl performer);
+}
