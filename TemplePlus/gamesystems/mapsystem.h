@@ -117,6 +117,8 @@ public:
 	bool IsValidMapId(int mapId);
 
 	int GetCurrentMapId() const;
+	// Cap an ally-alert radius in tiles; absent map/option preserves the caller's default.
+	int GetAlertDistance(int defaultRange) const;
 
 	int GetHighestMapId() const;
 

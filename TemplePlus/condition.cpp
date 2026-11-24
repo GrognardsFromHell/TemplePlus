@@ -1545,7 +1545,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 	auto &hpChange = (int64_t&)(dispIo->data1);
 
 	// Kill
-	if (hpCur <= -10){
+	if (hpCur <= -10 || (hpCur <= 0 && d20Sys.D20QueryPython(handle, "Dies at Zero HP"))) {
 		critterSys.Kill(handle);
 		return 0;
 	}

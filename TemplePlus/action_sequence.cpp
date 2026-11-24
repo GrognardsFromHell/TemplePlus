@@ -1108,6 +1108,10 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	//logger->debug("Parsing move sequence for {}, d20 action {}", d20aIn->d20APerformer, d20ActionNames[d20aIn->d20ActType]);
 	
 	seqCheckFuncs(&tbStatCopy);
+
+	const auto initialActionCount = actSeq->d20ActArrayNum;
+	if (initialActionCount >= _countof(actSeq->d20ActArray))
+		return AEC_TARGET_INVALID;
 	
 	// if prone, add a standup action
 	if (d20->d20Query(d20aIn->d20APerformer, DK_QUE_Prone))
@@ -1220,8 +1224,11 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return AEC_TARGET_TOO_FAR;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
 		{
-			auto temp = 1;;
-			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
+			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)) {
+				releasePath(d20aCopy.path);
+				actSeq->d20ActArrayNum = initialActionCount;
+				return AEC_TARGET_INVALID;
+			}
 			pqResult = d20aCopy.path;
 			pathLength = pathfinding->GetPathLength(pqResult);
 			pathLength = remainingMaxMoveLength;
@@ -1292,11 +1299,18 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 	}
 
-	 *actSeqPerfLoc = pqResult->to;
+	auto previousLoc = *actSeqPerfLoc;
+	*actSeqPerfLoc = pqResult->to;
 	CmbtIntrpts intrpts;
 	intrpts.numItems = 0;
 	ProcessPathForReadiedActions(&d20aCopy, &intrpts);
-	ProcessSequenceForAoOs(actSeq, &d20aCopy);
+	int availableActions = static_cast<int>(_countof(actSeq->d20ActArray)) - actSeq->d20ActArrayNum - intrpts.numItems;
+	if (!ProcessSequenceForAoOs(actSeq, &d20aCopy, availableActions)) {
+		releasePath(pqResult);
+		actSeq->d20ActArrayNum = initialActionCount;
+		*actSeqPerfLoc = previousLoc;
+		return AEC_TARGET_INVALID;
+	}
 	addReadiedInterrupts(actSeq, &intrpts);
 	updateDistTraversed(actSeq);
 	return 0;
@@ -1719,7 +1733,10 @@ int ActionSequenceSystem::TrimPathToRemainingMoveLength(D20Actn* d20a, float rem
 	auto pathLengthTrimmed = remainingMoveLength - 0.1f;
 	
 	
-	pathfindingSys.GetPartialPath(d20a->path, pqrTrimmed, 0.0f, pathLengthTrimmed);
+	if (!pathfindingSys.GetPartialPath(d20a->path, pqrTrimmed, 0.0f, pathLengthTrimmed)) {
+		releasePath(pqrTrimmed);
+		return 1;
+	}
 	
 	
 	if (pathfindingSys.pathQueryResultIsValid(d20a->path))
@@ -1810,8 +1827,10 @@ ActionErrorCode ActionSequenceSystem::ActionCheckReload(D20Actn *d20, TurnBasedS
 	return AEC_OK;
 }
 
-void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a)
+bool ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a, int availableActions)
 {
+	if (availableActions < 1)
+		return false;
 	AoOPacket aooPacket;
 
 	float distFeet = 0.0;
@@ -1821,7 +1840,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	if (d20ActionTypePostAoO == D20A_5FOOTSTEP)
 	{
 		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
-		return;
+		return true;
 	}
 	if (d20ActionTypePostAoO == D20A_DOUBLE_MOVE)
 	{
@@ -1832,8 +1851,25 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	if (aooPacket.numAoOs == 0)
 	{
 		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
-		return;
+		return true;
 	}
+	// Each interrupt needs an action. Interrupts at the same distance
+	// share one movement segment, followed by the final stretch.
+	int needed = 1 + aooPacket.numAoOs;
+	float previousDistance = 0;
+	for (unsigned i = 0; i < aooPacket.numAoOs; ++i) {
+		if (aooPacket.aooDistFeet[i] != previousDistance)
+			++needed;
+		previousDistance = aooPacket.aooDistFeet[i];
+	}
+	if (needed > availableActions)
+		return false;
+
+	const auto initialCount = actSeq->d20ActArrayNum;
+	auto discardSegments = [&]() {
+		while (actSeq->d20ActArrayNum > initialCount)
+			releasePath(actSeq->d20ActArray[--actSeq->d20ActArrayNum].path);
+	};
 	D20Actn d20aAoOMovement(D20A_AOO_MOVEMENT);
 	LocAndOffsets truncLoc;
 	pathfindingSys.TruncatePathToDistance(pqr, &truncLoc, 0.0);
@@ -1849,11 +1885,9 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 			d20aAoOMovement.path = pqrTrunc;
 			if (!pathfindingSys.GetPartialPath(pqr, pqrTrunc, startDistFeet, aooDistFeet))
 			{
-				if (pathfindingSys.pathQueryResultIsValid(pqrTrunc))
-					pqrTrunc->occupiedFlag = 0;
-				if (pathfindingSys.pathQueryResultIsValid(pqr))
-					pqr->occupiedFlag = 0;
-				return;
+				releasePath(pqrTrunc);
+				discardSegments();
+				return false;
 			}
 			startDistFeet = aooPacket.aooDistFeet[i];
 			d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
@@ -1863,12 +1897,6 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20ActType = d20ActionTypePostAoO;
 			addingAoOStatus = 0;
 			actSeq->d20ActArrayNum++;
-			if ( actSeq->d20ActArrayNum >= 32)
-			{
-				if (pathfindingSys.pathQueryResultIsValid(pqr))
-					pqr->occupiedFlag = 0;
-				return;
-			}
 		}
 		d20aAoOMovement.d20APerformer = aooPacket.interrupters[i];
 		d20aAoOMovement.d20ATarget = d20a->d20APerformer;
@@ -1879,34 +1907,23 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 		d20aAoOMovement.d20ActType = D20A_AOO_MOVEMENT;
 		d20aAoOMovement.data1 = 1;
 		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
-		if (actSeq->d20ActArrayNum >= 32)
-		{
-			if (pathfindingSys.pathQueryResultIsValid(pqr))
-				pqr->occupiedFlag = 0;
-			return;
-		}
 	}
 	d20aAoOMovement = *d20a;
 	auto pqrLastStretch = pathfindingSys.FetchAvailablePQRCacheSlot();
 	d20aAoOMovement.path = pqrLastStretch;
 	if (!pathfindingSys.GetPartialPath(pqr, pqrLastStretch, startDistFeet, endDistFeet))
 	{
-		if (pathfindingSys.pathQueryResultIsValid(pqr))
-			pqr->occupiedFlag = 0;
-		if (pathfindingSys.pathQueryResultIsValid(pqrLastStretch))
-			pqrLastStretch->occupiedFlag = 0;
-		return;
+		releasePath(pqrLastStretch);
+		discardSegments();
+		return false;
 	}
 	d20aAoOMovement.destLoc = d20a->destLoc;
 	d20aAoOMovement.distTraversed = pathfindingSys.GetPathLength(pqrLastStretch);
 	if (!addingAoOStatus)
 		d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
 	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
-	if (actSeq->d20ActArrayNum != 32)
-	{
-		pqr->occupiedFlag = 0;
-	}
-	return;
+	releasePath(pqr);
+	return true;
 
 	/*{ __asm push ecx __asm push esi __asm push ebx __asm push edi};
 	__asm{

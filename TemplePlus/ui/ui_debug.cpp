@@ -2,6 +2,12 @@
 #include "stdafx.h"
 #include "ui.h"
 #include "ui_debug.h"
+#include "alert_debug.h"
+#include "gameview.h"
+#include "gamesystems/mapsystem.h"
+#include "obj.h"
+#include <graphics/textengine.h>
+#include "ui/widgets/widget_styles.h"
 #include "ui/widgets/widgets.h"
 #include "tig/tig_startup.h"
 #include "tig/tig_console.h"
@@ -18,6 +24,101 @@
 #include <gamesystems/objects/objsystem.h>
 
 static bool debugUiVisible = false;
+
+namespace alertDebug {
+	struct Arc {
+		XMFLOAT3 from, to;
+		uint64_t expires;
+		int map;
+		std::string label;
+	};
+	static std::vector<Arc> arcs;
+	static bool enabled = false;
+	bool Enabled() { return enabled; }
+	void SetEnabled(bool value) {
+		enabled = value;
+		arcs.clear();
+	}
+	void Record(objHndl center, objHndl ally, int range, const char* reason) {
+		auto a = objects.GetLocationFull(center), b = objects.GetLocationFull(ally);
+		auto from = a.ToInches3D(12), to = b.ToInches3D(12);
+		auto distance = std::hypot(from.x - to.x, from.z - to.z) / INCH_PER_TILE;
+		auto map = gameSystems->GetMap().GetCurrentMapId();
+		logger->info("Ally alert [{}] map {}: {} ({},{}) -> {} ({},{}), {:.1f} tiles, search {}",
+			reason, map, center, a.location.locx, a.location.locy, ally, b.location.locx, b.location.locy, distance, range);
+		if (arcs.size() >= 64) arcs.erase(arcs.begin());
+		arcs.push_back({from, to, GetTickCount64() + 5000, map, fmt::format("{:.1f} tiles", distance)});
+	}
+	void Render() {
+		if (arcs.empty()) return;
+		auto now = GetTickCount64();
+		auto map = gameSystems->GetMap().GetCurrentMapId();
+		auto style = widgetTextStyles->GetTextStyle("default-button-text");
+		style.align = gfx::TextAlign::Center;
+		style.dropShadow = true;
+		for (auto it = arcs.begin(); it != arcs.end();) {
+			if (it->expires <= now || it->map != map) { it = arcs.erase(it); continue; }
+			auto a = gameView->WorldToScreenUi(it->from), b = gameView->WorldToScreenUi(it->to);
+			float lift = std::min(60.f, 12.f + 0.15f * std::hypot(b.x - a.x, b.y - a.y));
+			gfx::Line2d lines[18];
+			auto prev = a;
+			XMCOLOR color(1.f, 0.68f, 0.15f, 1.f);
+			for (int i = 0; i < 16; ++i) {
+				float t = (i+1)/16.f;
+				XMFLOAT2 p(a.x + t*(b.x-a.x), a.y + t*(b.y-a.y) - 4*t*(1-t)*lift);
+				lines[i] = gfx::Line2d(prev, p, color);
+				prev = p;
+			}
+			float dx = b.x-lines[15].from.x, dy = b.y-lines[15].from.y;
+			float scale = 8.f/std::max(0.01f, std::hypot(dx,dy));
+			dx *= scale; dy *= scale;
+			lines[16] = gfx::Line2d(b, {b.x-dx+dy/2, b.y-dy-dx/2}, color);
+			lines[17] = gfx::Line2d(b, {b.x-dx-dy/2, b.y-dy+dx/2}, color);
+			tig->GetShapeRenderer2d().DrawLines(lines);
+			TigRect rect{int((a.x+b.x)/2)-55, int((a.y+b.y)/2-lift)-20, 110, 22};
+			tig->GetRenderingDevice().GetTextEngine().RenderText(rect, style, it->label);
+			++it;
+		}
+	}
+}
+static std::vector<std::string> autoplayerGoals;
+
+void UISetAutoplayerGoals(const std::vector<std::string>& goals)
+{
+	autoplayerGoals = goals;
+}
+
+static void RenderAutoplayerGoals()
+{
+	if (autoplayerGoals.empty()) return;
+	const auto screen = ImGui::GetIO().DisplaySize;
+	const float margin = 12.0f;
+	const float width = std::min(300.0f, screen.x - 2 * margin);
+	if (width <= 0) return;
+
+	const auto& style = ImGui::GetStyle();
+	const float contentWidth = std::max(1.0f, width - 2 * style.WindowPadding.x - 2);
+	float height = 2 * style.WindowPadding.y + ImGui::GetTextLineHeight() + 2;
+	for (const auto& goal : autoplayerGoals) {
+		height += ImGui::CalcTextSize(goal.c_str(), nullptr, false, contentWidth).y + style.ItemSpacing.y;
+	}
+	ImGui::SetNextWindowPos(ImVec2(screen.x - width - margin, margin));
+	ImGui::SetNextWindowSize(ImVec2(width, height));
+	const auto flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing
+		| ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings
+		| ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.07f, 0.09f, 0.76f));
+	if (ImGui::Begin("##autoplayerGoals", nullptr, flags)) {
+		ImGui::TextColored(ImVec4(0.93f, 0.79f, 0.52f, 1), "AUTOPLAYER");
+		ImGui::PushTextWrapPos(0);
+		for (const auto& goal : autoplayerGoals) {
+			ImGui::TextUnformatted(goal.c_str());
+		}
+		ImGui::PopTextWrapPos();
+	}
+	ImGui::End();
+	ImGui::PopStyleColor();
+}
 
 void UIShowDebug()
 {
@@ -164,6 +265,7 @@ static void DrawAnimSlots();
 
 void UIRenderDebug()
 {
+	RenderAutoplayerGoals();
 	if (!debugUiVisible) {
 		return;
 	}

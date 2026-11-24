@@ -461,8 +461,30 @@ BOOL LegacyCombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon,
 
 BOOL LegacyCombatSystem::AffiliationSame(objHndl obj, objHndl obj2)
 {
-	auto objInParty = party.IsInParty(obj);
-	return party.IsInParty(obj2) == objInParty;
+	const bool firstInParty = party.IsInParty(obj);
+	const bool secondInParty = party.IsInParty(obj2);
+	if (!obj || !obj2)
+		return firstInParty == secondInParty;
+	if (critterSys.IsCombatPracticeTarget(obj) || critterSys.IsCombatPracticeTarget(obj2))
+		return TRUE;
+	if (firstInParty != secondInParty) {
+		auto outsider = firstInParty ? obj2 : obj;
+		return d20Sys.D20QueryPython(outsider, "Party Combat Ally") && critterSys.IsFriendly(obj, obj2);
+	}
+	if (firstInParty || obj == obj2)
+		return TRUE;
+
+	// Only an explicitly allied NPC changes the ordinary NPC-vs-NPC rule.
+	// Neutrals in the initiative list remain ineligible for incidental attacks.
+	auto hostileToParty = [](objHndl handle) {
+		auto critter = objSystem->GetObject(handle);
+		if (!critter->IsNPC())
+			return false;
+		auto flags = critter->GetNPCFlags();
+		return (flags & ONF_KOS) && !(flags & ONF_KOS_OVERRIDE);
+	};
+	return !(hostileToParty(obj2) && d20Sys.D20QueryPython(obj, "Party Combat Ally"))
+		&& !(hostileToParty(obj) && d20Sys.D20QueryPython(obj2, "Party Combat Ally"));
 }
 
 int LegacyCombatSystem::GetThreateningCrittersAtLoc(objHndl obj, LocAndOffsets* loc, objHndl threateners[40])
@@ -930,7 +952,7 @@ void LegacyCombatSystem::EndTurn()
 	}
 
 	if (AllCombatantsFarFromParty()){
-		logger->info("Ending combat (enemies far from party)");
+		logger->info("Ending combat (no nearby combatant requires initiative)");
 		auto leader = party.GetConsciousPartyLeader();
 		combatSys.CritterExitCombatMode(leader);
 	} else if (AllPcsUnconscious())
@@ -1229,6 +1251,15 @@ bool LegacyCombatSystem::AllCombatantsFarFromParty()
 		for (auto j=0u; j < Nparty; j++){
 			auto partyMem = party.GroupListGetMemberN(j);
 			if (locSys.DistanceToObj(combatant, partyMem) < PEACEOUT_DISTANCE){
+				if (!IsBrawlInProgress() && d20Sys.D20QueryPython(combatant, "Can Disengage From Party")) {
+					AiFightStatus status;
+					objHndl target;
+					aiSys.GetAiFightStatus(combatant, &status, &target);
+					if (status != AIFS_FIGHTING || !target || !party.IsInParty(target)) {
+						logger->debug("Combat exit: {} can disengage", combatant);
+						break; // Check the remaining combatants.
+					}
+				}
 				return false;
 			}
 				

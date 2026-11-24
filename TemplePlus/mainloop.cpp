@@ -40,6 +40,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_mainmenu.h"
 #include "ui/ui_debug.h"
+#include "ui/alert_debug.h"
 #include <mod_support.h>
 
 static GameLoop *gameLoop = nullptr;
@@ -249,6 +250,7 @@ void GameLoop::RenderFrame() {
 	device.ClearCurrentDepthTarget();
 	
 	mGameRenderer.Render();
+	alertDebug::Render();
 
 	device.BeginPerfGroup("UI");
 	mainLoop.RenderUi();

@@ -217,6 +217,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Checks if the given critter is friendly towards the target.
 	*/
 	uint32_t IsFriendly(objHndl, objHndl);
+	bool IsCombatPracticeTarget(objHndl handle);
 	/*
 		returns 0 if both are PCs
 		returns 1 if :

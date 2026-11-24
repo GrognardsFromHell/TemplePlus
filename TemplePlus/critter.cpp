@@ -478,6 +478,12 @@ int LegacyCritterSystem::MoneyAmount(objHndl handle){
 	return temple::GetRef<int(__cdecl)(objHndl)>(0x1007F880)(handle);
 }
 
+bool LegacyCritterSystem::IsCombatPracticeTarget(objHndl handle) {
+	auto obj = objSystem->GetObject(handle);
+	return obj && obj->IsNPC() && (obj->GetNPCFlags() & ONF_NO_ATTACK)
+		&& d20Sys.D20QueryPython(handle, "Combat Practice Target");
+}
+
 uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
 
 	if (!critter1 || !critter2)
@@ -509,6 +515,17 @@ uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
 
 	auto critter1_in_party = party.IsInParty(critter1);
 	auto critter2_in_party = party.IsInParty(critter2);
+	// Non-party combatants leave practice targets alone. A player can still
+	// deliberately attack the target, including with a recruited party member.
+	if (!critter1_in_party && !critter2_in_party
+		&& (IsCombatPracticeTarget(critter1) || IsCombatPracticeTarget(critter2)))
+		return TRUE;
+	if (critter1_in_party != critter2_in_party) {
+		auto member = critter1_in_party ? critter1 : critter2;
+		auto outsider = critter1_in_party ? critter2 : critter1;
+		if (d20Sys.D20QueryPython(outsider, "Party Combat Ally") && checkNotCharmedPartyMember(member))
+			return TRUE;
+	}
 	auto critter1_leader = critterSys.GetLeader(critter1);
 	auto critter2_leader = critterSys.GetLeader(critter2);
 
